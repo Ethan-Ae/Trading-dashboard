@@ -1293,6 +1293,13 @@ function openPanel(id){
   });
 }
 
+const field_=(icon,label,content)=>`
+    <div class="field-row">
+      <div class="field-icon">${icon}</div>
+      <div class="field-label">${label}</div>
+      <div class="field-value">${content}</div>
+    </div>`;
+
 function buildPanelHTML(t){
   const field=(icon,label,content)=>`
     <div class="field-row">
@@ -1361,20 +1368,20 @@ function buildPanelHTML(t){
     ${field(icoErr,'Erreurs',`<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px">
       ${ERRORS.map(e=>`<button class="emoji-btn ${(t.errs||[]).includes(e)?'selected':''}" style="font-size:.75rem;padding:4px 10px" onclick="toggleErr(${t.id},'${e}',this)">${e}</button>`).join('')}
     </div>`)}
-    ${t.result==='En cours'
+    <div id="panel-manage-section">${t.result==='En cours'
       ? field('🎯','Trade Management',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
       : field('🎯','Trade Management',`
       <div class="emoji-btn-group">
         <button class="emoji-btn ${t.manageTrade==='👍'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👍',this)">👍</button>
         <button class="emoji-btn ${t.manageTrade==='👎'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👎',this)">👎</button>
-      </div>`)}
-    ${t.result==='En cours'
+      </div>`)}</div>
+    <div id="panel-bontrade-section">${t.result==='En cours'
       ? field('✅','Bon Trade?',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
       : field('✅','Bon Trade?',`
       <div class="emoji-btn-group">
         <button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',true,this)">✅</button>
         <button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',false,this)">❌</button>
-      </div>`)}
+      </div>`)}</div>
     <div class="panel-section-title">Raisons & Confluences</div>
     <textarea class="field-textarea" placeholder="Décris tes confluences, la raison du trade…" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
     <div class="panel-section-title">État Psychologique</div>
@@ -1399,7 +1406,21 @@ function updatePanelDate(id,val){
   const panel=document.getElementById('panel-body');
   if(panel){ const spans=[...panel.querySelectorAll('.field-row')]; spans.forEach(row=>{ if(row.querySelector('.field-label')&&row.querySelector('.field-label').textContent==='Jour') row.querySelector('.field-value span').textContent=t.jour||'—'; }); }
 }
-function updateField(id,field,val){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); if(field==='result') openPanel(id); } }
+function updateField(id,field,val){
+  const t=trades.find(x=>x.id===id); if(!t) return;
+  t[field]=val; dbUpsert(t);
+  if(field==='result'){
+    const ms=document.getElementById('panel-manage-section');
+    const bs=document.getElementById('panel-bontrade-section');
+    if(ms) ms.innerHTML = val==='En cours'
+      ? field_('🎯','Trade Management',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
+      : field_('🎯','Trade Management',`<div class="emoji-btn-group"><button class="emoji-btn ${t.manageTrade==='👍'?'selected':''}" onclick="setEmoji(${id},'manageTrade','👍',this)">👍</button><button class="emoji-btn ${t.manageTrade==='👎'?'selected':''}" onclick="setEmoji(${id},'manageTrade','👎',this)">👎</button></div>`);
+    if(bs) bs.innerHTML = val==='En cours'
+      ? field_('✅','Bon Trade?',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
+      : field_('✅','Bon Trade?',`<div class="emoji-btn-group"><button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',true,this)">✅</button><button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',false,this)">❌</button></div>`);
+    document.getElementById('p-result-chip').innerHTML=resultChip(val);
+  }
+}
 function setEmoji(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
 function setBool(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
 function handleScreenshot(id,key,input){
