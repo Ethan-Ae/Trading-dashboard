@@ -914,47 +914,7 @@ const CHECKLIST = [
   'Tu n\'es pas sur-exposé sur ces devises',
 ];
 
-// Generate sample trades matching the user's real format
 let trades = [];
-(function seed(){
-  const pairs = ['EURUSD','GBPUSD','USDJPY','XAUUSD','USDCHF','AUDUSD','GBPJPY','EURJPY','NZDUSD','CADJPY','AUDCHF','CHFJPY','AUDNZD','EURGBP'];
-  const results = ['TP Total','SL Total','SL Total','TP Partiel','BE','TP Total','SL Total'];
-  const errList = [['FOMO'],['Mauvaise analyse'],['Mauvais Stop Initial'],['Avarice'],['Hors de mon Plan'],['Mauvais timing'],['Aucune'],['FOMO','Avarice'],['Mauvaise analyse','Mauvais timing'],[]];
-  const riskOpts = ['0.50%','0.50%','0.50%','0.70%','1.00%','0.25%'];
-  let d = new Date('2024-01-09');
-  for(let i=0;i<80;i++){
-    d.setDate(d.getDate() + Math.ceil(Math.random()*4));
-    const pair = pairs[Math.floor(Math.random()*pairs.length)];
-    const ordre = ORDRE_OPTIONS[Math.floor(Math.random()*ORDRE_OPTIONS.length)];
-    const tf = ['1h','1h','2h','4h','1h','15mins','30mins'][Math.floor(Math.random()*7)];
-    const rri = +(Math.random()*4+1.5).toFixed(2);
-    const result = results[Math.floor(Math.random()*results.length)];
-    const rrf = result==='TP Total' ? +(Math.random()*rri*.9+rri*.5).toFixed(2)
-               : result==='TP Partiel' ? +(Math.random()*.8+.2).toFixed(2)
-               : result==='SL Total' ? -1
-               : result==='BE' ? 0
-               : null;
-    const type = TYPE_OPTIONS[Math.floor(Math.random()*TYPE_OPTIONS.length)];
-    const tend = TEND_OPTIONS[Math.floor(Math.random()*TEND_OPTIONS.length)];
-    const hold = HOLD_OPTIONS[Math.floor(Math.random()*HOLD_OPTIONS.length)];
-    const errs = errList[Math.floor(Math.random()*errList.length)];
-    const risk = riskOpts[Math.floor(Math.random()*riskOpts.length)];
-    const jour = JOURS[d.getDay()];
-    const bonTrade = result==='TP Total' || result==='TP Partiel';
-    const prise = true;
-    trades.push({
-      id: i+1,
-      pair, date: new Date(d).toISOString().slice(0,10),
-      prise, tf, ordre, risk, result,
-      rri, rrf, jour, hold, type, tend,
-      errs, bonTrade,
-      manageTrade: result==='TP Total'||result==='TP Partiel' ? '👍' : '👎',
-      confluences: '', psy: '',
-      checklist: [false,false,false,false,false],
-      screenshots: { exec: null, mgmt: null, close: null },
-    });
-  }
-})();
 
 // ───────────────────────────────────────────
 //  HELPERS
