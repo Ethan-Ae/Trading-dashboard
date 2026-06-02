@@ -927,6 +927,11 @@ const CHECKLIST = [
   'Tu n\'es pas sur-exposé sur ces devises',
 ];
 
+// ── Supabase credentials ──────────────────────
+const SB_URL = 'https://zftmwtiahywqqqnlzxue.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpmdG13dGlhaHl3cXFxbmx6eHVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MTA1OTUsImV4cCI6MjA5NTk4NjU5NX0.asb_LajF0kwkZXb-GUJxMt4lNy90IClqTonGaxzX-Bk';
+// ─────────────────────────────────────────────
+
 let trades = [];
 
 // ───────────────────────────────────────────
@@ -1714,10 +1719,8 @@ function sbSetStatus(state, label) {
 }
 
 function openSbModal() {
-  const url = localStorage.getItem('sb_url') || '';
-  const key = localStorage.getItem('sb_key') || '';
-  document.getElementById('sb-url').value = url;
-  document.getElementById('sb-key').value = key;
+  document.getElementById('sb-url').value = SB_URL;
+  document.getElementById('sb-key').value = SB_KEY;
   document.getElementById('sb-error').style.display   = 'none';
   document.getElementById('sb-success').style.display = 'none';
   document.getElementById('sb-disconnect-btn').style.display = sb ? 'inline-flex' : 'none';
@@ -1803,8 +1806,6 @@ async function connectSupabase() {
     sb = supabase.createClient(url, key);
     const { error } = await sb.from('trades').select('id').limit(1);
     if (error) throw error;
-    localStorage.setItem('sb_url', url);
-    localStorage.setItem('sb_key', key);
     sbSetStatus('connected', 'Connecté');
     okEl.textContent   = '✓ Connecté ! Chargement des trades…';
     okEl.style.display = 'block';
@@ -1824,8 +1825,6 @@ async function connectSupabase() {
 
 function disconnectSupabase() {
   sb = null;
-  localStorage.removeItem('sb_url');
-  localStorage.removeItem('sb_key');
   sbSetStatus('', 'Base de données');
   document.getElementById('sb-disconnect-btn').style.display = 'none';
   closeSbModal();
@@ -1891,19 +1890,16 @@ async function dbDelete(id) {
 
 // Auto-reconnect if credentials saved
 (async function autoConnect(){
-  const url = localStorage.getItem('sb_url');
-  const key = localStorage.getItem('sb_key');
-  if (!url || !key) return;
-  sbSetStatus('loading', 'Reconnexion…');
+  sbSetStatus('loading', 'Connexion…');
   try {
-    sb = supabase.createClient(url, key);
+    sb = supabase.createClient(SB_URL, SB_KEY);
     const { error } = await sb.from('trades').select('id').limit(1);
     if (error) throw error;
     sbSetStatus('connected', 'Connecté');
     await loadTradesFromDb();
   } catch(e) {
     sb = null;
-    sbSetStatus('', 'Base de données');
+    sbSetStatus('', 'Erreur connexion');
     console.warn('Auto-connect failed:', e.message);
   }
 })();
