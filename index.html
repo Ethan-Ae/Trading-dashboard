@@ -493,6 +493,17 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 .text-muted { color: var(--text2); font-size: .78rem; }
 .divider { height: 1px; background: var(--sep); margin: 4px 0; }
 
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--bg3); border: 1px solid var(--sep); border-radius: 10px;
+  padding: 10px 18px; font-size: .8rem; color: var(--text);
+  z-index: 300; opacity: 0; transition: opacity .2s, transform .2s;
+  pointer-events: none; white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.err  { background: rgba(255,69,58,.15); border-color: rgba(255,69,58,.4); color: var(--red); }
+
 /* ── SUPABASE STATUS ── */
 .sb-status {
   display: flex; align-items: center; gap: 7px;
@@ -793,6 +804,8 @@ alter table trades disable row level security;</div>
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <!-- ══════ LIGHTBOX ══════ -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
@@ -1321,19 +1334,25 @@ function buildPanelHTML(t){
     </div>`;
   };
 
+  const sel=(opts,val,key)=>`
+    <select class="field-select" onchange="updateField(${t.id},'${key}',this.value)">
+      ${opts.map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
+    </select>`;
+
   return `
-    ${field(icoCalendar,'DATE',`<span style="color:var(--text);font-size:.82rem">${t.date}</span>`)}
+    ${field(icoCalendar,'Actif',`<input class="field-input" value="${t.pair||''}" oninput="this.value=this.value.toUpperCase()" onchange="updateField(${t.id},'pair',this.value)">`)}
+    ${field(icoCalendar,'Date',`<input class="field-input" type="date" value="${t.date||''}" onchange="updatePanelDate(${t.id},this.value)">`)}
     ${field(icoCalendar,'Prise de Position',`<button class="toggle ${t.prise?'on':''}" onclick="togglePrise(${t.id},this)"></button>`)}
-    ${field(icoTF,'Time-Frame',tfChip(t.tf))}
-    ${field(icoOrdre,'Type d\'Ordre',ordreChip(t.ordre))}
-    ${field(icoRisk,'Risk',`<span class="chip chip-risk">${t.risk}</span>`)}
-    ${field(icoRisk,'R/R Initial',`<span style="color:var(--text2);font-size:.82rem">${t.rri}</span>`)}
-    ${field(icoRisk,'Résultat',resultChip(t.result))}
-    ${field(icoRisk,'R/R Final',`<span class="${rClass(t.rrf)}" style="font-size:.9rem">${rStr(t.rrf)}</span>`)}
-    ${field(icoJour,'Jour',`<span class="chip chip-jour">${t.jour}</span>`)}
-    ${field(icoType,'Type de Trade',`<span style="background:rgba(255,159,10,.12);color:${typeColor};font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:6px">${t.type}</span>`)}
-    ${field(icoTend,'Tendance',`<span class="chip ${t.tend==='Reversal'?'chip-rev':'chip-cont'}">${t.tend}</span>`)}
-    ${field(icoHold,'Holding Period',`<span class="chip chip-tf">${t.hold}</span>`)}
+    ${field(icoTF,'Time-Frame',sel(TF_OPTIONS,t.tf,'tf'))}
+    ${field(icoOrdre,'Type d\'Ordre',sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
+    ${field(icoRisk,'Risk',sel(['0.25%','0.50%','0.75%','1.00%','1.50%','2.00%'],t.risk,'risk'))}
+    ${field(icoRisk,'R/R Initial',`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="ex: 3.2" onchange="updateField(${t.id},'rri',+this.value)">`)}
+    ${field(icoRisk,'Résultat',sel(['En cours','TP Total','TP Partiel','SL Total','BE'],t.result,'result'))}
+    ${field(icoRisk,'R/R Final',`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="ex: -1 ou 3.2" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
+    ${field(icoJour,'Jour',`<span style="color:var(--text2);font-size:.82rem">${t.jour||'—'}</span>`)}
+    ${field(icoType,'Type de Trade',sel(TYPE_OPTIONS,t.type,'type'))}
+    ${field(icoTend,'Tendance',sel(TEND_OPTIONS,t.tend,'tend'))}
+    ${field(icoHold,'Holding Period',sel(['— ',...HOLD_OPTIONS],t.hold||'— ','hold'))}
     ${field(icoErr,'Erreurs',`<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px">
       ${ERRORS.map(e=>`<button class="emoji-btn ${(t.errs||[]).includes(e)?'selected':''}" style="font-size:.75rem;padding:4px 10px" onclick="toggleErr(${t.id},'${e}',this)">${e}</button>`).join('')}
     </div>`)}
@@ -1363,6 +1382,14 @@ function buildPanelHTML(t){
   `;
 }
 
+function updatePanelDate(id,val){
+  const t=trades.find(x=>x.id===id); if(!t) return;
+  t.date=val; t.jour=JOURS[new Date(val).getDay()];
+  dbUpsert(t);
+  // refresh jour display
+  const panel=document.getElementById('panel-body');
+  if(panel){ const spans=[...panel.querySelectorAll('.field-row')]; spans.forEach(row=>{ if(row.querySelector('.field-label')&&row.querySelector('.field-label').textContent==='Jour') row.querySelector('.field-value span').textContent=t.jour||'—'; }); }
+}
 function updateField(id,field,val){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } }
 function setEmoji(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
 function setBool(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
@@ -1814,10 +1841,28 @@ async function loadTradesFromDb() {
   }
 }
 
+let toastTimer = null;
+function showToast(msg, isErr=false){
+  const el = document.getElementById('toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'toast show' + (isErr?' err':'');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.classList.remove('show'); }, 2200);
+}
+
 async function dbUpsert(trade) {
-  if (!sb) return;
-  const { error } = await sb.from('trades').upsert(localToDb(trade), { onConflict: 'id' });
-  if (error) console.error('upsert error', error);
+  if (!sb){ showToast('⚠️ Non connecté à Supabase', true); return; }
+  try {
+    // Strip screenshots to avoid oversized payload — save separately if needed
+    const row = localToDb(trade);
+    const { error } = await sb.from('trades').upsert(row, { onConflict: 'id' });
+    if (error) throw error;
+    showToast('✓ Sauvegardé');
+  } catch(e) {
+    showToast('Erreur : ' + (e.message||e), true);
+    console.error('dbUpsert error', e);
+  }
 }
 
 async function dbDelete(id) {
