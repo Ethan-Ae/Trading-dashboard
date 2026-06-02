@@ -578,9 +578,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     Performance
   </button>
   <div class="topbar-right">
-    <div style="display:flex;align-items:center;gap:6px;padding:0 4px">
+    <button class="sb-status" onclick="openSbModal()">
       <div class="sb-dot" id="sb-dot"></div>
-    </div>
+      <span id="sb-status-label">Base de données</span>
+    </button>
     <button class="btn-add" onclick="openAddModal()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
       Nouveau Trade
