@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trading Journal</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 /* ── RESET & BASE ── */
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
@@ -489,6 +490,47 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 .mb-24 { margin-bottom: 24px; }
 .text-muted { color: var(--text2); font-size: .78rem; }
 .divider { height: 1px; background: var(--sep); margin: 4px 0; }
+
+/* ── SUPABASE STATUS ── */
+.sb-status {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--bg3); border: 1px solid var(--sep);
+  border-radius: 8px; padding: 5px 12px; cursor: pointer;
+  font-size: .75rem; color: var(--text2); transition: border-color .15s;
+}
+.sb-status:hover { border-color: var(--orange); color: var(--text); }
+.sb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bg4); flex-shrink: 0; }
+.sb-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.sb-dot.loading { background: var(--orange); animation: pulse .8s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── SUPABASE SETUP MODAL ── */
+.sb-modal {
+  background: var(--bg2); border: 1px solid var(--sep);
+  border-radius: 20px; padding: 28px; width: 540px; max-width: 95vw;
+  max-height: 90vh; overflow-y: auto;
+  animation: fadeUp .2s ease;
+}
+.sb-modal h2 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+.sb-modal p  { font-size: .78rem; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+.sb-section  { margin-top: 20px; }
+.sb-section-title { font-size: .68rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px; }
+.sb-sql {
+  background: var(--bg); border: 1px solid var(--sep); border-radius: 10px;
+  padding: 12px 14px; font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: .72rem; color: #a8d8a8; line-height: 1.7; overflow-x: auto;
+  white-space: pre; margin-bottom: 10px;
+}
+.sb-copy-btn {
+  background: var(--bg3); border: 1px solid var(--sep); border-radius: 7px;
+  color: var(--text2); font-size: .73rem; padding: 5px 12px; cursor: pointer;
+  transition: all .15s; display: inline-flex; align-items: center; gap: 5px;
+}
+.sb-copy-btn:hover { border-color: var(--orange); color: var(--orange); }
+.sb-error { background: rgba(255,69,58,.1); border: 1px solid rgba(255,69,58,.3); border-radius: 8px; padding: 9px 12px; font-size: .78rem; color: var(--red); margin-top: 10px; display: none; }
+.sb-success { background: rgba(48,209,88,.1); border: 1px solid rgba(48,209,88,.3); border-radius: 8px; padding: 9px 12px; font-size: .78rem; color: var(--green); margin-top: 10px; display: none; }
+.sb-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,159,10,.3); border-top-color: var(--orange); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -523,6 +565,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     Performance
   </button>
   <div class="topbar-right">
+    <button class="sb-status" id="sb-status-btn" onclick="openSbModal()">
+      <div class="sb-dot" id="sb-dot"></div>
+      <span id="sb-status-label">Base de données</span>
+    </button>
     <button class="btn-add" onclick="openAddModal()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
       Nouveau Trade
@@ -680,6 +726,69 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       <button class="panel-close" onclick="closePanel()">✕</button>
     </div>
     <div class="panel-body" id="panel-body"></div>
+  </div>
+</div>
+
+<!-- ══════ SUPABASE SETUP MODAL ══════ -->
+<div class="modal-overlay" id="sbModal">
+  <div class="sb-modal">
+    <h2>🗄️ Connexion Supabase</h2>
+    <p>Connecte ton journal à Supabase pour que tes trades soient sauvegardés en base de données et persistent après chaque rechargement.</p>
+
+    <div class="sb-section">
+      <div class="sb-section-title">1 — Crée la table dans Supabase (SQL Editor)</div>
+      <div class="sb-sql" id="sb-sql-block">create table trades (
+  id bigint primary key,
+  pair text,
+  date text,
+  prise boolean default true,
+  tf text,
+  ordre text,
+  risk text,
+  rri numeric,
+  result text default 'En cours',
+  rrf numeric,
+  jour text,
+  hold text,
+  type_trade text,
+  tend text,
+  errs jsonb default '[]',
+  bon_trade boolean default false,
+  manage_trade text,
+  confluences text default '',
+  psy text default '',
+  checklist jsonb default '[false,false,false,false,false]',
+  screenshots jsonb default '{}',
+  created_at timestamptz default now()
+);
+
+-- Désactive RLS pour usage personnel
+alter table trades disable row level security;</div>
+      <button class="sb-copy-btn" onclick="copySql()">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="10" height="10" rx="2"/><path d="M4 12H3a1 1 0 01-1-1V3a1 1 0 011-1h8a1 1 0 011 1v1"/></svg>
+        Copier le SQL
+      </button>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-title">2 — Entre tes identifiants Supabase</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label style="font-size:.7rem;color:var(--text2);display:block;margin-bottom:4px">Project URL <span style="color:var(--text3)">(Settings → API)</span></label>
+        <input class="field-input" type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label style="font-size:.7rem;color:var(--text2);display:block;margin-bottom:4px">Anon Key (public)</label>
+        <input class="field-input" type="password" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIs..." autocomplete="off">
+      </div>
+      <div class="sb-error" id="sb-error"></div>
+      <div class="sb-success" id="sb-success"></div>
+    </div>
+
+    <div class="form-actions" style="margin-top:20px">
+      <button class="btn-ghost" id="sb-disconnect-btn" onclick="disconnectSupabase()" style="display:none;color:var(--red)">Déconnecter</button>
+      <button class="btn-ghost" onclick="closeSbModal()">Fermer</button>
+      <button class="btn-orange" id="sb-connect-btn" onclick="connectSupabase()">Connecter</button>
+    </div>
   </div>
 </div>
 
@@ -1055,12 +1164,13 @@ function renderTradesTable(){
 
 function deleteTrade(id){
   trades = trades.filter(t => t.id !== id);
+  dbDelete(id);
   renderTradesTable();
 }
 
 function togglePrise(id, btn){
   const t = trades.find(x=>x.id===id);
-  if(t){ t.prise=!t.prise; btn.classList.toggle('on',t.prise); }
+  if(t){ t.prise=!t.prise; btn.classList.toggle('on',t.prise); dbUpsert(t); }
 }
 
 // ───────────────────────────────────────────
@@ -1291,14 +1401,14 @@ function buildPanelHTML(t){
   `;
 }
 
-function updateField(id,field,val){ const t=trades.find(x=>x.id===id); if(t) t[field]=val; }
-function setEmoji(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t) t[field]=val; btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
-function setBool(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t) t[field]=val; btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
+function updateField(id,field,val){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } }
+function setEmoji(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
+function setBool(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
 function handleScreenshot(id,key,input){
   const t=trades.find(x=>x.id===id);
   if(!t||!input.files[0]) return;
   const reader=new FileReader();
-  reader.onload=e=>{ t.screenshots[key]=e.target.result; openPanel(id); };
+  reader.onload=e=>{ t.screenshots[key]=e.target.result; dbUpsert(t); openPanel(id); };
   reader.readAsDataURL(input.files[0]);
 }
 function openLightbox(src, label){
@@ -1316,10 +1426,11 @@ function toggleErr(id, err, btn){
   if(t.errs.includes(err)) t.errs=t.errs.filter(e=>e!==err);
   else t.errs.push(err);
   btn.classList.toggle('selected', t.errs.includes(err));
+  dbUpsert(t);
 }
 function delScreenshot(id,key){
   const t=trades.find(x=>x.id===id);
-  if(t){ t.screenshots[key]=null; openPanel(id); }
+  if(t){ t.screenshots[key]=null; dbUpsert(t); openPanel(id); }
 }
 
 function closePanel(){ document.getElementById('panelOverlay').classList.remove('open'); activeTrade=null; }
@@ -1377,13 +1488,15 @@ function saveTrade(){
   const hold=null;
   const errs=[];
   const bonTrade=false;
-  trades.unshift({
+  const newTrade = {
     id:Date.now(), pair, date, prise:true, tf, ordre, risk, rri, result, rrf,
     jour, hold, type, tend, errs:errs||[], bonTrade,
     manageTrade: bonTrade?'👍':'👎',
     confluences:'', psy:'', checklist:[false,false,false,false,false],
     screenshots:{exec:modalExecScreenshot,mgmt:null,close:null}
-  });
+  };
+  trades.unshift(newTrade);
+  dbUpsert(newTrade);
   closeAddModal();
   refreshCurrentPage();
 }
@@ -1599,7 +1712,161 @@ function refreshCurrentPage(){
   else if(currentPage==='perf') renderPerf();
 }
 
-// Init
+// ─────────────────────────────────────────────
+//  SUPABASE
+// ─────────────────────────────────────────────
+let sb = null;
+
+function sbSetStatus(state, label) {
+  const dot   = document.getElementById('sb-dot');
+  const lbl   = document.getElementById('sb-status-label');
+  dot.className = 'sb-dot' + (state === 'connected' ? ' connected' : state === 'loading' ? ' loading' : '');
+  lbl.textContent = label;
+}
+
+function openSbModal() {
+  const url = localStorage.getItem('sb_url') || '';
+  const key = localStorage.getItem('sb_key') || '';
+  document.getElementById('sb-url').value = url;
+  document.getElementById('sb-key').value = key;
+  document.getElementById('sb-error').style.display   = 'none';
+  document.getElementById('sb-success').style.display = 'none';
+  document.getElementById('sb-disconnect-btn').style.display = sb ? 'inline-flex' : 'none';
+  document.getElementById('sbModal').classList.add('open');
+}
+function closeSbModal() { document.getElementById('sbModal').classList.remove('open'); }
+document.getElementById('sbModal').addEventListener('click', e => { if (e.target === document.getElementById('sbModal')) closeSbModal(); });
+
+function copySql() {
+  navigator.clipboard.writeText(document.getElementById('sb-sql-block').textContent);
+  const btn = event.currentTarget;
+  btn.textContent = '✓ Copié !';
+  setTimeout(() => { btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="10" height="10" rx="2"/><path d="M4 12H3a1 1 0 01-1-1V3a1 1 0 011-1h8a1 1 0 011 1v1"/></svg> Copier le SQL'; }, 2000);
+}
+
+// Map JS trade object ↔ DB row
+function localToDb(t) {
+  return {
+    id:           t.id,
+    pair:         t.pair,
+    date:         t.date,
+    prise:        t.prise,
+    tf:           t.tf,
+    ordre:        t.ordre,
+    risk:         t.risk,
+    rri:          t.rri,
+    result:       t.result,
+    rrf:          t.rrf,
+    jour:         t.jour,
+    hold:         t.hold,
+    type_trade:   t.type,
+    tend:         t.tend,
+    errs:         t.errs         || [],
+    bon_trade:    t.bonTrade,
+    manage_trade: t.manageTrade,
+    confluences:  t.confluences  || '',
+    psy:          t.psy          || '',
+    checklist:    t.checklist    || [false,false,false,false,false],
+    screenshots:  t.screenshots  || {},
+  };
+}
+function dbToLocal(r) {
+  return {
+    id:          r.id,
+    pair:        r.pair,
+    date:        r.date,
+    prise:       r.prise,
+    tf:          r.tf,
+    ordre:       r.ordre,
+    risk:        r.risk,
+    rri:         r.rri,
+    result:      r.result,
+    rrf:         r.rrf,
+    jour:        r.jour,
+    hold:        r.hold,
+    type:        r.type_trade,
+    tend:        r.tend,
+    errs:        r.errs         || [],
+    bonTrade:    r.bon_trade,
+    manageTrade: r.manage_trade,
+    confluences: r.confluences  || '',
+    psy:         r.psy          || '',
+    checklist:   r.checklist    || [false,false,false,false,false],
+    screenshots: r.screenshots  || {},
+  };
+}
+
+async function connectSupabase() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  const errEl = document.getElementById('sb-error');
+  const okEl  = document.getElementById('sb-success');
+  const btn   = document.getElementById('sb-connect-btn');
+  errEl.style.display = 'none';
+  okEl.style.display  = 'none';
+  if (!url || !key) { errEl.textContent = 'Remplis les deux champs.'; errEl.style.display = 'block'; return; }
+
+  btn.innerHTML = '<span class="sb-spinner"></span> Connexion…';
+  btn.disabled  = true;
+  sbSetStatus('loading', 'Connexion…');
+
+  try {
+    sb = supabase.createClient(url, key);
+    const { error } = await sb.from('trades').select('id').limit(1);
+    if (error) throw error;
+    localStorage.setItem('sb_url', url);
+    localStorage.setItem('sb_key', key);
+    sbSetStatus('connected', 'Connecté');
+    okEl.textContent   = '✓ Connecté ! Chargement des trades…';
+    okEl.style.display = 'block';
+    document.getElementById('sb-disconnect-btn').style.display = 'inline-flex';
+    await loadTradesFromDb();
+    setTimeout(closeSbModal, 1200);
+  } catch(e) {
+    sb = null;
+    sbSetStatus('', 'Base de données');
+    errEl.textContent   = 'Erreur : ' + (e.message || JSON.stringify(e));
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = 'Connecter';
+    btn.disabled    = false;
+  }
+}
+
+function disconnectSupabase() {
+  sb = null;
+  localStorage.removeItem('sb_url');
+  localStorage.removeItem('sb_key');
+  sbSetStatus('', 'Base de données');
+  document.getElementById('sb-disconnect-btn').style.display = 'none';
+  closeSbModal();
+}
+
+async function loadTradesFromDb() {
+  if (!sb) return;
+  const { data, error } = await sb.from('trades').select('*').order('date', { ascending: false });
+  if (error) { console.error('load error', error); return; }
+  if (data.length > 0) {
+    trades = data.map(dbToLocal);
+    refreshCurrentPage();
+  }
+}
+
+async function dbUpsert(trade) {
+  if (!sb) return;
+  const { error } = await sb.from('trades').upsert(localToDb(trade), { onConflict: 'id' });
+  if (error) console.error('upsert error', error);
+}
+
+async function dbDelete(id) {
+  if (!sb) return;
+  const { error } = await sb.from('trades').delete().eq('id', id);
+  if (error) console.error('delete error', error);
+}
+
+// ─────────────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────────────
 (function buildPairSelect(){
   const sel = document.getElementById('t-pair');
   if(!sel) return;
@@ -1614,6 +1881,26 @@ function refreshCurrentPage(){
     sel.appendChild(og);
   });
 })();
+
+// Auto-reconnect if credentials saved
+(async function autoConnect(){
+  const url = localStorage.getItem('sb_url');
+  const key = localStorage.getItem('sb_key');
+  if (!url || !key) return;
+  sbSetStatus('loading', 'Reconnexion…');
+  try {
+    sb = supabase.createClient(url, key);
+    const { error } = await sb.from('trades').select('id').limit(1);
+    if (error) throw error;
+    sbSetStatus('connected', 'Connecté');
+    await loadTradesFromDb();
+  } catch(e) {
+    sb = null;
+    sbSetStatus('', 'Base de données');
+    console.warn('Auto-connect failed:', e.message);
+  }
+})();
+
 renderOverview();
 </script>
 </body>
