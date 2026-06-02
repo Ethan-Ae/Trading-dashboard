@@ -1399,7 +1399,7 @@ function updatePanelDate(id,val){
   const panel=document.getElementById('panel-body');
   if(panel){ const spans=[...panel.querySelectorAll('.field-row')]; spans.forEach(row=>{ if(row.querySelector('.field-label')&&row.querySelector('.field-label').textContent==='Jour') row.querySelector('.field-value span').textContent=t.jour||'—'; }); }
 }
-function updateField(id,field,val){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } }
+function updateField(id,field,val){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); if(field==='result') openPanel(id); } }
 function setEmoji(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
 function setBool(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
 function handleScreenshot(id,key,input){
