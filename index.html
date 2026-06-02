@@ -1361,12 +1361,16 @@ function buildPanelHTML(t){
     ${field(icoErr,'Erreurs',`<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px">
       ${ERRORS.map(e=>`<button class="emoji-btn ${(t.errs||[]).includes(e)?'selected':''}" style="font-size:.75rem;padding:4px 10px" onclick="toggleErr(${t.id},'${e}',this)">${e}</button>`).join('')}
     </div>`)}
-    ${field('🎯','Trade Management',`
+    ${t.result==='En cours'
+      ? field('🎯','Trade Management',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
+      : field('🎯','Trade Management',`
       <div class="emoji-btn-group">
         <button class="emoji-btn ${t.manageTrade==='👍'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👍',this)">👍</button>
         <button class="emoji-btn ${t.manageTrade==='👎'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👎',this)">👎</button>
       </div>`)}
-    ${field('✅','Bon Trade?',`
+    ${t.result==='En cours'
+      ? field('✅','Bon Trade?',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
+      : field('✅','Bon Trade?',`
       <div class="emoji-btn-group">
         <button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',true,this)">✅</button>
         <button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',false,this)">❌</button>
