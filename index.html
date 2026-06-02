@@ -652,6 +652,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <option value="">Jour</option>
         <option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option>
       </select>
+      <select class="filter-select" id="t-sort" onchange="renderTradesTable()">
+        <option value="desc">Date ↓ (récent)</option>
+        <option value="asc">Date ↑ (ancien)</option>
+      </select>
       <span class="count-badge" id="t-count">0 trades</span>
     </div>
     <div style="overflow-x:auto;">
@@ -1105,7 +1109,8 @@ function renderOverview(){
 //  TRADES TABLE
 // ───────────────────────────────────────────
 function renderTradesTable(){
-  let ts = [...trades].reverse();
+  const sortDir=(document.getElementById('t-sort')||{}).value||'desc';
+  let ts = [...trades].sort((a,b)=> sortDir==='asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
   const pair=(document.getElementById('t-pair')||{}).value||'';
   const tf=(document.getElementById('t-tf')||{}).value||'';
   const res=(document.getElementById('t-result')||{}).value||'';
