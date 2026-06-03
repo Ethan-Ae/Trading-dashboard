@@ -846,7 +846,7 @@ alter table trades disable row level security;</div>
         <select id="m-risk">
           <option>0.25%</option><option>0.33%</option><option>0.38%</option>
           <option>0.50%</option><option>0.70%</option><option>0.75%</option>
-          <option>1.00%</option><option>1.50%</option><option>2.00%</option>
+          <option>1.00%</option><option>1.50%</option><option>2.00%</option><option>2.50%</option>
         </select>
       </div>
       <div class="form-group"><label>R/R Initial</label>
@@ -871,7 +871,7 @@ alter table trades disable row level security;</div>
         <div id="m-ss-slot" class="ss-slot" style="height:90px;" onclick="">
           <input type="file" accept="image/*" onchange="handleModalScreenshot(this)">
           <div class="ss-slot-icon" id="m-ss-icon">📸</div>
-          <div class="ss-slot-label" id="m-ss-label">Cliquer ou glisser une image</div>
+          <div class="ss-slot-label" id="m-ss-label">Cliquer, glisser ou <span style="color:var(--orange)">Ctrl+V</span></div>
         </div>
       </div>
     </div>
@@ -1341,13 +1341,13 @@ function buildPanelHTML(t){
 
   const ssSlot=(key,label,icon)=>{
     const has=t.screenshots&&t.screenshots[key];
-    return `<div class="ss-slot" id="ss-${t.id}-${key}" style="${has?'cursor:zoom-in':''}">
+    return `<div class="ss-slot" id="ss-${t.id}-${key}" style="${has?'cursor:zoom-in':''}" ${!has?`onclick="setPasteTarget('${key}')"`:''}>
       ${!has?`<input type="file" accept="image/*" onchange="handleScreenshot(${t.id},'${key}',this)">`:'' }
       ${has
         ? `<img src="${has}" alt="${label}" onclick="event.stopPropagation();openLightbox('${has}','${label}')">
            <button class="ss-slot-del" onclick="event.stopPropagation();delScreenshot(${t.id},'${key}')">✕</button>
            <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);border-radius:6px;padding:2px 8px;font-size:.6rem;color:#fff;pointer-events:none">🔍 Zoom</div>`
-        : `<div class="ss-slot-icon">${icon}</div><div class="ss-slot-title">${label}</div><div class="ss-slot-label">Cliquer ou glisser</div>`
+        : `<div class="ss-slot-icon">${icon}</div><div class="ss-slot-title">${label}</div><div class="ss-slot-label">Cliquer, glisser ou <span style="color:var(--orange)">Ctrl+V</span> après avoir cliqué ici</div>`
       }
     </div>`;
   };
@@ -1363,7 +1363,7 @@ function buildPanelHTML(t){
     ${field(icoCalendar,'Prise de Position',`<button class="toggle ${t.prise?'on':''}" onclick="togglePrise(${t.id},this)"></button>`)}
     ${field(icoTF,'Time-Frame',sel(TF_OPTIONS,t.tf,'tf'))}
     ${field(icoOrdre,'Type d\'Ordre',sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
-    ${field(icoRisk,'Risk',sel(['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%'],t.risk,'risk'))}
+    ${field(icoRisk,'Risk',sel(['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%','2.50%'],t.risk,'risk'))}
     ${field(icoRisk,'R/R Initial',`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="ex: 3.2" onchange="updateField(${t.id},'rri',+this.value)">`)}
     ${field(icoRisk,'Résultat',sel(['En cours','TP Total','TP Partiel','SL Total','BE'],t.result,'result'))}
     ${field(icoRisk,'R/R Final',`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="ex: -1 ou 3.2" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
@@ -1461,6 +1461,56 @@ function delScreenshot(id,key){
 function closePanel(){ document.getElementById('panelOverlay').classList.remove('open'); activeTrade=null; }
 function closePanelOnBg(e){ if(e.target===document.getElementById('panelOverlay')) closePanel(); }
 
+// ── PASTE IMAGE (Ctrl+V) ──────────────────────
+let pasteTargetKey = null; // which slot is focused for paste
+
+function setPasteTarget(key){
+  pasteTargetKey = key;
+}
+
+// Show a floating paste hint when panel is open
+document.addEventListener('paste', function(e){
+  const items = (e.clipboardData||e.originalEvent&&e.originalEvent.clipboardData||{}).items;
+  if(!items) return;
+  let file = null;
+  for(const item of items){ if(item.type.startsWith('image/')){ file = item.getAsFile(); break; } }
+  if(!file) return;
+  e.preventDefault();
+
+  // If panel is open, try to find a target slot
+  if(activeTrade){
+    const key = pasteTargetKey || 'exec'; // default to exec slot
+    const reader = new FileReader();
+    reader.onload = ev => {
+      activeTrade.screenshots[key] = ev.target.result;
+      dbUpsert(activeTrade);
+      // Refresh only the screenshot grid without re-rendering the whole panel
+      openPanel(activeTrade.id);
+    };
+    reader.readAsDataURL(file);
+    showToast('📸 Image collée dans "' + (key==='exec'?'Exécution':key==='mgmt'?'Management':'Clôture') + '"');
+    pasteTargetKey = null;
+    return;
+  }
+
+  // If add modal is open, paste into exec slot
+  const modal = document.getElementById('addModal');
+  if(modal && modal.classList.contains('open')){
+    const reader = new FileReader();
+    reader.onload = ev => {
+      modalExecScreenshot = ev.target.result;
+      const slot = document.getElementById('m-ss-slot');
+      let img = slot.querySelector('img');
+      if(!img){ img = document.createElement('img'); img.style.cssText='width:100%;border-radius:8px;margin-top:6px;max-height:160px;object-fit:cover'; slot.appendChild(img); }
+      img.src = ev.target.result;
+      document.getElementById('m-ss-icon').style.display='none';
+      document.getElementById('m-ss-label').style.display='none';
+      showToast('📸 Image collée');
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
 // ───────────────────────────────────────────
 //  ADD TRADE MODAL
 // ───────────────────────────────────────────
@@ -1539,7 +1589,7 @@ const PERF_DIMS = [
   { key:'hold',  label:'Holding',        vals: ['< 1H','< 5H','< 3J','< 5J','> 5J'], get: t=>t.hold },
   { key:'jour',  label:'Jour',           vals: ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'], get: t=>t.jour },
   { key:'result',label:'Résultat',       vals: ['TP Total','TP Partiel','SL Total','BE','En cours'], get: t=>t.result },
-  { key:'risk',  label:'Risk',           vals: ['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%'], get: t=>t.risk },
+  { key:'risk',  label:'Risk',           vals: ['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%','2.50%'], get: t=>t.risk },
 ];
 
 // active filter state: { dimKey: Set(vals) }
