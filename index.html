@@ -885,7 +885,8 @@ alter table trades disable row level security;</div>
       </div>
       <div class="form-group"><label>Tendance</label>
         <select id="m-tend">
-          <option>Reversal</option><option>Continuation</option><option>Range</option>
+          <option>In Trend</option><option>Range Trade</option><option>Counter Trend</option>
+          <option>Reversal</option><option>Contre les Retails</option><option>Avec les Retails</option>
         </select>
       </div>
       <div class="form-group"><label>Type de Trade</label>
@@ -896,6 +897,47 @@ alter table trades disable row level security;</div>
           <option>100% Technique</option>
           <option>100% Fondamental</option>
         </select>
+      </div>
+      <div class="form-group"><label>Résultat</label>
+        <select id="m-result">
+          <option>En cours</option><option>TP Total</option><option>TP Partiel</option>
+          <option>SL Total</option><option>BE</option>
+        </select>
+      </div>
+      <div class="form-group"><label>R/R Final <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
+        <input type="number" id="m-rrf" step=".01" placeholder="ex: 3.2 ou -1">
+      </div>
+      <div class="form-group"><label>Holding <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
+        <select id="m-hold">
+          <option value="">—</option>
+          <option>&lt; 1H</option><option>&lt; 5H</option><option>&lt; 3J</option><option>&lt; 5J</option><option>&gt; 5J</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Trade Management <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
+        <div class="emoji-btn-group" id="m-manage-group">
+          <button type="button" class="emoji-btn" data-val="" onclick="pickModalEmoji(this,'m-manage-group')">—</button>
+          <button type="button" class="emoji-btn" data-val="👍" onclick="pickModalEmoji(this,'m-manage-group')">👍</button>
+          <button type="button" class="emoji-btn" data-val="👎" onclick="pickModalEmoji(this,'m-manage-group')">👎</button>
+        </div>
+      </div>
+      <div class="form-group"><label>Bon Trade ? <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
+        <div class="emoji-btn-group" id="m-bon-group">
+          <button type="button" class="emoji-btn" data-val="" onclick="pickModalEmoji(this,'m-bon-group')">—</button>
+          <button type="button" class="emoji-btn" data-val="true" onclick="pickModalEmoji(this,'m-bon-group')">✅</button>
+          <button type="button" class="emoji-btn" data-val="false" onclick="pickModalEmoji(this,'m-bon-group')">❌</button>
+        </div>
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label>Erreurs <span style="color:var(--text3);font-size:.65rem">(plusieurs possibles)</span></label>
+        <div class="emoji-btn-group" id="m-errs-group" style="flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label>Raisons & Confluences</label>
+        <textarea id="m-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…"></textarea>
+      </div>
+      <div class="form-group" style="grid-column:span 2">
+        <label>État Psychologique</label>
+        <textarea id="m-psy" class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…"></textarea>
       </div>
       <div class="form-group" style="grid-column:span 2">
         <label>Screenshot d'Exécution</label>
@@ -1696,13 +1738,34 @@ let modalExecScreenshot = null;
 function openAddModal(){
   document.getElementById('m-date').value=new Date().toISOString().slice(0,10);
   document.getElementById('m-pair').value='';
+  document.getElementById('m-rri').value='';
+  document.getElementById('m-rrf').value='';
+  document.getElementById('m-hold').value='';
+  document.getElementById('m-result').value='En cours';
+  document.getElementById('m-confluences').value='';
+  document.getElementById('m-psy').value='';
+  // Reset emoji groups
+  ['m-manage-group','m-bon-group'].forEach(g=>{
+    document.querySelectorAll('#'+g+' .emoji-btn').forEach(b=>b.classList.remove('selected'));
+    const def = document.querySelector('#'+g+' .emoji-btn[data-val=""]');
+    if(def) def.classList.add('selected');
+  });
+  // Populate errors chips
+  const errsGroup = document.getElementById('m-errs-group');
+  errsGroup.innerHTML = ERRORS.map(e=>`<button type="button" class="emoji-btn" data-val="${e}" style="font-size:.75rem;padding:4px 10px" onclick="toggleModalErr(this)">${e}</button>`).join('');
   modalExecScreenshot = null;
-  // Reset screenshot slot
   const slot = document.getElementById('m-ss-slot');
   slot.querySelectorAll('img').forEach(i=>i.remove());
   document.getElementById('m-ss-icon').style.display='';
   document.getElementById('m-ss-label').style.display='';
   document.getElementById('addModal').classList.add('open');
+}
+function pickModalEmoji(btn, groupId){
+  document.querySelectorAll('#'+groupId+' .emoji-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function toggleModalErr(btn){
+  btn.classList.toggle('selected');
 }
 
 function handleModalDrop(e){
@@ -1751,17 +1814,24 @@ function saveTrade(){
   const tend=document.getElementById('m-tend').value;
   const type=document.getElementById('m-type').value;
   const jour=JOURS[new Date(date).getDay()];
-  const result='En cours';
-  const rrf=null;
-  const hold=null;
-  const errs=[];
-  const bonTrade=false;
+  const result=document.getElementById('m-result').value;
+  const rrfRaw=document.getElementById('m-rrf').value;
+  const rrf = rrfRaw==='' ? null : +rrfRaw;
+  const hold=document.getElementById('m-hold').value || null;
+  const errs=[...document.querySelectorAll('#m-errs-group .emoji-btn.selected')].map(b=>b.dataset.val);
+  const bonSel=document.querySelector('#m-bon-group .emoji-btn.selected');
+  const bonVal = bonSel ? bonSel.dataset.val : '';
+  const bonTrade = bonVal==='true' ? true : bonVal==='false' ? false : null;
+  const mgmtSel=document.querySelector('#m-manage-group .emoji-btn.selected');
+  const manageTrade = mgmtSel && mgmtSel.dataset.val ? mgmtSel.dataset.val : null;
+  const confluences=document.getElementById('m-confluences').value||'';
+  const psy=document.getElementById('m-psy').value||'';
   const newTrade = {
     id:Date.now(), pair, date, prise:true, tf, ordre, risk, rri, result, rrf,
-    jour, hold, type, tend, errs:errs||[], bonTrade,
-    manageTrade: bonTrade?'👍':'👎',
-    confluences:'', psy:'', checklist:[false,false,false,false,false],
-    screenshots:{exec:modalExecScreenshot,mgmt:null,close:null}
+    jour, hold, type, tend, errs, bonTrade: bonTrade===null ? false : bonTrade,
+    manageTrade: manageTrade || (bonTrade ? '👍' : bonTrade===false ? '👎' : null),
+    confluences, psy, checklist: CHECKLIST.map(()=>false),
+    screenshots:{exec:modalExecScreenshot,mgmt:[],close:null}
   };
   trades.unshift(newTrade);
   dbUpsert(newTrade);
