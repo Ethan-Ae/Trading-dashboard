@@ -1489,6 +1489,17 @@ function setPasteTarget(key){
 }
 
 // Show a floating paste hint when panel is open
+// Block browser default: opening dragged image as new page
+['dragover','drop'].forEach(evt=>{
+  window.addEventListener(evt, function(e){
+    // Only block if dropping outside an ss-slot
+    if(!e.target.closest('.ss-slot')){
+      e.preventDefault();
+      e.dataTransfer && (e.dataTransfer.dropEffect = 'none');
+    }
+  }, false);
+});
+
 document.addEventListener('paste', function(e){
   const items = (e.clipboardData||e.originalEvent&&e.originalEvent.clipboardData||{}).items;
   if(!items) return;
