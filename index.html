@@ -671,7 +671,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       </select>
       <select class="filter-select" id="t-result" onchange="renderTradesTable()">
         <option value="">Résultat</option>
-        <option>TP Total</option><option>TP Partiel</option><option>SL Total</option><option>BE</option><option>En cours</option>
+        <option>TP Total</option><option>TP Partiel</option><option>SL Total</option><option>SL Partiel</option><option>BE</option><option>En cours</option>
       </select>
       <select class="filter-select" id="t-type" onchange="renderTradesTable()">
         <option value="">Type d'Ordre</option>
@@ -901,7 +901,14 @@ alter table trades disable row level security;</div>
       <div class="form-group"><label>Résultat</label>
         <select id="m-result">
           <option>En cours</option><option>TP Total</option><option>TP Partiel</option>
-          <option>SL Total</option><option>BE</option>
+          <option>SL Total</option><option>SL Partiel</option><option>BE</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Position vs Retails</label>
+        <select id="m-retails">
+          <option value="">—</option>
+          <option>Avec les Retails</option>
+          <option>Contre les Retails</option>
         </select>
       </div>
       <div class="form-group"><label>R/R Final <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
@@ -910,7 +917,9 @@ alter table trades disable row level security;</div>
       <div class="form-group"><label>Holding <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
         <select id="m-hold">
           <option value="">—</option>
-          <option>&lt; 1H</option><option>&lt; 5H</option><option>&lt; 3J</option><option>&lt; 5J</option><option>&gt; 5J</option>
+          <option>&lt; 1H</option><option>&lt; 5H</option><option>&lt; 24H</option>
+          <option>&lt; 3J</option><option>&lt; 5J</option><option>&lt; 10J</option>
+          <option>&lt; 15J</option><option>&gt; 15J</option>
         </select>
       </div>
       <div class="form-group"><label>Trade Management <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
@@ -962,7 +971,9 @@ alter table trades disable row level security;</div>
 //  DATA MODEL
 // ───────────────────────────────────────────
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-const RESULT_EMOJI = { 'TP Total':'✅', 'TP Partiel':'👍', 'SL Total':'❌', 'BE':'⚖️', 'En cours':'🔵' };
+const RESULT_EMOJI = { 'TP Total':'✅', 'TP Partiel':'👍', 'SL Total':'❌', 'SL Partiel':'🟠', 'BE':'⚖️', 'En cours':'🔵' };
+const RESULT_OPTIONS = ['En cours','TP Total','TP Partiel','SL Total','SL Partiel','BE'];
+const RETAILS_OPTIONS = ['—','Avec les Retails','Contre les Retails'];
 const TYPE_OPTIONS = [
   '50% Technique 50% Fondamental',
   '75% Technique 25% Fondamental',
@@ -972,7 +983,7 @@ const TYPE_OPTIONS = [
 ];
 const ORDRE_OPTIONS = ['MARKET BUY','MARKET SELL','BUY LIMIT','SELL LIMIT','BUY STOP','SELL STOP'];
 const TF_OPTIONS = ['Weekly','Daily','12h','8h','4h','2h','1h','30mins','15mins','10mins','5mins','1min'];
-const HOLD_OPTIONS = ['< 1H','< 5H','< 3J','< 5J','> 5J'];
+const HOLD_OPTIONS = ['< 1H','< 5H','< 24H','< 3J','< 5J','< 10J','< 15J','> 15J'];
 const TEND_OPTIONS = ['In Trend','Range Trade','Counter Trend','Reversal','Contre les Retails','Avec les Retails'];
 const FOREX_PAIRS = {
   'Majeures':   ['EURUSD','GBPUSD','USDJPY','USDCHF','USDCAD','AUDUSD','NZDUSD'],
@@ -1504,11 +1515,12 @@ function buildPanelHTML(t){
     ${field(icoOrdre,'Type d\'Ordre',sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
     ${field(icoRisk,'Risk',sel(['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%','2.50%'],t.risk,'risk'))}
     ${field(icoRisk,'R/R Initial',`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="ex: 3.2" onchange="updateField(${t.id},'rri',+this.value)">`)}
-    ${field(icoRisk,'Résultat',sel(['En cours','TP Total','TP Partiel','SL Total','BE'],t.result,'result'))}
+    ${field(icoRisk,'Résultat',sel(RESULT_OPTIONS,t.result,'result'))}
     ${field(icoRisk,'R/R Final',`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="ex: -1 ou 3.2" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
     ${field(icoJour,'Jour',`<span style="color:var(--text2);font-size:.82rem">${t.jour||'—'}</span>`)}
     ${field(icoType,'Type de Trade',sel(TYPE_OPTIONS,t.type,'type'))}
     ${field(icoTend,'Tendance',sel(TEND_OPTIONS,t.tend,'tend'))}
+    ${field('👥','Position vs Retails',sel(RETAILS_OPTIONS,t.retails||'—','retails'))}
     ${field(icoHold,'Holding Period',sel(['— ',...HOLD_OPTIONS],t.hold||'— ','hold'))}
     ${field(icoErr,'Erreurs',`<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px">
       ${ERRORS.map(e=>`<button class="emoji-btn ${(t.errs||[]).includes(e)?'selected':''}" style="font-size:.75rem;padding:4px 10px" onclick="toggleErr(${t.id},'${e}',this)">${e}</button>`).join('')}
@@ -1744,6 +1756,7 @@ function openAddModal(){
   document.getElementById('m-result').value='En cours';
   document.getElementById('m-confluences').value='';
   document.getElementById('m-psy').value='';
+  document.getElementById('m-retails').value='';
   // Reset emoji groups
   ['m-manage-group','m-bon-group'].forEach(g=>{
     document.querySelectorAll('#'+g+' .emoji-btn').forEach(b=>b.classList.remove('selected'));
@@ -1826,9 +1839,10 @@ function saveTrade(){
   const manageTrade = mgmtSel && mgmtSel.dataset.val ? mgmtSel.dataset.val : null;
   const confluences=document.getElementById('m-confluences').value||'';
   const psy=document.getElementById('m-psy').value||'';
+  const retails=document.getElementById('m-retails').value||'';
   const newTrade = {
     id:Date.now(), pair, date, prise:true, tf, ordre, risk, rri, result, rrf,
-    jour, hold, type, tend, errs, bonTrade: bonTrade===null ? false : bonTrade,
+    jour, hold, type, tend, retails, errs, bonTrade: bonTrade===null ? false : bonTrade,
     manageTrade: manageTrade || (bonTrade ? '👍' : bonTrade===false ? '👎' : null),
     confluences, psy, checklist: CHECKLIST.map(()=>false),
     screenshots:{exec:modalExecScreenshot,mgmt:[],close:null}
@@ -2097,6 +2111,7 @@ function localToDb(t) {
     hold:         t.hold,
     type_trade:   t.type,
     tend:         t.tend,
+    retails:      t.retails       || '',
     errs:         t.errs         || [],
     bon_trade:    t.bonTrade,
     manage_trade: t.manageTrade,
@@ -2122,6 +2137,7 @@ function dbToLocal(r) {
     hold:        r.hold,
     type:        r.type_trade,
     tend:        r.tend,
+    retails:     r.retails      || '',
     errs:        r.errs         || [],
     bonTrade:    r.bon_trade,
     manageTrade: r.manage_trade,
