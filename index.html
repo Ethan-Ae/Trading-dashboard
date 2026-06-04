@@ -525,6 +525,22 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   font-size: .75rem; color: var(--text2); transition: border-color .15s;
 }
 .sb-status:hover { border-color: var(--orange); color: var(--text); }
+.year-select {
+  background: var(--bg3); border: 1px solid var(--sep); border-radius: 8px;
+  padding: 5px 28px 5px 12px; font-size: .78rem; color: var(--text);
+  cursor: pointer; appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='6' viewBox='0 0 8 6' fill='none'><path d='M1 1l3 3 3-3' stroke='%23aeaeb2' stroke-width='1.4' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat; background-position: right 10px center;
+  font-weight: 600; transition: border-color .15s;
+}
+.year-select:hover { border-color: var(--orange); }
+.year-add {
+  background: var(--bg3); border: 1px solid var(--sep); border-radius: 8px;
+  width: 26px; height: 26px; color: var(--text2); cursor: pointer;
+  font-size: 1rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s, color .15s;
+}
+.year-add:hover { border-color: var(--orange); color: var(--orange); }
 .sb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--bg4); flex-shrink: 0; }
 .sb-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
 .sb-dot.loading { background: var(--orange); animation: pulse .8s ease-in-out infinite; }
@@ -591,6 +607,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     Performance
   </button>
   <div class="topbar-right">
+    <select class="year-select" id="year-select" onchange="onYearChange(this.value)" title="Année du journal"></select>
+    <button class="year-add" onclick="addYear()" title="Ajouter une année">＋</button>
     <button class="sb-status" onclick="openSbModal()">
       <div class="sb-dot" id="sb-dot"></div>
       <span id="sb-status-label">Base de données</span>
@@ -939,13 +957,41 @@ const ERRORS = [
   'Raisons Perso',
 ];
 
-const CHECKLIST = [
+const CHECKLIST_DEFAULT = [
   'Minimum 4 confluences',
   'Partir de Weekly à m15',
   'Je ne prends pas cette position car quelqu\'un d\'autre la prise',
   'SL invalide mon idée',
   'Tu n\'es pas sur-exposé sur ces devises',
 ];
+let CHECKLIST = JSON.parse(localStorage.getItem('checklist_items')||'null') || CHECKLIST_DEFAULT.slice();
+function saveChecklist(){ localStorage.setItem('checklist_items', JSON.stringify(CHECKLIST)); }
+function addChecklistItem(){
+  const label = prompt('Nouvel élément de checklist :');
+  if(!label||!label.trim()) return;
+  CHECKLIST.push(label.trim()); saveChecklist();
+  if(activeTrade){ if(!activeTrade.checklist) activeTrade.checklist=[]; activeTrade.checklist.push(false); dbUpsert(activeTrade); openPanel(activeTrade.id); }
+}
+function editChecklistItem(i){
+  const label = prompt('Modifier l\'élément :', CHECKLIST[i]);
+  if(label===null) return;
+  if(!label.trim()){ delChecklistItem(i); return; }
+  CHECKLIST[i] = label.trim(); saveChecklist();
+  if(activeTrade) openPanel(activeTrade.id);
+}
+function delChecklistItem(i){
+  if(!confirm('Supprimer cet élément ?')) return;
+  CHECKLIST.splice(i,1); saveChecklist();
+  if(activeTrade){ if(activeTrade.checklist) activeTrade.checklist.splice(i,1); dbUpsert(activeTrade); openPanel(activeTrade.id); }
+}
+function toggleCheck(id, i){
+  const t = trades.find(x=>x.id===id); if(!t) return;
+  if(!t.checklist) t.checklist = CHECKLIST.map(()=>false);
+  while(t.checklist.length < CHECKLIST.length) t.checklist.push(false);
+  t.checklist[i] = !t.checklist[i];
+  dbUpsert(t);
+  openPanel(id);
+}
 
 // ── Supabase credentials ──────────────────────
 const SB_URL = 'https://zftmwtiahywqqqnlzxue.supabase.co';
@@ -953,6 +999,37 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 // ─────────────────────────────────────────────
 
 let trades = [];
+
+// ── YEAR JOURNAL ──────────────────────
+let JOURNAL_YEARS = JSON.parse(localStorage.getItem('journal_years')||'null') || [2025, 2026];
+let currentYear = parseInt(localStorage.getItem('journal_active_year')||'') || (new Date()).getFullYear();
+if(!JOURNAL_YEARS.includes(currentYear)) currentYear = JOURNAL_YEARS[JOURNAL_YEARS.length-1];
+
+function saveYears(){ localStorage.setItem('journal_years', JSON.stringify(JOURNAL_YEARS)); }
+function renderYearSelect(){
+  const sel = document.getElementById('year-select'); if(!sel) return;
+  JOURNAL_YEARS.sort((a,b)=>a-b);
+  sel.innerHTML = JOURNAL_YEARS.map(y=>`<option value="${y}" ${y===currentYear?'selected':''}>Journal ${y}</option>`).join('');
+}
+function onYearChange(val){
+  currentYear = parseInt(val);
+  localStorage.setItem('journal_active_year', String(currentYear));
+  if(typeof calY !== 'undefined') calY = currentYear;
+  refreshCurrentPage();
+}
+function addYear(){
+  const val = prompt('Ajouter une année (ex: 2027) :');
+  if(!val) return;
+  const y = parseInt(val);
+  if(isNaN(y) || y < 2000 || y > 2100){ alert('Année invalide'); return; }
+  if(JOURNAL_YEARS.includes(y)){ alert('Année déjà présente'); return; }
+  JOURNAL_YEARS.push(y); saveYears();
+  currentYear = y; localStorage.setItem('journal_active_year', String(y));
+  renderYearSelect(); refreshCurrentPage();
+}
+function tradesOfYear(){
+  return trades.filter(t => t.date && t.date.startsWith(String(currentYear)+'-'));
+}
 
 // ───────────────────────────────────────────
 //  HELPERS
@@ -1017,7 +1094,7 @@ function calcMaxDD(ts){
 //  OVERVIEW
 // ───────────────────────────────────────────
 function renderOverview(){
-  const ts = trades;
+  const ts = tradesOfYear();
   const s = calcStats(ts);
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi"><div class="kpi-label">Total Trades</div><div class="kpi-value">${s.total}</div><div class="kpi-sub">${s.wins}W · ${s.losses}L</div></div>
@@ -1126,7 +1203,7 @@ function renderOverview(){
 // ───────────────────────────────────────────
 function renderTradesTable(){
   const sortDir=(document.getElementById('t-sort')||{}).value||'desc';
-  let ts = [...trades].sort((a,b)=> sortDir==='asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
+  let ts = tradesOfYear().sort((a,b)=> sortDir==='asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
   const pair=(document.getElementById('t-pair')||{}).value||'';
   const tf=(document.getElementById('t-tf')||{}).value||'';
   const res=(document.getElementById('t-result')||{}).value||'';
@@ -1178,7 +1255,7 @@ function togglePrise(id, btn){
 //  SETUPS PAGE
 // ───────────────────────────────────────────
 function renderSetups(){
-  const ts = trades;
+  const ts = tradesOfYear();
   const s = calcStats(ts);
   document.getElementById('setup-kpi').innerHTML = `
     <div class="kpi"><div class="kpi-label">Win Rate Global</div><div class="kpi-value ora">${s.winRate.toFixed(1)}%</div></div>
@@ -1308,10 +1385,6 @@ function openPanel(id){
   document.getElementById('p-result-chip').innerHTML=resultChip(t.result);
   document.getElementById('panel-body').innerHTML=buildPanelHTML(t);
   document.getElementById('panelOverlay').classList.add('open');
-  // Re-attach checklist listeners
-  document.querySelectorAll('.check-item').forEach((el,i)=>{
-    el.onclick=()=>{ t.checklist[i]=!t.checklist[i]; el.querySelector('.check-box').classList.toggle('checked',t.checklist[i]); };
-  });
 }
 
 const field_=(icon,label,content)=>`
@@ -1348,11 +1421,14 @@ function buildPanelHTML(t){
 
   const checkItems = CHECKLIST.map((c,i)=>`
     <div class="check-item">
-      <div class="check-box ${t.checklist[i]?'checked':''}">
+      <div class="check-box ${(t.checklist||[])[i]?'checked':''}" onclick="toggleCheck(${t.id},${i})">
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>
       </div>
-      <div class="check-label">${c}</div>
-    </div>`).join('');
+      <div class="check-label" style="flex:1;cursor:pointer" onclick="toggleCheck(${t.id},${i})">${c}</div>
+      <button onclick="event.stopPropagation();editChecklistItem(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 6px;font-size:.75rem" title="Modifier">✏️</button>
+      <button onclick="event.stopPropagation();delChecklistItem(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 6px;font-size:.75rem" title="Supprimer">✕</button>
+    </div>`).join('') + `
+    <button onclick="addChecklistItem()" style="margin-top:6px;background:none;border:1.5px dashed var(--bg4);border-radius:8px;color:var(--text3);cursor:pointer;padding:8px;font-size:.78rem;transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--bg4)';this.style.color='var(--text3)'">＋ Ajouter un élément</button>`;
 
   const ssSlot=(key,label,icon)=>{
     const has=t.screenshots&&t.screenshots[key];
@@ -1714,7 +1790,7 @@ const perfFilters = {};
 PERF_DIMS.forEach(d=>{ perfFilters[d.key]=new Set(); }); // empty = all
 
 function getPerfFilteredTrades(){
-  return trades.filter(t=>{
+  return tradesOfYear().filter(t=>{
     return PERF_DIMS.every(d=>{
       const active=perfFilters[d.key];
       if(!active||active.size===0) return true;
@@ -1735,7 +1811,7 @@ function togglePerfFilter(dimKey,val){
 }
 
 function renderPerfFilters(){
-  const ts=trades;
+  const ts=tradesOfYear();
   const row=document.getElementById('perf-filter-row');
   if(!row) return;
   row.innerHTML=PERF_DIMS.map(d=>{
@@ -2087,6 +2163,7 @@ async function dbDelete(id) {
 })();
 
 // Auto-reconnect if credentials saved
+renderYearSelect();
 (async function autoConnect(){
   sbSetStatus('loading', 'Connexion…');
   try {
