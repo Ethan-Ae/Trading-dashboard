@@ -429,7 +429,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   position: relative; overflow: hidden;
 }
 .ss-slot:hover { border-color: var(--orange); background: rgba(255,159,10,.04); }
-.ss-slot input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width:100%; height:100%; }
+.ss-slot.drag-over { border-color: var(--orange); background: rgba(255,159,10,.10); transform: scale(1.02); }
 .ss-slot-label { font-size: .68rem; color: var(--text3); text-align: center; padding: 0 8px; line-height: 1.4; pointer-events: none; }
 .ss-slot-title { font-size: .72rem; color: var(--text2); font-weight: 600; pointer-events: none; }
 .ss-slot img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; border-radius: 10px; }
@@ -868,10 +868,12 @@ alter table trades disable row level security;</div>
       </div>
       <div class="form-group" style="grid-column:span 2">
         <label>Screenshot d'Exécution</label>
-        <div id="m-ss-slot" class="ss-slot" style="height:90px;" onclick="">
-          <input type="file" accept="image/*" onchange="handleModalScreenshot(this)">
+        <div id="m-ss-slot" class="ss-slot" style="height:90px;"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="event.preventDefault();this.classList.remove('drag-over');handleModalDrop(event)">
           <div class="ss-slot-icon" id="m-ss-icon">📸</div>
-          <div class="ss-slot-label" id="m-ss-label">Cliquer, glisser ou <span style="color:var(--orange)">Ctrl+V</span></div>
+          <div class="ss-slot-label" id="m-ss-label">Glisser une image ou <span style="color:var(--orange)">Ctrl+V</span></div>
         </div>
       </div>
     </div>
@@ -1341,13 +1343,19 @@ function buildPanelHTML(t){
 
   const ssSlot=(key,label,icon)=>{
     const has=t.screenshots&&t.screenshots[key];
-    return `<div class="ss-slot" id="ss-${t.id}-${key}" style="${has?'cursor:zoom-in':''}" ${!has?`onclick="setPasteTarget('${key}')"`:''}>
-      ${!has?`<input type="file" accept="image/*" onchange="handleScreenshot(${t.id},'${key}',this)">`:'' }
+    return `<div class="ss-slot" id="ss-${t.id}-${key}"
+      style="${has?'cursor:zoom-in':''}"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="event.preventDefault();this.classList.remove('drag-over');handleDropOnSlot(event,${t.id},'${key}')"
+      onclick="${has?`event.stopPropagation();openLightbox('${has}','${label}')`:`setPasteTarget('${key}')`}">
       ${has
-        ? `<img src="${has}" alt="${label}" onclick="event.stopPropagation();openLightbox('${has}','${label}')">
+        ? `<img src="${has}" alt="${label}">
            <button class="ss-slot-del" onclick="event.stopPropagation();delScreenshot(${t.id},'${key}')">✕</button>
            <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);border-radius:6px;padding:2px 8px;font-size:.6rem;color:#fff;pointer-events:none">🔍 Zoom</div>`
-        : `<div class="ss-slot-icon">${icon}</div><div class="ss-slot-title">${label}</div><div class="ss-slot-label">Cliquer, glisser ou <span style="color:var(--orange)">Ctrl+V</span> après avoir cliqué ici</div>`
+        : `<div class="ss-slot-icon">${icon}</div>
+           <div class="ss-slot-title">${label}</div>
+           <div class="ss-slot-label">Glisser une image ou <span style="color:var(--orange)">Ctrl+V</span></div>`
       }
     </div>`;
   };
@@ -1436,6 +1444,18 @@ function handleScreenshot(id,key,input){
   reader.onload=e=>{ t.screenshots[key]=e.target.result; dbUpsert(t); openPanel(id); };
   reader.readAsDataURL(input.files[0]);
 }
+function handleDropOnSlot(e,id,key){
+  const file=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
+  if(!file) return;
+  const t=trades.find(x=>x.id===id); if(!t) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ t.screenshots[key]=ev.target.result; dbUpsert(t); openPanel(id); showToast('📸 Image ajoutée'); };
+  reader.readAsDataURL(file);
+}
+function saveImgToSlot(id,key,dataUrl){
+  const t=trades.find(x=>x.id===id); if(!t) return;
+  t.screenshots[key]=dataUrl; dbUpsert(t); openPanel(id);
+}
 function openLightbox(src, label){
   document.getElementById('lightbox-img').src = src;
   document.getElementById('lightbox-label').textContent = label||'';
@@ -1479,16 +1499,21 @@ document.addEventListener('paste', function(e){
 
   // If panel is open, try to find a target slot
   if(activeTrade){
-    const key = pasteTargetKey || 'exec'; // default to exec slot
+    // Pick target: clicked slot first, then first empty slot, then exec
+    let key = pasteTargetKey;
+    if(!key){
+      const ss = activeTrade.screenshots||{};
+      key = !ss.exec ? 'exec' : !ss.mgmt ? 'mgmt' : !ss.close ? 'close' : 'exec';
+    }
     const reader = new FileReader();
     reader.onload = ev => {
       activeTrade.screenshots[key] = ev.target.result;
       dbUpsert(activeTrade);
-      // Refresh only the screenshot grid without re-rendering the whole panel
       openPanel(activeTrade.id);
+      const names={exec:'Exécution',mgmt:'Management',close:'Clôture'};
+      showToast('📸 Image collée dans "' + names[key] + '"');
     };
     reader.readAsDataURL(file);
-    showToast('📸 Image collée dans "' + (key==='exec'?'Exécution':key==='mgmt'?'Management':'Clôture') + '"');
     pasteTargetKey = null;
     return;
   }
@@ -1497,16 +1522,7 @@ document.addEventListener('paste', function(e){
   const modal = document.getElementById('addModal');
   if(modal && modal.classList.contains('open')){
     const reader = new FileReader();
-    reader.onload = ev => {
-      modalExecScreenshot = ev.target.result;
-      const slot = document.getElementById('m-ss-slot');
-      let img = slot.querySelector('img');
-      if(!img){ img = document.createElement('img'); img.style.cssText='width:100%;border-radius:8px;margin-top:6px;max-height:160px;object-fit:cover'; slot.appendChild(img); }
-      img.src = ev.target.result;
-      document.getElementById('m-ss-icon').style.display='none';
-      document.getElementById('m-ss-label').style.display='none';
-      showToast('📸 Image collée');
-    };
+    reader.onload = ev => { applyModalScreenshot(ev.target.result); showToast('📸 Image collée'); };
     reader.readAsDataURL(file);
   }
 });
@@ -1528,6 +1544,22 @@ function openAddModal(){
   document.getElementById('addModal').classList.add('open');
 }
 
+function handleModalDrop(e){
+  const file=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ applyModalScreenshot(ev.target.result); showToast('📸 Image ajoutée'); };
+  reader.readAsDataURL(file);
+}
+function applyModalScreenshot(dataUrl){
+  modalExecScreenshot = dataUrl;
+  const slot = document.getElementById('m-ss-slot');
+  document.getElementById('m-ss-icon').style.display='none';
+  document.getElementById('m-ss-label').style.display='none';
+  let img = slot.querySelector('img');
+  if(!img){ img=document.createElement('img'); img.style.cssText='width:100%;border-radius:8px;max-height:140px;object-fit:cover'; slot.appendChild(img); }
+  img.src = dataUrl;
+}
 function handleModalScreenshot(input){
   if(!input.files[0]) return;
   const reader = new FileReader();
