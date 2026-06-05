@@ -995,7 +995,6 @@ const FOREX_PAIRS = {
 const ALL_PAIRS = Object.values(FOREX_PAIRS).flat();
 
 const ERRORS = [
-  'Aucune',
   'FOMO',
   'Avarice',
   'Mauvaise analyse',
@@ -1854,12 +1853,13 @@ document.getElementById('addModal').addEventListener('click',e=>{ if(e.target===
 // ───────────────────────────────────────────
 const PERF_DIMS = [
   { key:'tf',    label:'Time-Frame',     vals: ['Weekly','Daily','12h','8h','4h','2h','1h','30mins','15mins','10mins','5mins','1min'], get: t=>t.tf },
-  { key:'pair',  label:'Devise',         vals: ALL_PAIRS, get: t=>t.pair },
+  { key:'pair',  label:'Devise',         vals: null, get: t=>t.pair }, // null = compute from data
   { key:'ordre', label:'Type d\'Ordre',  vals: ['MARKET BUY','MARKET SELL','BUY LIMIT','SELL LIMIT','BUY STOP','SELL STOP'], get: t=>t.ordre },
-  { key:'tend',  label:'Tendance',       vals: ['Reversal','Continuation','Range'], get: t=>t.tend },
-  { key:'hold',  label:'Holding',        vals: ['< 1H','< 5H','< 3J','< 5J','> 5J'], get: t=>t.hold },
+  { key:'tend',  label:'Tendance',       vals: TEND_OPTIONS, get: t=>t.tend },
+  { key:'retails',label:'Position vs Retails', vals:['Avec les Retails','Contre les Retails'], get:t=>t.retails },
+  { key:'hold',  label:'Holding',        vals: HOLD_OPTIONS, get: t=>t.hold },
   { key:'jour',  label:'Jour',           vals: ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'], get: t=>t.jour },
-  { key:'result',label:'Résultat',       vals: ['TP Total','TP Partiel','SL Total','BE','En cours'], get: t=>t.result },
+  { key:'result',label:'Résultat',       vals: RESULT_OPTIONS, get: t=>t.result },
   { key:'risk',  label:'Risk',           vals: ['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%','2.50%'], get: t=>t.risk },
 ];
 
@@ -1894,7 +1894,8 @@ function renderPerfFilters(){
   if(!row) return;
   row.innerHTML=PERF_DIMS.map(d=>{
     // build unique vals from data if null
-    const vals=d.vals || [...new Set(ts.map(d.get))].sort();
+    let vals = d.vals || [...new Set(ts.map(d.get).filter(Boolean))].sort();
+    if(!vals.length) return '';
     const chips=vals.map(v=>`
       <span class="pchip ${perfFilters[d.key].has(v)?'on':''}" onclick="togglePerfFilter('${d.key}','${v}')">${v}</span>
     `).join('');
