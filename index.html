@@ -2886,22 +2886,44 @@ function dbToLocal(r) {
   };
 }
 
+let _loadingTrades = false;
 async function loadTradesFromDb() {
   if (!currentUser) { console.warn('[Supabase] loadTradesFromDb: pas d\'utilisateur connecté, abandon'); return; }
-  console.log('[Supabase] SELECT trades pour user', currentUser.id, currentUser.email);
-  const { data, error, status } = await sb.from('trades').select('*').order('date', { ascending: false });
-  if (error) {
-    console.error('[Supabase] SELECT échec', { status, error, fullError: JSON.stringify(error) });
-    showToast('Erreur chargement : '+error.message, true);
-    return;
+  if (_loadingTrades) { console.log('[Supabase] SELECT déjà en cours, skip duplicate'); return; }
+  _loadingTrades = true;
+  try {
+    // ─── S'assure que le token est frais (évite SELECT avec JWT expiré qui renvoie 0 ligne sans erreur) ───
+    const { data: { session }, error: sessErr } = await sb.auth.getSession();
+    if (sessErr || !session) {
+      console.error('[Supabase] Session invalide au moment du SELECT', sessErr);
+      showToast('Session expirée — reconnecte-toi', true);
+      setSignedOutUI();
+      return;
+    }
+    // Si le token expire bientôt (< 60s), force un refresh
+    const expiresAt = session.expires_at ? session.expires_at * 1000 : 0;
+    if (expiresAt && expiresAt - Date.now() < 60_000) {
+      console.log('[Auth] Token proche expiration, refresh forcé…');
+      const { error: refreshErr } = await sb.auth.refreshSession();
+      if (refreshErr) console.warn('[Auth] refreshSession a échoué', refreshErr);
+    }
+    console.log('[Supabase] SELECT trades pour user', currentUser.id, currentUser.email);
+    const { data, error, status } = await sb.from('trades').select('*').order('date', { ascending: false });
+    if (error) {
+      console.error('[Supabase] SELECT échec', { status, error, fullError: JSON.stringify(error) });
+      showToast('Erreur chargement : '+error.message, true);
+      return;
+    }
+    console.log('[Supabase] SELECT OK :', (data||[]).length, 'trades reçus');
+    trades = (data||[]).map(dbToLocal);
+    if((data||[]).length === 0){
+      console.warn('[Supabase] Aucun trade trouvé. Causes possibles : (1) RLS bloque la lecture, (2) les trades existants ont user_id NULL, (3) le compte est vide.');
+    }
+    rebuildPairDatalist();
+    refreshCurrentPage();
+  } finally {
+    _loadingTrades = false;
   }
-  console.log('[Supabase] SELECT OK :', (data||[]).length, 'trades reçus', data);
-  trades = (data||[]).map(dbToLocal);
-  if((data||[]).length === 0){
-    console.warn('[Supabase] Aucun trade trouvé. Causes possibles : (1) RLS bloque la lecture, (2) les trades existants ont user_id NULL, (3) le compte est vide.');
-  }
-  rebuildPairDatalist();
-  refreshCurrentPage();
 }
 function rebuildPairDatalist(){
   const dl = document.getElementById('pair-list');
@@ -2977,34 +2999,39 @@ async function dbDelete(id) {
 // ─── Bootstrap auth ───
 renderYearSelect();
 
-// Réagit à chaque changement de session (login, logout, refresh token)
+// Source de vérité unique : onAuthStateChange
+// Supabase v2 émet INITIAL_SESSION dès l'enregistrement du listener,
+// donc PAS besoin d'un initAuth séparé (sinon → race condition).
 sb.auth.onAuthStateChange(async (event, session) => {
-  console.log('[Auth] onAuthStateChange event=', event, 'session?', !!session, session?.user?.email);
-  if (session && session.user) {
-    setSignedInUI(session.user);
-    if (event === 'SIGNED_IN') {
-      // Recharge les trades à chaque login (pas sur INITIAL_SESSION pour éviter le double-fetch)
-      await loadTradesFromDb();
-    }
-  } else {
+  console.log('[Auth] event=', event, '· session?', !!session, '· email=', session?.user?.email);
+
+  // Déconnexion explicite ou pas de session du tout
+  if (event === 'SIGNED_OUT' || !session) {
     setSignedOutUI();
+    return;
   }
+
+  // Tout autre event AVEC session : INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED
+  setSignedInUI(session.user);
+
+  // Recharge les trades sur tout event porteur de session.
+  // Le verrou _loadingTrades dans loadTradesFromDb évite les doublons.
+  await loadTradesFromDb();
 });
 
-// Vérifie s'il y a déjà une session (utilisateur déjà connecté lors d'un précédent passage)
-(async function initAuth(){
-  console.log('[Auth] initAuth: récupération de la session existante…');
-  const { data: { session }, error } = await sb.auth.getSession();
-  if (error) console.error('[Auth] getSession error', error);
+// Filet de sécurité : si pour une raison quelconque le listener ne se déclenche pas
+// dans les 1.5s (rare, mais possible), on force une vérif manuelle.
+setTimeout(async () => {
+  if (currentUser) return; // déjà OK
+  console.log('[Auth] Filet de sécurité : aucun event reçu, vérif manuelle…');
+  const { data: { session } } = await sb.auth.getSession();
   if (session && session.user) {
-    console.log('[Auth] Session trouvée pour', session.user.email, '— user.id =', session.user.id);
     setSignedInUI(session.user);
     await loadTradesFromDb();
   } else {
-    console.log('[Auth] Aucune session — affichage du login');
     setSignedOutUI();
   }
-})();
+}, 1500);
 
 // ─────────────────────────────────────────────
 //  MONTHLY R GOAL
