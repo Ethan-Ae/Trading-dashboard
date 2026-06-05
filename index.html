@@ -138,13 +138,11 @@ input, select, textarea, button { font-family: inherit; }
 .auth-forgot:hover { color: var(--orange); }
 .auth-footer { text-align: center; color: var(--text3); font-size: .72rem; margin-top: 22px; }
 
-/* ── ACCOUNT MENU ── */
-.account-wrap { position: relative; }
-.account-menu { position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg2); border: 1px solid var(--sep); border-radius: 12px; padding: 6px; min-width: 220px; box-shadow: 0 14px 40px rgba(0,0,0,.5); display: none; z-index: 100; }
-.account-menu.on { display: block; }
-.account-menu-email { padding: 10px 12px; font-size: .75rem; color: var(--text3); border-bottom: 1px solid var(--sep); margin-bottom: 4px; word-break: break-all; }
-.account-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; color: var(--text); padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; text-align: left; }
-.account-menu-item:hover { background: var(--bg3); color: var(--orange); }
+/* ── ACCOUNT + LOGOUT ── */
+.account-wrap { display: flex; align-items: center; gap: 6px; }
+.logout-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--bg2); border: 1px solid var(--sep); color: var(--text2); padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: .75rem; font-weight: 500; transition: all .15s; }
+.logout-btn:hover { background: rgba(255,69,58,.12); border-color: rgba(255,69,58,.5); color: #ff6961; }
+.logout-btn svg { flex-shrink: 0; }
 
 /* ── ICON BTN ── */
 .icon-btn { background: var(--bg2); border: 1px solid var(--sep); color: var(--text2); width: 32px; height: 32px; border-radius: 10px; cursor: pointer; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
@@ -846,17 +844,14 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     <button class="icon-btn" onclick="document.getElementById('import-file').click()" title="Importer une sauvegarde">↓</button>
     <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importJSON(this)">
     <div class="account-wrap" id="account-wrap" style="display:none">
-      <button class="sb-status" onclick="toggleAccountMenu()" title="Compte">
+      <div class="sb-status" title="Compte connecté">
         <div class="sb-dot connected"></div>
         <span id="account-email">—</span>
-      </button>
-      <div class="account-menu" id="account-menu">
-        <div class="account-menu-email" id="account-menu-email">—</div>
-        <button class="account-menu-item" onclick="logoutUser()">
-          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 4h3a1 1 0 011 1v10a1 1 0 01-1 1h-3M9 14l-4-4 4-4M5 10h11"/></svg>
-          Déconnexion
-        </button>
       </div>
+      <button class="logout-btn" onclick="logoutUser()" title="Se déconnecter">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h3a1 1 0 011 1v10a1 1 0 01-1 1h-3M9 14l-4-4 4-4M5 10h11"/></svg>
+        Déconnexion
+      </button>
     </div>
     <button class="btn-add" onclick="openAddModal()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
@@ -2797,28 +2792,15 @@ async function forgotPassword(){
 }
 
 async function logoutUser(){
-  closeAccountMenu();
+  if(!confirm('Te déconnecter ?')) return;
   await sb.auth.signOut();
   // onAuthStateChange remettra l'auth gate
 }
-
-function toggleAccountMenu(){
-  const m = document.getElementById('account-menu');
-  m.classList.toggle('on');
-}
-function closeAccountMenu(){
-  document.getElementById('account-menu').classList.remove('on');
-}
-document.addEventListener('click', e => {
-  const wrap = document.getElementById('account-wrap');
-  if(wrap && !wrap.contains(e.target)) closeAccountMenu();
-});
 
 function setSignedInUI(user){
   currentUser = user;
   document.getElementById('account-wrap').style.display = '';
   document.getElementById('account-email').textContent = user.email.length>22 ? user.email.slice(0,20)+'…' : user.email;
-  document.getElementById('account-menu-email').textContent = user.email;
   hideAuthGate();
 }
 function setSignedOutUI(){
