@@ -2792,9 +2792,12 @@ async function forgotPassword(){
 }
 
 async function logoutUser(){
-  if(!confirm('Te déconnecter ?')) return;
-  await sb.auth.signOut();
-  // onAuthStateChange remettra l'auth gate
+  try {
+    await sb.auth.signOut();
+  } catch(e) {
+    console.warn('signOut error', e);
+  }
+  location.reload();
 }
 
 function setSignedInUI(user){
