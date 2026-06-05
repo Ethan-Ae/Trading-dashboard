@@ -116,6 +116,36 @@ input, select, textarea, button { font-family: inherit; }
 .welcome-tips { display: flex; justify-content: center; gap: 18px; margin-top: 22px; color: var(--text3); font-size: .72rem; }
 .welcome-tips b { color: var(--orange); margin-right: 4px; }
 
+/* ── AUTH GATE ── */
+.auth-gate { position: fixed; inset: 0; background: radial-gradient(circle at 30% 20%, rgba(255,159,10,.10), transparent 60%), radial-gradient(circle at 80% 80%, rgba(10,132,255,.08), transparent 60%), #0a0a0b; z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+.auth-gate.on { display: flex; }
+.auth-card { background: linear-gradient(160deg, var(--bg2), var(--bg1)); border: 1px solid var(--sep); border-radius: 24px; padding: 40px 36px; width: 100%; max-width: 420px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+.auth-logo { display: flex; justify-content: center; margin-bottom: 18px; }
+.auth-title { text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+.auth-sub { text-align: center; color: var(--text3); font-size: .85rem; margin-bottom: 24px; }
+.auth-tabs { display: flex; background: var(--bg1); border-radius: 12px; padding: 4px; margin-bottom: 22px; border: 1px solid var(--sep); }
+.auth-tab { flex: 1; background: transparent; border: none; color: var(--text3); padding: 9px; border-radius: 9px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: all .15s; }
+.auth-tab.on { background: var(--bg3); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-field label { display: block; font-size: .72rem; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+.auth-field input { width: 100%; background: var(--bg1); border: 1px solid var(--sep); color: var(--text); padding: 11px 14px; border-radius: 10px; font-size: .9rem; transition: border-color .15s; }
+.auth-field input:focus { outline: none; border-color: var(--orange); }
+.auth-error { background: rgba(255,69,58,.12); border: 1px solid rgba(255,69,58,.3); color: #ff6961; padding: 10px 12px; border-radius: 10px; font-size: .8rem; }
+.auth-success { background: rgba(48,209,88,.12); border: 1px solid rgba(48,209,88,.3); color: #30d158; padding: 10px 12px; border-radius: 10px; font-size: .8rem; }
+.auth-submit { padding: 12px; font-size: .9rem; margin-top: 4px; }
+.auth-submit:disabled { opacity: .6; cursor: wait; }
+.auth-forgot { background: transparent; border: none; color: var(--text3); font-size: .75rem; cursor: pointer; padding: 4px; margin-top: -4px; }
+.auth-forgot:hover { color: var(--orange); }
+.auth-footer { text-align: center; color: var(--text3); font-size: .72rem; margin-top: 22px; }
+
+/* ── ACCOUNT MENU ── */
+.account-wrap { position: relative; }
+.account-menu { position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg2); border: 1px solid var(--sep); border-radius: 12px; padding: 6px; min-width: 220px; box-shadow: 0 14px 40px rgba(0,0,0,.5); display: none; z-index: 100; }
+.account-menu.on { display: block; }
+.account-menu-email { padding: 10px 12px; font-size: .75rem; color: var(--text3); border-bottom: 1px solid var(--sep); margin-bottom: 4px; word-break: break-all; }
+.account-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; color: var(--text); padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; text-align: left; }
+.account-menu-item:hover { background: var(--bg3); color: var(--orange); }
+
 /* ── ICON BTN ── */
 .icon-btn { background: var(--bg2); border: 1px solid var(--sep); color: var(--text2); width: 32px; height: 32px; border-radius: 10px; cursor: pointer; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
 .icon-btn:hover { background: var(--bg3); color: var(--orange); border-color: var(--orange); }
@@ -815,10 +845,19 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     <button class="icon-btn" onclick="exportJSON()" title="Exporter (télécharger sauvegarde JSON)">↑</button>
     <button class="icon-btn" onclick="document.getElementById('import-file').click()" title="Importer une sauvegarde">↓</button>
     <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importJSON(this)">
-    <button class="sb-status" onclick="openSbModal()">
-      <div class="sb-dot" id="sb-dot"></div>
-      <span id="sb-status-label">Base de données</span>
-    </button>
+    <div class="account-wrap" id="account-wrap" style="display:none">
+      <button class="sb-status" onclick="toggleAccountMenu()" title="Compte">
+        <div class="sb-dot connected"></div>
+        <span id="account-email">—</span>
+      </button>
+      <div class="account-menu" id="account-menu">
+        <div class="account-menu-email" id="account-menu-email">—</div>
+        <button class="account-menu-item" onclick="logoutUser()">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 4h3a1 1 0 011 1v10a1 1 0 01-1 1h-3M9 14l-4-4 4-4M5 10h11"/></svg>
+          Déconnexion
+        </button>
+      </div>
+    </div>
     <button class="btn-add" onclick="openAddModal()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
       Nouveau Trade
@@ -1122,65 +1161,39 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 </div>
 
 <!-- ══════ SUPABASE SETUP MODAL ══════ -->
-<div class="modal-overlay" id="sbModal">
-  <div class="sb-modal">
-    <h2>🗄️ Connexion Supabase</h2>
-    <p>Connecte ton journal à Supabase pour que tes trades soient sauvegardés en base de données et persistent après chaque rechargement.</p>
+<!-- ══════ AUTH GATE (plein écran) ══════ -->
+<div class="auth-gate" id="auth-gate">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg viewBox="0 0 40 40" width="44" height="44">
+        <rect width="40" height="40" rx="11" fill="#ff9f0a"/>
+        <path d="M7 28 L14 18 L21 23 L30 11 L35 14" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+    <div class="auth-title" id="auth-title">Connexion</div>
+    <div class="auth-sub" id="auth-sub">Accède à ton journal de trading</div>
 
-    <div class="sb-section">
-      <div class="sb-section-title">1 — Crée la table dans Supabase (SQL Editor)</div>
-      <div class="sb-sql" id="sb-sql-block">create table trades (
-  id bigint primary key,
-  pair text,
-  date text,
-  prise boolean default true,
-  tf text,
-  ordre text,
-  risk text,
-  rri numeric,
-  result text default 'En cours',
-  rrf numeric,
-  jour text,
-  hold text,
-  type_trade text,
-  tend text,
-  errs jsonb default '[]',
-  bon_trade boolean default false,
-  manage_trade text,
-  confluences text default '',
-  psy text default '',
-  checklist jsonb default '[false,false,false,false,false]',
-  screenshots jsonb default '{}',
-  created_at timestamptz default now()
-);
-
--- Désactive RLS pour usage personnel
-alter table trades disable row level security;</div>
-      <button class="sb-copy-btn" onclick="copySql()">
-        <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="10" height="10" rx="2"/><path d="M4 12H3a1 1 0 01-1-1V3a1 1 0 011-1h8a1 1 0 011 1v1"/></svg>
-        Copier le SQL
-      </button>
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-login" onclick="switchAuthTab('login')">Se connecter</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Créer un compte</button>
     </div>
 
-    <div class="sb-section">
-      <div class="sb-section-title">2 — Entre tes identifiants Supabase</div>
-      <div class="form-group" style="margin-bottom:10px">
-        <label style="font-size:.7rem;color:var(--text2);display:block;margin-bottom:4px">Project URL <span style="color:var(--text3)">(Settings → API)</span></label>
-        <input class="field-input" type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co" autocomplete="off">
+    <form class="auth-form" onsubmit="event.preventDefault();submitAuth()">
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="auth-email" autocomplete="email" required placeholder="ton@email.com">
       </div>
-      <div class="form-group">
-        <label style="font-size:.7rem;color:var(--text2);display:block;margin-bottom:4px">Anon Key (public)</label>
-        <input class="field-input" type="password" id="sb-key" placeholder="eyJhbGciOiJIUzI1NiIs..." autocomplete="off">
+      <div class="auth-field">
+        <label>Mot de passe</label>
+        <input type="password" id="auth-password" autocomplete="current-password" required placeholder="••••••••" minlength="6">
       </div>
-      <div class="sb-error" id="sb-error"></div>
-      <div class="sb-success" id="sb-success"></div>
-    </div>
+      <div class="auth-error" id="auth-error" style="display:none"></div>
+      <div class="auth-success" id="auth-success" style="display:none"></div>
+      <button class="btn-orange auth-submit" id="auth-submit" type="submit">Se connecter</button>
+      <button type="button" class="auth-forgot" id="auth-forgot" onclick="forgotPassword()">Mot de passe oublié ?</button>
+    </form>
 
-    <div class="form-actions" style="margin-top:20px">
-      <button class="btn-ghost" id="sb-disconnect-btn" onclick="disconnectSupabase()" style="display:none;color:var(--red)">Déconnecter</button>
-      <button class="btn-ghost" onclick="closeSbModal()">Fermer</button>
-      <button class="btn-orange" id="sb-connect-btn" onclick="connectSupabase()">Connecter</button>
-    </div>
+    <div class="auth-footer">🔒 Tes trades sont protégés et chiffrés — seul toi y as accès.</div>
   </div>
 </div>
 
@@ -2694,33 +2707,127 @@ function refreshCurrentPage(){
 }
 
 // ─────────────────────────────────────────────
-//  SUPABASE
+//  SUPABASE (client unique + auth)
 // ─────────────────────────────────────────────
-let sb = null;
+const sb = supabase.createClient(SB_URL, SB_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+});
+let currentUser = null;
+let authMode = 'login'; // 'login' | 'signup'
 
-function sbSetStatus(state, label) {
-  const dot   = document.getElementById('sb-dot');
-  const lbl   = document.getElementById('sb-status-label');
-  dot.className = 'sb-dot' + (state === 'connected' ? ' connected' : state === 'loading' ? ' loading' : '');
-  lbl.textContent = label;
+// ─────────────────────────────────────────────
+//  AUTH UI
+// ─────────────────────────────────────────────
+function showAuthGate(){
+  document.getElementById('auth-gate').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+function hideAuthGate(){
+  document.getElementById('auth-gate').classList.remove('on');
+  document.body.style.overflow = '';
+}
+function switchAuthTab(mode){
+  authMode = mode;
+  document.getElementById('tab-login').classList.toggle('on', mode==='login');
+  document.getElementById('tab-signup').classList.toggle('on', mode==='signup');
+  document.getElementById('auth-title').textContent = mode==='login' ? 'Connexion' : 'Créer un compte';
+  document.getElementById('auth-sub').textContent = mode==='login' ? 'Accède à ton journal de trading' : 'Crée ton journal en 10 secondes';
+  document.getElementById('auth-submit').textContent = mode==='login' ? 'Se connecter' : 'Créer mon compte';
+  document.getElementById('auth-forgot').style.display = mode==='login' ? '' : 'none';
+  document.getElementById('auth-password').setAttribute('autocomplete', mode==='login' ? 'current-password' : 'new-password');
+  document.getElementById('auth-error').style.display = 'none';
+  document.getElementById('auth-success').style.display = 'none';
 }
 
-function openSbModal() {
-  document.getElementById('sb-url').value = SB_URL;
-  document.getElementById('sb-key').value = SB_KEY;
-  document.getElementById('sb-error').style.display   = 'none';
-  document.getElementById('sb-success').style.display = 'none';
-  document.getElementById('sb-disconnect-btn').style.display = sb ? 'inline-flex' : 'none';
-  document.getElementById('sbModal').classList.add('open');
+function showAuthError(msg){
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display='block';
+  document.getElementById('auth-success').style.display='none';
 }
-function closeSbModal() { document.getElementById('sbModal').classList.remove('open'); }
-document.getElementById('sbModal').addEventListener('click', e => { if (e.target === document.getElementById('sbModal')) closeSbModal(); });
+function showAuthSuccess(msg){
+  const el = document.getElementById('auth-success');
+  el.textContent = msg; el.style.display='block';
+  document.getElementById('auth-error').style.display='none';
+}
 
-function copySql() {
-  navigator.clipboard.writeText(document.getElementById('sb-sql-block').textContent);
-  const btn = event.currentTarget;
-  btn.textContent = '✓ Copié !';
-  setTimeout(() => { btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="10" height="10" rx="2"/><path d="M4 12H3a1 1 0 01-1-1V3a1 1 0 011-1h8a1 1 0 011 1v1"/></svg> Copier le SQL'; }, 2000);
+async function submitAuth(){
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const btn = document.getElementById('auth-submit');
+  if(!email || !password){ showAuthError('Email et mot de passe requis.'); return; }
+  if(password.length < 6){ showAuthError('Mot de passe : 6 caractères minimum.'); return; }
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = '…';
+  try {
+    if(authMode==='login'){
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if(error) throw error;
+      // onAuthStateChange prendra le relais
+    } else {
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if(error) throw error;
+      if(data.user && !data.session){
+        showAuthSuccess('✓ Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.');
+        switchAuthTab('login');
+      }
+    }
+  } catch(e){
+    const msg = (e.message||'').toLowerCase();
+    if(msg.includes('invalid login')) showAuthError('Email ou mot de passe incorrect.');
+    else if(msg.includes('already registered')) showAuthError('Cet email a déjà un compte. Connecte-toi à la place.');
+    else if(msg.includes('email not confirmed')) showAuthError('Confirme d\'abord ton email (vérifie tes spams).');
+    else showAuthError(e.message || 'Erreur de connexion.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+async function forgotPassword(){
+  const email = document.getElementById('auth-email').value.trim();
+  if(!email){ showAuthError('Saisis ton email puis re-clique sur "Mot de passe oublié".'); return; }
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email);
+    if(error) throw error;
+    showAuthSuccess('✓ Email de réinitialisation envoyé à ' + email);
+  } catch(e){
+    showAuthError(e.message || 'Erreur lors de l\'envoi.');
+  }
+}
+
+async function logoutUser(){
+  closeAccountMenu();
+  await sb.auth.signOut();
+  // onAuthStateChange remettra l'auth gate
+}
+
+function toggleAccountMenu(){
+  const m = document.getElementById('account-menu');
+  m.classList.toggle('on');
+}
+function closeAccountMenu(){
+  document.getElementById('account-menu').classList.remove('on');
+}
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('account-wrap');
+  if(wrap && !wrap.contains(e.target)) closeAccountMenu();
+});
+
+function setSignedInUI(user){
+  currentUser = user;
+  document.getElementById('account-wrap').style.display = '';
+  document.getElementById('account-email').textContent = user.email.length>22 ? user.email.slice(0,20)+'…' : user.email;
+  document.getElementById('account-menu-email').textContent = user.email;
+  hideAuthGate();
+}
+function setSignedOutUI(){
+  currentUser = null;
+  trades = [];
+  document.getElementById('account-wrap').style.display = 'none';
+  // Vide l'affichage
+  if(typeof refreshCurrentPage === 'function') refreshCurrentPage();
+  showAuthGate();
 }
 
 // Map JS trade object ↔ DB row
@@ -2777,57 +2884,13 @@ function dbToLocal(r) {
   };
 }
 
-async function connectSupabase() {
-  const url = document.getElementById('sb-url').value.trim();
-  const key = document.getElementById('sb-key').value.trim();
-  const errEl = document.getElementById('sb-error');
-  const okEl  = document.getElementById('sb-success');
-  const btn   = document.getElementById('sb-connect-btn');
-  errEl.style.display = 'none';
-  okEl.style.display  = 'none';
-  if (!url || !key) { errEl.textContent = 'Remplis les deux champs.'; errEl.style.display = 'block'; return; }
-
-  btn.innerHTML = '<span class="sb-spinner"></span> Connexion…';
-  btn.disabled  = true;
-  sbSetStatus('loading', 'Connexion…');
-
-  try {
-    sb = supabase.createClient(url, key);
-    const { error } = await sb.from('trades').select('id').limit(1);
-    if (error) throw error;
-    sbSetStatus('connected', 'Connecté');
-    okEl.textContent   = '✓ Connecté ! Chargement des trades…';
-    okEl.style.display = 'block';
-    document.getElementById('sb-disconnect-btn').style.display = 'inline-flex';
-    await loadTradesFromDb();
-    setTimeout(closeSbModal, 1200);
-  } catch(e) {
-    sb = null;
-    sbSetStatus('', 'Base de données');
-    errEl.textContent   = 'Erreur : ' + (e.message || JSON.stringify(e));
-    errEl.style.display = 'block';
-  } finally {
-    btn.textContent = 'Connecter';
-    btn.disabled    = false;
-  }
-}
-
-function disconnectSupabase() {
-  sb = null;
-  sbSetStatus('', 'Base de données');
-  document.getElementById('sb-disconnect-btn').style.display = 'none';
-  closeSbModal();
-}
-
 async function loadTradesFromDb() {
-  if (!sb) return;
+  if (!currentUser) return;
   const { data, error } = await sb.from('trades').select('*').order('date', { ascending: false });
-  if (error) { console.error('load error', error); return; }
-  if (data.length > 0) {
-    trades = data.map(dbToLocal);
-    rebuildPairDatalist();
-    refreshCurrentPage();
-  }
+  if (error) { console.error('load error', error); showToast('Erreur chargement : '+error.message, true); return; }
+  trades = (data||[]).map(dbToLocal);
+  rebuildPairDatalist();
+  refreshCurrentPage();
 }
 function rebuildPairDatalist(){
   const dl = document.getElementById('pair-list');
@@ -2848,10 +2911,10 @@ function showToast(msg, isErr=false){
 }
 
 async function dbUpsert(trade) {
-  if (!sb){ showToast('⚠️ Non connecté à Supabase', true); return; }
+  if (!currentUser){ showToast('⚠️ Non connecté', true); return; }
   try {
-    // Strip screenshots to avoid oversized payload — save separately if needed
     const row = localToDb(trade);
+    // user_id est rempli automatiquement côté DB (default auth.uid())
     const { error } = await sb.from('trades').upsert(row, { onConflict: 'id' });
     if (error) throw error;
     showToast('✓ Sauvegardé');
@@ -2862,7 +2925,7 @@ async function dbUpsert(trade) {
 }
 
 async function dbDelete(id) {
-  if (!sb) return;
+  if (!currentUser) return;
   const { error } = await sb.from('trades').delete().eq('id', id);
   if (error) console.error('delete error', error);
 }
@@ -2892,20 +2955,29 @@ async function dbDelete(id) {
   });
 })();
 
-// Auto-reconnect if credentials saved
+// ─── Bootstrap auth ───
 renderYearSelect();
-(async function autoConnect(){
-  sbSetStatus('loading', 'Connexion…');
-  try {
-    sb = supabase.createClient(SB_URL, SB_KEY);
-    const { error } = await sb.from('trades').select('id').limit(1);
-    if (error) throw error;
-    sbSetStatus('connected', 'Connecté');
+
+// Réagit à chaque changement de session (login, logout, refresh token)
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session && session.user) {
+    setSignedInUI(session.user);
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+      await loadTradesFromDb();
+    }
+  } else {
+    setSignedOutUI();
+  }
+});
+
+// Vérifie s'il y a déjà une session (utilisateur déjà connecté lors d'un précédent passage)
+(async function initAuth(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (session && session.user) {
+    setSignedInUI(session.user);
     await loadTradesFromDb();
-  } catch(e) {
-    sb = null;
-    sbSetStatus('', 'Erreur connexion');
-    console.warn('Auto-connect failed:', e.message);
+  } else {
+    setSignedOutUI();
   }
 })();
 
@@ -2982,7 +3054,7 @@ function importJSON(input){
       data.trades.forEach(t => {
         const idx = trades.findIndex(x=>x.id===t.id);
         if(idx>=0) trades[idx] = t; else trades.push(t);
-        if(sb) dbUpsert(t);
+        if(currentUser) dbUpsert(t);
       });
       if(Array.isArray(data.checklist)){ CHECKLIST = data.checklist.slice(); saveChecklist(); }
       if(Array.isArray(data.years)){ JOURNAL_YEARS = data.years.slice(); localStorage.setItem('journal_years', JSON.stringify(JOURNAL_YEARS)); renderYearSelect(); }
@@ -3032,7 +3104,7 @@ document.addEventListener('keydown', e => {
   const typing = tag==='input' || tag==='textarea' || tag==='select' || e.target.isContentEditable;
   // Esc closes modals / panel
   if(e.key==='Escape'){
-    ['addModal','sbModal','panelOverlay'].forEach(id=>{
+    ['addModal','panelOverlay'].forEach(id=>{
       const el = document.getElementById(id); if(el && el.classList.contains('open')) el.classList.remove('open');
     });
     return;
