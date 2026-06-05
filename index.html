@@ -455,29 +455,131 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 .ss-slot:hover .ss-slot-del { display: flex; }
 .ss-slot-icon { font-size: 1.3rem; pointer-events: none; }
 
+/* ── MONTHLY PAGE ── */
+.month-toolbar {
+  display: flex; align-items: center; gap: 14px;
+  background: linear-gradient(135deg, var(--bg2), var(--bg1));
+  border: 1px solid var(--sep); border-radius: 18px;
+  padding: 16px 20px; margin-bottom: 18px;
+}
+.month-nav {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--bg3); border: 1px solid var(--sep);
+  color: var(--text); font-size: 1.2rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.month-nav:hover { background: var(--orange); color: #000; border-color: var(--orange); }
+.month-title-wrap { display: flex; flex-direction: column; min-width: 200px; }
+.month-title-sub { font-size: .7rem; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
+.month-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -.5px; }
+
+.month-hero {
+  display: grid; grid-template-columns: 1.4fr 2fr; gap: 14px; margin-bottom: 14px;
+}
+.month-hero-main {
+  background: linear-gradient(135deg, rgba(255,159,10,.12), rgba(255,159,10,.02));
+  border: 1px solid rgba(255,159,10,.25); border-radius: 22px;
+  padding: 26px 28px; display: flex; flex-direction: column; justify-content: center; gap: 6px;
+  position: relative; overflow: hidden;
+}
+.month-hero-main::after {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,159,10,.18), transparent 70%);
+  pointer-events: none;
+}
+.month-hero-label { font-size: .8rem; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; font-weight: 500; }
+.month-hero-value { font-size: 3rem; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
+.month-hero-value.pos { color: var(--green); }
+.month-hero-value.neg { color: var(--red); }
+.month-hero-sub { font-size: .85rem; color: var(--text2); margin-top: 2px; }
+
+.month-hero-side {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.month-mini {
+  background: var(--bg2); border: 1px solid var(--sep); border-radius: 18px;
+  padding: 18px 20px; display: flex; flex-direction: column; gap: 4px;
+  transition: border-color .15s, transform .15s;
+}
+.month-mini:hover { border-color: var(--bg4); transform: translateY(-1px); }
+.month-mini-label { font-size: .72rem; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
+.month-mini-value { font-size: 1.6rem; font-weight: 700; letter-spacing: -.5px; }
+.month-mini-value.ora { color: var(--orange); }
+
+.month-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; margin-bottom: 14px; }
+.month-card {
+  background: var(--bg2); border: 1px solid var(--sep); border-radius: 22px;
+  padding: 22px 24px;
+}
+.month-card-title { font-size: .95rem; font-weight: 600; letter-spacing: -.3px; }
+.month-card-sub { font-size: .72rem; color: var(--text3); margin-bottom: 14px; margin-top: 2px; }
+.month-chart-wrap { position: relative; height: 220px; }
+
+.month-donuts { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 14px; margin-bottom: 14px; }
+.month-donut-card {
+  background: var(--bg2); border: 1px solid var(--sep); border-radius: 22px;
+  padding: 22px 24px;
+}
+.month-donut-wrap {
+  position: relative; height: 170px; margin: 8px auto 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.month-donut-wrap canvas { max-width: 170px; max-height: 170px; }
+.month-donut-center {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  font-size: 1.4rem; font-weight: 700; letter-spacing: -.5px;
+  pointer-events: none;
+}
+.month-donut-legend {
+  display: flex; justify-content: center; gap: 18px; font-size: .75rem; color: var(--text2);
+}
+.month-donut-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+.month-donut-legend b { color: var(--text); margin-left: 4px; font-weight: 600; }
+
+.month-streak-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.month-streak-cell {
+  background: var(--bg1); border: 1px solid var(--sep); border-radius: 14px;
+  padding: 14px 16px;
+}
+.month-streak-cell.pos { background: linear-gradient(135deg, rgba(48,209,88,.08), transparent); border-color: rgba(48,209,88,.2); }
+.month-streak-cell.neg { background: linear-gradient(135deg, rgba(255,69,58,.08), transparent); border-color: rgba(255,69,58,.2); }
+.month-streak-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; }
+.month-streak-value { font-size: 1.6rem; font-weight: 700; letter-spacing: -.5px; margin-top: 4px; }
+.month-streak-value.pos { color: var(--green); }
+.month-streak-value.neg { color: var(--red); }
+.month-streak-sub { font-size: .65rem; color: var(--text3); margin-top: 2px; }
+
+.month-empty {
+  background: var(--bg2); border: 1px solid var(--sep); border-radius: 22px;
+  padding: 60px 20px; text-align: center;
+}
+
 /* ── PERF PAGE ── */
 .perf-filters {
-  background: var(--bg2); border: 1px solid var(--sep); border-radius: var(--r);
-  padding: 18px 20px; margin-bottom: 20px;
+  background: linear-gradient(180deg, var(--bg2), var(--bg1));
+  border: 1px solid var(--sep); border-radius: 22px;
+  padding: 22px 24px; margin-bottom: 18px;
 }
 .perf-filter-row { display: flex; flex-wrap: wrap; gap: 20px; }
 .perf-filter-group { display: flex; flex-direction: column; gap: 6px; }
 .perf-filter-group label { font-size: .66rem; color: var(--text3); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 .perf-chips { display: flex; flex-wrap: wrap; gap: 5px; }
 .pchip {
-  background: var(--bg3); border: 1.5px solid transparent;
-  border-radius: 7px; padding: 4px 11px; font-size: .72rem;
+  background: var(--bg3); border: 1px solid transparent;
+  border-radius: 999px; padding: 5px 12px; font-size: .72rem;
   font-weight: 500; color: var(--text2); cursor: pointer;
   transition: all .15s; user-select: none;
 }
-.pchip.on { background: rgba(255,159,10,.15); border-color: var(--orange); color: var(--orange); font-weight: 600; }
-.pchip:hover:not(.on) { background: var(--bg4); color: var(--text); }
+.pchip.on { background: var(--orange); border-color: var(--orange); color: #000; font-weight: 600; box-shadow: 0 2px 10px rgba(255,159,10,.25); }
+.pchip:hover:not(.on) { background: var(--bg4); color: var(--text); transform: translateY(-1px); }
 .perf-reset { background: none; border: none; color: var(--text3); font-size: .72rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: color .15s; }
 .perf-reset:hover { color: var(--orange); }
 
 .perf-breakdown { display: flex; flex-direction: column; gap: 16px; }
 .breakdown-card {
-  background: var(--bg2); border: 1px solid var(--sep); border-radius: var(--r);
+  background: var(--bg2); border: 1px solid var(--sep); border-radius: 22px;
   overflow: hidden;
 }
 .breakdown-header {
@@ -605,6 +707,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   <button class="nav-pill" onclick="showPage('perf',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 14l4-5 3 3 3-4 4 3"/><circle cx="17" cy="5" r="2"/></svg>
     Performance
+  </button>
+  <button class="nav-pill" onclick="showPage('monthly',this)">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 10h14M7 14h2M11 14h2"/></svg>
+    Mensuel
   </button>
   <div class="topbar-right">
     <select class="year-select" id="year-select" onchange="onYearChange(this.value)" title="Année du journal"></select>
@@ -737,6 +843,85 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     <div class="cal-grid" id="cal-grid"></div>
   </div>
   <div class="kpi-grid" id="cal-kpi" style="margin-top:16px"></div>
+</div>
+
+<!-- ══════════ MENSUEL ══════════ -->
+<div id="page-monthly" class="page">
+  <div class="month-toolbar">
+    <button class="month-nav" onclick="monthShift(-1)" title="Mois précédent">‹</button>
+    <div class="month-title-wrap">
+      <div class="month-title-sub" id="month-sub">Performance mensuelle</div>
+      <div class="month-title" id="month-title">—</div>
+    </div>
+    <button class="month-nav" onclick="monthShift(1)" title="Mois suivant">›</button>
+    <div style="flex:1"></div>
+    <select class="year-select" id="month-year-select" onchange="onMonthlyYearChange(this.value)" style="margin-right:6px"></select>
+    <select class="year-select" id="month-month-select" onchange="onMonthlyMonthChange(this.value)"></select>
+  </div>
+
+  <!-- Hero KPIs -->
+  <div class="month-hero">
+    <div class="month-hero-main">
+      <div class="month-hero-label">Total R du mois</div>
+      <div class="month-hero-value" id="mh-totalR">—</div>
+      <div class="month-hero-sub" id="mh-sub">—</div>
+    </div>
+    <div class="month-hero-side">
+      <div class="month-mini"><div class="month-mini-label">Trades</div><div class="month-mini-value" id="mh-total">0</div></div>
+      <div class="month-mini"><div class="month-mini-label">Win Rate</div><div class="month-mini-value ora" id="mh-wr">0%</div></div>
+      <div class="month-mini"><div class="month-mini-label">Profit Factor</div><div class="month-mini-value ora" id="mh-pf">0</div></div>
+      <div class="month-mini"><div class="month-mini-label">Expectancy</div><div class="month-mini-value" id="mh-exp">0R</div></div>
+    </div>
+  </div>
+
+  <!-- Equity + per-trade -->
+  <div class="month-grid">
+    <div class="month-card">
+      <div class="month-card-title">Équité cumulée</div>
+      <div class="month-card-sub" id="mh-eq-sub">R cumulés trade par trade</div>
+      <div class="month-chart-wrap"><canvas id="m-eq-chart"></canvas></div>
+    </div>
+    <div class="month-card">
+      <div class="month-card-title">P&L par trade</div>
+      <div class="month-card-sub">vert = win, rouge = loss</div>
+      <div class="month-chart-wrap"><canvas id="m-pl-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Donuts -->
+  <div class="month-donuts">
+    <div class="month-donut-card">
+      <div class="month-card-title">Hit Rate</div>
+      <div class="month-donut-wrap"><canvas id="m-hr-chart"></canvas><div class="month-donut-center" id="mh-hr">0%</div></div>
+      <div class="month-donut-legend">
+        <span><span class="dot" style="background:var(--green)"></span>Wins <b id="mh-wins">0</b></span>
+        <span><span class="dot" style="background:var(--red)"></span>Losses <b id="mh-losses">0</b></span>
+      </div>
+    </div>
+    <div class="month-donut-card">
+      <div class="month-card-title">Profit / Loss</div>
+      <div class="month-donut-wrap"><canvas id="m-pl-pie"></canvas><div class="month-donut-center" id="mh-net">0R</div></div>
+      <div class="month-donut-legend">
+        <span><span class="dot" style="background:var(--green)"></span>Profits <b id="mh-profits">0R</b></span>
+        <span><span class="dot" style="background:var(--red)"></span>Pertes <b id="mh-loss">0R</b></span>
+      </div>
+    </div>
+    <div class="month-donut-card month-streak">
+      <div class="month-card-title">Séries</div>
+      <div class="month-streak-grid">
+        <div class="month-streak-cell pos"><div class="month-streak-label">Meilleure série</div><div class="month-streak-value" id="mh-bestw">0</div><div class="month-streak-sub">wins consécutifs</div></div>
+        <div class="month-streak-cell neg"><div class="month-streak-label">Pire série</div><div class="month-streak-value" id="mh-bestl">0</div><div class="month-streak-sub">losses consécutifs</div></div>
+        <div class="month-streak-cell"><div class="month-streak-label">Meilleur trade</div><div class="month-streak-value pos" id="mh-best">+0R</div></div>
+        <div class="month-streak-cell"><div class="month-streak-label">Pire trade</div><div class="month-streak-value neg" id="mh-worst">0R</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="month-empty" id="month-empty" style="display:none">
+    <div style="font-size:2.5rem;opacity:.3">📊</div>
+    <div style="margin-top:8px;color:var(--text3);font-size:.85rem">Aucun trade pour ce mois</div>
+  </div>
 </div>
 
 <!-- ══════════ PERFORMANCE ══════════ -->
@@ -1935,6 +2120,164 @@ function bdRow(dim, ts, val){
   </tr>`;
 }
 
+// ─────────────────────────────────────────────
+//  MONTHLY PAGE
+// ─────────────────────────────────────────────
+const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+let monthY = (new Date()).getFullYear();
+let monthM = (new Date()).getMonth();
+
+function monthShift(delta){
+  monthM += delta;
+  if(monthM < 0){ monthM = 11; monthY--; }
+  if(monthM > 11){ monthM = 0; monthY++; }
+  renderMonthly();
+}
+function onMonthlyYearChange(v){ monthY = parseInt(v); renderMonthly(); }
+function onMonthlyMonthChange(v){ monthM = parseInt(v); renderMonthly(); }
+
+function renderMonthly(){
+  // populate selects
+  const yearSel = document.getElementById('month-year-select');
+  if(yearSel){
+    yearSel.innerHTML = JOURNAL_YEARS.map(y=>`<option value="${y}" ${y===monthY?'selected':''}>${y}</option>`).join('');
+  }
+  const monSel = document.getElementById('month-month-select');
+  if(monSel){
+    monSel.innerHTML = MONTH_NAMES.map((m,i)=>`<option value="${i}" ${i===monthM?'selected':''}>${m}</option>`).join('');
+  }
+  document.getElementById('month-title').textContent = `${MONTH_NAMES[monthM]} ${monthY}`;
+  document.getElementById('month-sub').textContent = `Performance mensuelle`;
+
+  // Filter trades to this month
+  const prefix = `${monthY}-${String(monthM+1).padStart(2,'0')}-`;
+  const ts = trades
+    .filter(t => t.date && t.date.startsWith(prefix))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+
+  const emptyEl = document.getElementById('month-empty');
+  if(ts.length===0){
+    document.getElementById('mh-totalR').textContent = '0R';
+    document.getElementById('mh-totalR').className = 'month-hero-value';
+    document.getElementById('mh-sub').textContent = '—';
+    ['mh-total','mh-wr','mh-pf','mh-exp','mh-wins','mh-losses','mh-profits','mh-loss','mh-bestw','mh-bestl','mh-best','mh-worst','mh-hr','mh-net'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.textContent = id.includes('R')||['mh-best','mh-worst','mh-net','mh-profits','mh-loss'].includes(id)?'0R':id.includes('wr')||id==='mh-hr'?'0%':'0';
+    });
+    ['m-eq-chart','m-pl-chart','m-hr-chart','m-pl-pie'].forEach(id=>{ if(ch[id]){ ch[id].destroy(); delete ch[id]; } });
+    if(emptyEl) emptyEl.style.display='block';
+    return;
+  }
+  if(emptyEl) emptyEl.style.display='none';
+
+  // Stats
+  const closed = ts.filter(t => t.result !== 'En cours');
+  const wins = closed.filter(t => t.result==='TP Total' || t.result==='TP Partiel');
+  const losses = closed.filter(t => t.result==='SL Total');
+  const totalR = +closed.reduce((s,t)=>s+(t.rrf||0),0).toFixed(2);
+  const wr = closed.length ? (wins.length/closed.length*100) : 0;
+  const profits = +closed.filter(t=>(t.rrf||0)>0).reduce((s,t)=>s+t.rrf,0).toFixed(2);
+  const lossR  = +closed.filter(t=>(t.rrf||0)<0).reduce((s,t)=>s+t.rrf,0).toFixed(2);
+  const pf = lossR!==0 ? +(profits/Math.abs(lossR)).toFixed(2) : (profits>0?Infinity:0);
+  const exp = closed.length ? +(totalR/closed.length).toFixed(2) : 0;
+
+  // Hero
+  const totalEl = document.getElementById('mh-totalR');
+  totalEl.textContent = (totalR>=0?'+':'') + totalR + 'R';
+  totalEl.className = 'month-hero-value ' + (totalR>=0?'pos':'neg');
+  document.getElementById('mh-sub').textContent = `${closed.length} trade${closed.length>1?'s':''} clôturé${closed.length>1?'s':''} · ${ts.length - closed.length} en cours`;
+  document.getElementById('mh-total').textContent = ts.length;
+  document.getElementById('mh-wr').textContent = wr.toFixed(0) + '%';
+  document.getElementById('mh-pf').textContent = isFinite(pf) ? pf : '∞';
+  const expEl = document.getElementById('mh-exp');
+  expEl.textContent = (exp>=0?'+':'') + exp + 'R';
+  expEl.style.color = exp>=0 ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('mh-wins').textContent = wins.length;
+  document.getElementById('mh-losses').textContent = losses.length;
+  document.getElementById('mh-profits').textContent = '+' + profits + 'R';
+  document.getElementById('mh-loss').textContent = lossR + 'R';
+
+  // Streaks
+  let bestW=0,bestL=0,curW=0,curL=0;
+  closed.forEach(t=>{
+    if(t.result==='TP Total'||t.result==='TP Partiel'){ curW++; curL=0; bestW=Math.max(bestW,curW); }
+    else if(t.result==='SL Total'){ curL++; curW=0; bestL=Math.max(bestL,curL); }
+    else { curW=0; curL=0; }
+  });
+  document.getElementById('mh-bestw').textContent = bestW;
+  document.getElementById('mh-bestl').textContent = bestL;
+  const rrfs = closed.map(t=>t.rrf||0);
+  const best = rrfs.length ? Math.max(...rrfs) : 0;
+  const worst = rrfs.length ? Math.min(...rrfs) : 0;
+  document.getElementById('mh-best').textContent = (best>=0?'+':'') + best.toFixed(2) + 'R';
+  document.getElementById('mh-worst').textContent = worst.toFixed(2) + 'R';
+
+  // Hit rate donut
+  document.getElementById('mh-hr').textContent = wr.toFixed(0) + '%';
+  document.getElementById('mh-net').textContent = (totalR>=0?'+':'') + totalR + 'R';
+
+  // Charts
+  if(typeof Chart === 'undefined') return;
+  // Equity
+  let cum = 0;
+  const eqData = closed.map(t => { cum += (t.rrf||0); return +cum.toFixed(2); });
+  const labels = closed.map((_,i)=>'#'+(i+1));
+  dc('m-eq-chart');
+  const ctxEq = document.getElementById('m-eq-chart').getContext('2d');
+  const grad = ctxEq.createLinearGradient(0,0,0,200);
+  const isPos = totalR>=0;
+  grad.addColorStop(0, isPos?'rgba(48,209,88,.45)':'rgba(255,69,58,.45)');
+  grad.addColorStop(1, isPos?'rgba(48,209,88,0)':'rgba(255,69,58,0)');
+  ch['m-eq-chart'] = new Chart(ctxEq, {
+    type:'line',
+    data:{ labels, datasets:[{
+      data: eqData,
+      borderColor: isPos?'#30d158':'#ff453a',
+      backgroundColor: grad,
+      borderWidth: 2.5, tension: .35, fill:true,
+      pointBackgroundColor: isPos?'#30d158':'#ff453a',
+      pointBorderColor: '#000', pointBorderWidth: 1.5, pointRadius: 3.5, pointHoverRadius: 5.5,
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R cumulés` } } },
+      scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:v=>v+'R'}} },
+      animation:{duration:600,easing:'easeOutCubic'}
+    }
+  });
+
+  // P&L per trade
+  dc('m-pl-chart');
+  const ctxPl = document.getElementById('m-pl-chart').getContext('2d');
+  ch['m-pl-chart'] = new Chart(ctxPl, {
+    type:'bar',
+    data:{ labels, datasets:[{
+      data: closed.map(t=>+(t.rrf||0).toFixed(2)),
+      backgroundColor: closed.map(t=>(t.rrf||0)>=0?'rgba(48,209,88,.85)':'rgba(255,69,58,.85)'),
+      borderRadius: 6, borderSkipped: false,
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R` } } },
+      scales:{ x:{grid:{display:false},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:v=>v+'R'}} },
+      animation:{duration:600,easing:'easeOutCubic'}
+    }
+  });
+
+  // Hit Rate donut
+  dc('m-hr-chart');
+  ch['m-hr-chart'] = new Chart(document.getElementById('m-hr-chart'), {
+    type:'doughnut',
+    data:{ datasets:[{ data:[wins.length, losses.length, Math.max(closed.length-wins.length-losses.length,0)], backgroundColor:['#30d158','#ff453a','#2c2c2e'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{legend:{display:false},tooltip:{enabled:false}}, animation:{duration:600} }
+  });
+  // Profit/Loss donut
+  dc('m-pl-pie');
+  ch['m-pl-pie'] = new Chart(document.getElementById('m-pl-pie'), {
+    type:'doughnut',
+    data:{ datasets:[{ data:[profits, Math.abs(lossR)], backgroundColor:['#30d158','#ff453a'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{legend:{display:false},tooltip:{enabled:false}}, animation:{duration:600} }
+  });
+}
+
 function renderPerf(){
   renderPerfFilters();
   const ts=getPerfFilteredTrades();
@@ -1962,6 +2305,7 @@ function renderPerf(){
     ERRORS.forEach(e=>{ map[e]={total:0,losses:0,r:0}; });
     ts.forEach(t=>{
       (t.errs||[]).forEach(e=>{
+        if(e==='Aucune' || !e) return; // skip legacy "Aucune" / empty
         if(!map[e]) map[e]={total:0,losses:0,r:0};
         map[e].total++;
         if(t.result==='SL Total') map[e].losses++;
@@ -2057,6 +2401,7 @@ function refreshCurrentPage(){
   else if(currentPage==='setups') renderSetups();
   else if(currentPage==='calendar') renderCalendar();
   else if(currentPage==='perf') renderPerf();
+  else if(currentPage==='monthly') renderMonthly();
 }
 
 // ─────────────────────────────────────────────
