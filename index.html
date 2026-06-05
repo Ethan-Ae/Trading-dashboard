@@ -133,6 +133,60 @@ input, select, textarea, button { font-family: inherit; }
 .calc-r-val { font-weight: 700; font-size: .9rem; }
 .calc-hint { color: var(--text3); font-size: .68rem; margin-top: 8px; }
 
+/* ── SETUPS REDESIGN ── */
+.setups-intro { background: linear-gradient(135deg, rgba(255,159,10,.10), rgba(10,132,255,.06)); border: 1px solid var(--sep); border-radius: 22px; padding: 20px 24px; margin-bottom: 22px; }
+.setups-intro-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+.setups-intro-sub { color: var(--text2); font-size: .88rem; line-height: 1.5; }
+.setups-intro-sub b { color: var(--orange); }
+
+.best-worst-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.bw-card { border-radius: 20px; padding: 22px; border: 1px solid var(--sep); position: relative; overflow: hidden; }
+.bw-card.best { background: linear-gradient(135deg, rgba(48,209,88,.18), rgba(48,209,88,.04)); }
+.bw-card.worst { background: linear-gradient(135deg, rgba(255,69,58,.18), rgba(255,69,58,.04)); }
+.bw-card.empty { background: var(--bg2); }
+.bw-tag { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; opacity: .8; }
+.bw-card.best .bw-tag { color: #30d158; }
+.bw-card.worst .bw-tag { color: #ff453a; }
+.bw-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; line-height: 1.3; }
+.bw-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.bw-stat-l { font-size: .65rem; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.bw-stat-v { font-size: 1.1rem; font-weight: 700; }
+.bw-stat-v.pos { color: #30d158; } .bw-stat-v.neg { color: #ff453a; } .bw-stat-v.ora { color: var(--orange); }
+
+.insights-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.insight-card { background: var(--bg2); border: 1px solid var(--sep); border-radius: 16px; padding: 16px 18px; }
+.insight-icon { font-size: 1.3rem; margin-bottom: 4px; }
+.insight-label { color: var(--text3); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+.insight-val { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
+.insight-sub { color: var(--text3); font-size: .72rem; }
+.insight-val.pos { color: #30d158; } .insight-val.neg { color: #ff453a; } .insight-val.ora { color: var(--orange); }
+
+.setup-rank-card { background: var(--bg2); border: 1px solid var(--sep); border-radius: 18px; padding: 16px; }
+.setup-rank-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
+.rank-hint { color: var(--text3); font-size: .78rem; }
+.rank-hint select { background: var(--bg3); color: var(--text); border: 1px solid var(--sep); border-radius: 6px; padding: 2px 6px; font-size: .78rem; margin: 0 4px; }
+.rank-sort { background: var(--bg3); color: var(--text); border: 1px solid var(--sep); border-radius: 8px; padding: 5px 10px; font-size: .78rem; cursor: pointer; }
+.setup-rank-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.setup-rank-table th { color: var(--text3); font-weight: 600; text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--sep); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; }
+.setup-rank-table th.ar, .setup-rank-table td.ar { text-align: right; }
+.setup-rank-table td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.setup-rank-table tr:hover td { background: rgba(255,255,255,.02); }
+.setup-rank-table .rank-pos { font-weight: 700; color: var(--orange); width: 30px; }
+.setup-rank-table .rank-medal { font-size: 1rem; }
+.setup-rank-table td.pos { color: #30d158; font-weight: 600; }
+.setup-rank-table td.neg { color: #ff453a; font-weight: 600; }
+.setup-rank-empty { text-align: center; color: var(--text3); padding: 30px; font-size: .85rem; }
+
+.discipline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.disc-card { background: var(--bg2); border: 1px solid var(--sep); border-radius: 16px; padding: 18px; }
+.disc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.disc-label { color: var(--text2); font-size: .82rem; font-weight: 600; }
+.disc-val { font-weight: 700; font-size: 1rem; }
+.disc-val.pos { color: #30d158; } .disc-val.neg { color: #ff453a; } .disc-val.ora { color: var(--orange); }
+.disc-bar { height: 8px; background: #1c1c1e; border-radius: 999px; overflow: hidden; }
+.disc-bar-fill { height: 100%; border-radius: 999px; transition: width .4s; }
+.disc-hint { color: var(--text3); font-size: .7rem; margin-top: 8px; }
+
 /* ── STAT CARDS ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
 .kpi {
@@ -756,8 +810,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   <div class="topbar-right">
     <select class="year-select" id="year-select" onchange="onYearChange(this.value)" title="Année du journal"></select>
     <button class="year-add" onclick="addYear()" title="Ajouter une année">＋</button>
-    <button class="icon-btn" onclick="exportJSON()" title="Exporter (sauvegarde JSON)">⬇</button>
-    <button class="icon-btn" onclick="document.getElementById('import-file').click()" title="Importer une sauvegarde">⬆</button>
+    <button class="icon-btn" onclick="exportJSON()" title="Exporter (télécharger sauvegarde JSON)">↑</button>
+    <button class="icon-btn" onclick="document.getElementById('import-file').click()" title="Importer une sauvegarde">↓</button>
     <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importJSON(this)">
     <button class="sb-status" onclick="openSbModal()">
       <div class="sb-dot" id="sb-dot"></div>
@@ -865,23 +919,46 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 <!-- ══════════ SETUPS ══════════ -->
 <div id="page-setups" class="page">
-  <div class="kpi-grid" id="setup-kpi"></div>
-  <div class="sec-title mb-16" style="margin-top:8px">Analyse par Type de Trade</div>
-  <div class="setup-grid" id="setup-grid"></div>
-  <div class="sec-title" style="margin-top:24px;margin-bottom:12px">Performance par Tendance</div>
+  <div class="setups-intro">
+    <div class="setups-intro-title">🎯 Qu'est-ce qui marche pour toi ?</div>
+    <div class="setups-intro-sub">Cette page croise tes données pour révéler tes <b>combinaisons gagnantes</b> (Tendance × Time-Frame × Type d'ordre) et celles que tu devrais éviter. Minimum <b>3 trades</b> par combo pour être pertinent.</div>
+  </div>
+
+  <!-- BEST / WORST SETUP HERO -->
+  <div class="best-worst-row" id="best-worst-row"></div>
+
+  <!-- INSIGHTS GRID -->
+  <div class="sec-title" style="margin:24px 0 12px">📊 Tes points forts</div>
+  <div class="insights-grid" id="insights-grid"></div>
+
+  <!-- RANKED SETUPS TABLE -->
+  <div class="sec-title" style="margin:24px 0 12px">🏆 Classement de tes setups</div>
+  <div class="setup-rank-card">
+    <div class="setup-rank-toolbar">
+      <span class="rank-hint">Classés par Expectancy (R moyen × WR). Min. <select id="rank-min" onchange="renderSetups()"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option><option value="10">10</option></select> trades par combo.</span>
+      <select id="rank-sort" onchange="renderSetups()" class="rank-sort">
+        <option value="exp">Trier : Expectancy</option>
+        <option value="wr">Win Rate</option>
+        <option value="totalR">Total R</option>
+        <option value="count">Nb Trades</option>
+      </select>
+    </div>
+    <div style="overflow-x:auto"><table class="setup-rank-table"><thead><tr>
+      <th>#</th><th>Tendance</th><th>Time-Frame</th><th>Type d'Ordre</th>
+      <th class="ar">Trades</th><th class="ar">Win Rate</th><th class="ar">Total R</th><th class="ar">Avg R</th><th class="ar">Profit Factor</th>
+    </tr></thead><tbody id="setup-rank-body"></tbody></table></div>
+  </div>
+
+  <!-- DISCIPLINE -->
+  <div class="sec-title" style="margin:24px 0 12px">🧘 Discipline & exécution</div>
+  <div class="discipline-grid" id="discipline-grid"></div>
+
+  <!-- CHARTS -->
+  <div class="sec-title" style="margin:24px 0 12px">📈 Vues détaillées</div>
   <div class="charts-row">
-    <div class="chart-card">
-      <div class="chart-card-title">Win Rate par Tendance</div>
-      <canvas id="tendChart" height="200"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-card-title">R Final par Type d'Ordre</div>
-      <canvas id="ordreChart" height="200"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-card-title">Drawdown Cumulé</div>
-      <canvas id="ddChart" height="200"></canvas>
-    </div>
+    <div class="chart-card"><div class="chart-card-title">Win Rate par Tendance</div><canvas id="tendChart" height="200"></canvas></div>
+    <div class="chart-card"><div class="chart-card-title">R Final par Type d'Ordre</div><canvas id="ordreChart" height="200"></canvas></div>
+    <div class="chart-card"><div class="chart-card-title">Drawdown Cumulé</div><canvas id="ddChart" height="200"></canvas></div>
   </div>
 </div>
 
@@ -1560,35 +1637,148 @@ function togglePrise(id, btn){
 // ───────────────────────────────────────────
 //  SETUPS PAGE
 // ───────────────────────────────────────────
+function statsOf(arr){
+  const closed = arr.filter(t=>t.rrf!==null && t.rrf!==undefined);
+  const n = closed.length;
+  const wins = closed.filter(t=>(t.rrf||0)>0);
+  const losses = closed.filter(t=>(t.rrf||0)<0);
+  const wr = n ? (wins.length/n*100) : 0;
+  const totalR = closed.reduce((s,t)=>s+(t.rrf||0),0);
+  const avgR = n ? totalR/n : 0;
+  const grossWin = wins.reduce((s,t)=>s+t.rrf,0);
+  const grossLoss = Math.abs(losses.reduce((s,t)=>s+t.rrf,0));
+  const pf = grossLoss>0 ? grossWin/grossLoss : (grossWin>0?Infinity:0);
+  const exp = avgR; // simple expectancy in R per trade
+  return {n, wr, totalR, avgR, pf, exp};
+}
 function renderSetups(){
   const ts = tradesOfYear();
-  const s = calcStats(ts);
-  document.getElementById('setup-kpi').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Win Rate Global</div><div class="kpi-value ora">${s.winRate.toFixed(1)}%</div></div>
-    <div class="kpi"><div class="kpi-label">Meilleure Série</div><div class="kpi-value pos">+${maxStreak(ts,'TP Total')} wins</div></div>
-    <div class="kpi"><div class="kpi-label">Pire Série</div><div class="kpi-value neg">${maxStreak(ts,'SL Total')} losses</div></div>
-    <div class="kpi"><div class="kpi-label">Trades "Bon"</div><div class="kpi-value">${ts.filter(t=>t.bonTrade).length}/${ts.length}</div></div>
-  `;
+  const minTrades = +(document.getElementById('rank-min')?.value || 3);
+  const sortKey = document.getElementById('rank-sort')?.value || 'exp';
 
-  const typeStats = TYPE_OPTIONS.map(name=>{
-    const st=ts.filter(t=>t.type===name);
-    const w=st.filter(t=>t.result==='TP Total'||t.result==='TP Partiel').length;
-    const wr=st.length?(w/st.length*100).toFixed(0):0;
-    const tr=st.filter(t=>t.rrf!==null).reduce((s,t)=>s+(t.rrf||0),0).toFixed(2);
-    const ar=st.length?(+tr/st.length).toFixed(2):0;
-    return {name,count:st.length,wr:+wr,totalR:+tr,avgR:+ar};
-  }).filter(x=>x.count>0).sort((a,b)=>b.wr-a.wr);
+  // ─── BUILD COMBOS (Tendance × TF × Ordre) ───
+  const combos = {};
+  ts.forEach(t=>{
+    if(!t.tend || !t.tf || !t.ordre || t.rrf===null || t.rrf===undefined) return;
+    const k = t.tend+'|'+t.tf+'|'+t.ordre;
+    (combos[k]||(combos[k]=[])).push(t);
+  });
+  let comboList = Object.entries(combos).map(([k,arr])=>{
+    const [tend,tf,ordre]=k.split('|');
+    return {tend,tf,ordre, ...statsOf(arr)};
+  }).filter(c=>c.n>=minTrades);
 
-  document.getElementById('setup-grid').innerHTML = typeStats.map(s=>`
-    <div class="setup-card">
-      <div class="setup-card-name" style="font-size:.82rem">${s.name}</div>
-      <div class="setup-stat-row"><span>Win Rate</span><span style="color:${s.wr>=50?'var(--green)':'var(--red)'}">${s.wr}%</span></div>
-      <div class="prog-bar"><div class="prog-fill" style="width:${s.wr}%"></div></div>
-      <div class="setup-stat-row"><span>Total R</span><span style="color:${s.totalR>=0?'var(--orange)':'var(--red)'}">${s.totalR>0?'+':''}${s.totalR}R</span></div>
-      <div class="setup-stat-row"><span>Avg R</span><span>${s.avgR>0?'+':''}${s.avgR}R</span></div>
-      <div class="setup-stat-row"><span>Trades</span><span>${s.count}</span></div>
+  // ─── BEST / WORST HERO ───
+  const bw = document.getElementById('best-worst-row');
+  if(comboList.length===0){
+    bw.innerHTML = `<div class="bw-card empty" style="grid-column:span 2;text-align:center;padding:40px">
+      <div class="bw-tag">Pas encore assez de données</div>
+      <div class="bw-name">Enregistre au moins ${minTrades} trades par combinaison Tendance × TF × Ordre</div>
+      <div style="color:var(--text3);font-size:.85rem">Les meilleurs et pires setups apparaîtront ici.</div>
+    </div>`;
+  } else {
+    const sorted = [...comboList].sort((a,b)=>b.exp-a.exp);
+    const best = sorted[0], worst = sorted[sorted.length-1];
+    const bwHtml = (c, type)=>`
+      <div class="bw-card ${type}">
+        <div class="bw-tag">${type==='best'?'🏆 Meilleur Setup':'⚠️ Setup à éviter'}</div>
+        <div class="bw-name">${c.tend} · ${c.tf} · ${c.ordre}</div>
+        <div class="bw-stats">
+          <div><div class="bw-stat-l">Win Rate</div><div class="bw-stat-v ${c.wr>=50?'pos':'neg'}">${c.wr.toFixed(0)}%</div></div>
+          <div><div class="bw-stat-l">Total R</div><div class="bw-stat-v ${c.totalR>=0?'pos':'neg'}">${c.totalR>0?'+':''}${c.totalR.toFixed(2)}R</div></div>
+          <div><div class="bw-stat-l">${c.n} trades</div><div class="bw-stat-v ora">${c.avgR>0?'+':''}${c.avgR.toFixed(2)}R<span style="font-size:.65rem;color:var(--text3);font-weight:400"> /trade</span></div></div>
+        </div>
+      </div>`;
+    bw.innerHTML = bwHtml(best,'best') + (worst===best ? `<div class="bw-card empty"><div class="bw-tag">À venir</div><div class="bw-name">Plus de trades = plus d'insights</div><div style="color:var(--text3);font-size:.85rem">Continue d'enregistrer pour révéler ton setup le plus faible.</div></div>` : bwHtml(worst,'worst'));
+  }
+
+  // ─── INSIGHTS (best TF, best Tendance, best Pair, best Day, best Holding, best Order) ───
+  const bestBy = (getKey, label, icon, options)=>{
+    const groups = {};
+    ts.forEach(t=>{ const k=getKey(t); if(!k || t.rrf===null) return; (groups[k]||(groups[k]=[])).push(t); });
+    const arr = Object.entries(groups).map(([k,a])=>({k, ...statsOf(a)})).filter(x=>x.n>=Math.max(2, Math.floor(minTrades/2)));
+    if(arr.length===0) return `<div class="insight-card"><div class="insight-icon">${icon}</div><div class="insight-label">${label}</div><div class="insight-val" style="color:var(--text3)">—</div><div class="insight-sub">Pas assez de données</div></div>`;
+    arr.sort((a,b)=>b.exp-a.exp);
+    const top = arr[0];
+    return `<div class="insight-card"><div class="insight-icon">${icon}</div><div class="insight-label">${label}</div>
+      <div class="insight-val ora">${top.k}</div>
+      <div class="insight-sub">${top.wr.toFixed(0)}% WR · ${top.totalR>0?'+':''}${top.totalR.toFixed(2)}R sur ${top.n} trades</div></div>`;
+  };
+  document.getElementById('insights-grid').innerHTML =
+    bestBy(t=>t.tf, 'Meilleur Time-Frame', '⏱')
+    + bestBy(t=>t.tend, 'Meilleure Tendance', '📈')
+    + bestBy(t=>t.pair, 'Meilleure Paire', '💱')
+    + bestBy(t=>t.jour, 'Meilleur Jour', '📅')
+    + bestBy(t=>t.ordre, 'Meilleur Type d\'Ordre', '🎯')
+    + bestBy(t=>t.hold, 'Meilleure Durée', '⏳');
+
+  // ─── RANKING TABLE ───
+  const sortFns = {
+    exp: (a,b)=>b.exp-a.exp,
+    wr: (a,b)=>b.wr-a.wr,
+    totalR: (a,b)=>b.totalR-a.totalR,
+    count: (a,b)=>b.n-a.n,
+  };
+  comboList.sort(sortFns[sortKey]);
+  const tbody = document.getElementById('setup-rank-body');
+  if(comboList.length===0){
+    tbody.innerHTML = `<tr><td colspan="9" class="setup-rank-empty">Aucun combo avec au moins ${minTrades} trades. Diminue le seuil ou enregistre plus de trades.</td></tr>`;
+  } else {
+    const medal = i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    tbody.innerHTML = comboList.map((c,i)=>`
+      <tr>
+        <td class="rank-pos">${medal(i)||(i+1)}</td>
+        <td>${c.tend}</td><td>${c.tf}</td><td>${c.ordre}</td>
+        <td class="ar">${c.n}</td>
+        <td class="ar ${c.wr>=50?'pos':'neg'}">${c.wr.toFixed(0)}%</td>
+        <td class="ar ${c.totalR>=0?'pos':'neg'}">${c.totalR>0?'+':''}${c.totalR.toFixed(2)}R</td>
+        <td class="ar ${c.avgR>=0?'pos':'neg'}">${c.avgR>0?'+':''}${c.avgR.toFixed(2)}R</td>
+        <td class="ar">${isFinite(c.pf)?c.pf.toFixed(2):'∞'}</td>
+      </tr>`).join('');
+  }
+
+  // ─── DISCIPLINE ───
+  const tsClosed = ts.filter(t=>t.rrf!==null && t.rrf!==undefined);
+  const bonCount = ts.filter(t=>t.bonTrade===true).length;
+  const bonTotal = ts.filter(t=>t.bonTrade===true||t.bonTrade===false).length;
+  const bonPct = bonTotal? (bonCount/bonTotal*100):0;
+  const errCount = ts.filter(t=>(t.errors||[]).filter(e=>e&&e!=='Aucune').length>0).length;
+  const errPct = ts.length? (errCount/ts.length*100):0;
+  const bestStreak = maxStreak(ts,'TP Total');
+  const worstStreak = maxStreak(ts,'SL Total');
+  const sGlobal = statsOf(ts);
+
+  document.getElementById('discipline-grid').innerHTML = `
+    <div class="disc-card">
+      <div class="disc-head"><div class="disc-label">Bon Trade</div><div class="disc-val ${bonPct>=70?'pos':bonPct>=50?'ora':'neg'}">${bonPct.toFixed(0)}%</div></div>
+      <div class="disc-bar"><div class="disc-bar-fill" style="width:${bonPct}%;background:${bonPct>=70?'#30d158':bonPct>=50?'#ff9f0a':'#ff453a'}"></div></div>
+      <div class="disc-hint">${bonCount}/${bonTotal} trades respectent ton plan</div>
     </div>
-  `).join('');
+    <div class="disc-card">
+      <div class="disc-head"><div class="disc-label">Trades sans erreur</div><div class="disc-val ${(100-errPct)>=70?'pos':'ora'}">${(100-errPct).toFixed(0)}%</div></div>
+      <div class="disc-bar"><div class="disc-bar-fill" style="width:${100-errPct}%;background:${(100-errPct)>=70?'#30d158':'#ff9f0a'}"></div></div>
+      <div class="disc-hint">${ts.length-errCount}/${ts.length} trades exécutés proprement</div>
+    </div>
+    <div class="disc-card">
+      <div class="disc-head"><div class="disc-label">Meilleure série</div><div class="disc-val pos">+${bestStreak} 🔥</div></div>
+      <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,bestStreak*10)}%;background:#30d158"></div></div>
+      <div class="disc-hint">Wins consécutifs (TP Total)</div>
+    </div>
+    <div class="disc-card">
+      <div class="disc-head"><div class="disc-label">Pire série</div><div class="disc-val neg">-${worstStreak}</div></div>
+      <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,worstStreak*10)}%;background:#ff453a"></div></div>
+      <div class="disc-hint">SL consécutifs — attention au tilt</div>
+    </div>
+    <div class="disc-card">
+      <div class="disc-head"><div class="disc-label">Profit Factor</div><div class="disc-val ${sGlobal.pf>=1.5?'pos':sGlobal.pf>=1?'ora':'neg'}">${isFinite(sGlobal.pf)?sGlobal.pf.toFixed(2):'∞'}</div></div>
+      <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,sGlobal.pf*40)}%;background:${sGlobal.pf>=1.5?'#30d158':sGlobal.pf>=1?'#ff9f0a':'#ff453a'}"></div></div>
+      <div class="disc-hint">> 1.5 = très bon · > 1 = profitable</div>
+    </div>
+    <div class="disc-card">
+      <div class="disc-head"><div class="disc-label">Expectancy</div><div class="disc-val ${sGlobal.exp>=0.3?'pos':sGlobal.exp>=0?'ora':'neg'}">${sGlobal.exp>0?'+':''}${sGlobal.exp.toFixed(2)}R</div></div>
+      <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,Math.max(0,sGlobal.exp*80))}%;background:${sGlobal.exp>=0.3?'#30d158':sGlobal.exp>=0?'#ff9f0a':'#ff453a'}"></div></div>
+      <div class="disc-hint">R moyen attendu par trade</div>
+    </div>`;
 
   // Tendance chart
   const tMap={};
