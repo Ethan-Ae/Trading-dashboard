@@ -92,6 +92,47 @@ input, select, textarea, button { font-family: inherit; }
   margin-bottom: 12px;
 }
 
+/* ── MONTHLY GOAL CARD ── */
+.goal-card { background: linear-gradient(135deg, rgba(255,159,10,.12), rgba(10,132,255,.08)); border: 1px solid var(--sep); border-radius: 22px; padding: 18px 22px; margin-bottom: 18px; display: none; }
+.goal-card.on { display: block; }
+.goal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.goal-title { font-weight: 700; font-size: .95rem; letter-spacing: .01em; }
+.goal-title small { color: var(--text3); font-weight: 500; margin-left: 8px; font-size: .72rem; }
+.goal-val { font-weight: 700; font-size: .9rem; }
+.goal-val.pos { color: #30d158; } .goal-val.neg { color: #ff453a; } .goal-val.ora { color: var(--orange); }
+.goal-bar { height: 10px; border-radius: 999px; background: #1c1c1e; overflow: hidden; position: relative; }
+.goal-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ff9f0a, #ffb340); transition: width .4s ease; }
+.goal-bar-fill.done { background: linear-gradient(90deg, #30d158, #34c759); }
+.goal-bar-fill.over { background: linear-gradient(90deg, #ff453a, #ff6961); }
+.goal-actions { display: flex; gap: 8px; margin-left: auto; }
+.goal-edit { background: transparent; border: 1px solid var(--sep); color: var(--text2); padding: 4px 10px; border-radius: 8px; font-size: .7rem; cursor: pointer; }
+.goal-edit:hover { background: var(--bg3); color: var(--text); }
+
+/* ── WELCOME ── */
+.welcome-card { background: linear-gradient(160deg, var(--bg2), var(--bg1)); border: 1px solid var(--sep); border-radius: 24px; padding: 38px; text-align: center; margin-bottom: 24px; }
+.welcome-emoji { font-size: 3rem; margin-bottom: 10px; }
+.welcome-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+.welcome-sub { color: var(--text2); max-width: 480px; margin: 0 auto; font-size: .9rem; }
+.welcome-tips { display: flex; justify-content: center; gap: 18px; margin-top: 22px; color: var(--text3); font-size: .72rem; }
+.welcome-tips b { color: var(--orange); margin-right: 4px; }
+
+/* ── ICON BTN ── */
+.icon-btn { background: var(--bg2); border: 1px solid var(--sep); color: var(--text2); width: 32px; height: 32px; border-radius: 10px; cursor: pointer; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; transition: all .15s; }
+.icon-btn:hover { background: var(--bg3); color: var(--orange); border-color: var(--orange); }
+
+/* ── LOT CALC ── */
+.calc-details { background: var(--bg1); border: 1px solid var(--sep); border-radius: 12px; padding: 10px 14px; }
+.calc-details summary { cursor: pointer; font-weight: 600; font-size: .82rem; color: var(--text); list-style: none; }
+.calc-details summary::-webkit-details-marker { display: none; }
+.calc-details[open] summary { margin-bottom: 12px; color: var(--orange); }
+.calc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end; }
+.calc-grid label { display:block; font-size:.7rem; color: var(--text3); margin-bottom: 4px; }
+.calc-grid input { width: 100%; background: var(--bg2); border: 1px solid var(--sep); color: var(--text); padding: 6px 10px; border-radius: 8px; font-size: .85rem; }
+.calc-result { display: grid; grid-template-columns: auto auto; gap: 4px 12px; align-items: center; padding: 8px 12px; background: var(--bg2); border-radius: 10px; min-width: 160px; }
+.calc-r-label { font-size: .68rem; color: var(--text3); }
+.calc-r-val { font-weight: 700; font-size: .9rem; }
+.calc-hint { color: var(--text3); font-size: .68rem; margin-top: 8px; }
+
 /* ── STAT CARDS ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
 .kpi {
@@ -715,6 +756,9 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   <div class="topbar-right">
     <select class="year-select" id="year-select" onchange="onYearChange(this.value)" title="Année du journal"></select>
     <button class="year-add" onclick="addYear()" title="Ajouter une année">＋</button>
+    <button class="icon-btn" onclick="exportJSON()" title="Exporter (sauvegarde JSON)">⬇</button>
+    <button class="icon-btn" onclick="document.getElementById('import-file').click()" title="Importer une sauvegarde">⬆</button>
+    <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importJSON(this)">
     <button class="sb-status" onclick="openSbModal()">
       <div class="sb-dot" id="sb-dot"></div>
       <span id="sb-status-label">Base de données</span>
@@ -730,6 +774,16 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 <!-- ══════════ OVERVIEW ══════════ -->
 <div id="page-overview" class="page active">
+  <div id="goal-card" class="goal-card"></div>
+  <div id="welcome-card" class="welcome-card" style="display:none">
+    <div class="welcome-emoji">📈</div>
+    <div class="welcome-title">Bienvenue sur ton Journal</div>
+    <div class="welcome-sub">Commence par enregistrer ton premier trade pour suivre ta performance, ton R cumulé, et tes patterns gagnants.</div>
+    <button class="btn-orange" onclick="openAddModal()" style="margin-top:14px">＋ Mon premier trade</button>
+    <div class="welcome-tips">
+      <div><b>N</b> Nouveau trade</div><div><b>Esc</b> Fermer</div><div><b>← →</b> Naviguer le mois</div>
+    </div>
+  </div>
   <div class="kpi-grid" id="kpi-grid"></div>
   <div class="gauge-row" id="gauge-row"></div>
   <div class="charts-row">
@@ -1141,6 +1195,21 @@ alter table trades disable row level security;</div>
           <div class="ss-slot-label" id="m-ss-label">Glisser une image ou <span style="color:var(--orange)">Ctrl+V</span></div>
         </div>
       </div>
+      <div class="form-group" style="grid-column:span 2">
+        <details class="calc-details">
+          <summary>📐 Calculateur de taille de position</summary>
+          <div class="calc-grid">
+            <div><label>Capital ($)</label><input type="number" id="calc-cap" placeholder="ex: 10000" oninput="updateLotCalc()"></div>
+            <div><label>Stop (pips)</label><input type="number" id="calc-pips" placeholder="ex: 25" oninput="updateLotCalc()"></div>
+            <div><label>Valeur pip ($/lot)</label><input type="number" id="calc-pipval" value="10" step=".01" oninput="updateLotCalc()"></div>
+            <div class="calc-result">
+              <div class="calc-r-label">Risque</div><div class="calc-r-val" id="calc-risk-out">—</div>
+              <div class="calc-r-label">Taille (lots)</div><div class="calc-r-val ora" id="calc-lots-out">—</div>
+            </div>
+          </div>
+          <div class="calc-hint">Astuce : EUR/USD ≈ 10$/lot · XAUUSD ≈ 1$/lot · JPY pairs ≈ ajuste manuellement</div>
+        </details>
+      </div>
     </div>
     <div class="form-actions">
       <button class="btn-ghost" onclick="closeAddModal()">Annuler</button>
@@ -1331,6 +1400,8 @@ function calcMaxDD(ts){
 function renderOverview(){
   const ts = tradesOfYear();
   const s = calcStats(ts);
+  renderGoalCard(ts);
+  document.getElementById('welcome-card').style.display = (trades.length===0) ? 'block' : 'none';
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi"><div class="kpi-label">Total Trades</div><div class="kpi-value">${s.total}</div><div class="kpi-sub">${s.wins}W · ${s.losses}L</div></div>
     <div class="kpi"><div class="kpi-label">Win Rate</div><div class="kpi-value ora">${s.winRate.toFixed(1)}%</div></div>
@@ -2619,6 +2690,147 @@ renderYearSelect();
     console.warn('Auto-connect failed:', e.message);
   }
 })();
+
+// ─────────────────────────────────────────────
+//  MONTHLY R GOAL
+// ─────────────────────────────────────────────
+function getGoal(){ return +(localStorage.getItem('monthly_r_goal')||'10'); }
+function setGoal(v){ localStorage.setItem('monthly_r_goal', String(v)); renderGoalCard(tradesOfYear()); }
+function editGoal(){
+  const cur = getGoal();
+  const v = prompt('Objectif mensuel en R :', cur);
+  if(v===null) return;
+  const n = parseFloat(v);
+  if(isNaN(n) || n<=0) return showToast('Valeur invalide');
+  setGoal(n);
+  showToast('🎯 Objectif mis à jour');
+}
+function renderGoalCard(ts){
+  const card = document.getElementById('goal-card');
+  if(!card) return;
+  const goal = getGoal();
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  const monthTs = ts.filter(t=>t.date && t.date.startsWith(ym));
+  const r = monthTs.reduce((s,t)=>s+(t.rrf||0),0);
+  const pct = goal>0 ? Math.max(0, Math.min(100, (r/goal)*100)) : 0;
+  const overPct = r>goal && goal>0 ? Math.min(100, ((r-goal)/goal)*100) : 0;
+  const done = r>=goal;
+  const neg = r<0;
+  const monthName = now.toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
+  card.className = 'goal-card on';
+  card.innerHTML = `
+    <div class="goal-head">
+      <div class="goal-title">🎯 Objectif du mois <small>${monthName}</small></div>
+      <div class="goal-val ${neg?'neg':done?'pos':'ora'}">${r>0?'+':''}${r.toFixed(2)}R / ${goal}R <span style="color:var(--text3);font-weight:500;margin-left:6px">${monthTs.length} trades</span></div>
+      <div class="goal-actions"><button class="goal-edit" onclick="editGoal()">Modifier</button></div>
+    </div>
+    <div class="goal-bar"><div class="goal-bar-fill ${neg?'over':done?'done':''}" style="width:${neg?Math.min(100,Math.abs(r)/goal*100):pct}%"></div></div>
+    <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:.7rem;color:var(--text3)">
+      <span>${done?'✅ Objectif atteint':neg?'⚠️ En drawdown — protège ton capital':pct.toFixed(0)+'% accompli'}</span>
+      <span>${done && overPct>0 ? '+'+(r-goal).toFixed(2)+'R au-dessus' : (goal-r>0?'reste '+ (goal-r).toFixed(2)+'R':'')}</span>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────
+//  EXPORT / IMPORT JSON
+// ─────────────────────────────────────────────
+function exportJSON(){
+  const data = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    trades,
+    checklist: CHECKLIST,
+    years: JOURNAL_YEARS,
+    monthlyGoal: getGoal(),
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `journal-trading-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  showToast('💾 Sauvegarde exportée');
+}
+function importJSON(input){
+  const f = input.files && input.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data.trades)) throw new Error('Format invalide');
+      if(!confirm(`Importer ${data.trades.length} trades ? Cela écrasera les trades portant le même ID.`)) { input.value=''; return; }
+      // Merge
+      data.trades.forEach(t => {
+        const idx = trades.findIndex(x=>x.id===t.id);
+        if(idx>=0) trades[idx] = t; else trades.push(t);
+        if(sb) dbUpsert(t);
+      });
+      if(Array.isArray(data.checklist)){ CHECKLIST = data.checklist.slice(); saveChecklist(); }
+      if(Array.isArray(data.years)){ JOURNAL_YEARS = data.years.slice(); localStorage.setItem('journal_years', JSON.stringify(JOURNAL_YEARS)); renderYearSelect(); }
+      if(data.monthlyGoal) setGoal(data.monthlyGoal);
+      refreshCurrentPage();
+      showToast('✅ '+data.trades.length+' trades importés');
+    } catch(err){
+      alert('Erreur import : '+err.message);
+    }
+    input.value='';
+  };
+  reader.readAsText(f);
+}
+
+// ─────────────────────────────────────────────
+//  POSITION SIZE CALCULATOR (in New Trade modal)
+// ─────────────────────────────────────────────
+function updateLotCalc(){
+  const cap = +document.getElementById('calc-cap').value || 0;
+  const pips = +document.getElementById('calc-pips').value || 0;
+  const pipVal = +document.getElementById('calc-pipval').value || 10;
+  const riskPctStr = document.getElementById('m-risk').value || '1%';
+  const riskPct = parseFloat(riskPctStr) || 1;
+  const riskUsd = cap * riskPct / 100;
+  const lots = (pips>0 && pipVal>0) ? (riskUsd / (pips * pipVal)) : 0;
+  document.getElementById('calc-risk-out').textContent = cap>0 ? '$'+riskUsd.toFixed(2)+' ('+riskPct+'%)' : '—';
+  document.getElementById('calc-lots-out').textContent = lots>0 ? lots.toFixed(2)+' lots' : '—';
+  // also remember capital
+  if(cap>0) localStorage.setItem('calc_capital', cap);
+}
+// Restore capital on modal open
+(function(){
+  const origOpen = window.openAddModal;
+  window.openAddModal = function(){
+    origOpen.apply(this, arguments);
+    const cap = localStorage.getItem('calc_capital');
+    if(cap) document.getElementById('calc-cap').value = cap;
+    updateLotCalc();
+  };
+})();
+
+// ─────────────────────────────────────────────
+//  KEYBOARD SHORTCUTS
+// ─────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const tag = (e.target.tagName||'').toLowerCase();
+  const typing = tag==='input' || tag==='textarea' || tag==='select' || e.target.isContentEditable;
+  // Esc closes modals / panel
+  if(e.key==='Escape'){
+    ['addModal','sbModal','panelOverlay'].forEach(id=>{
+      const el = document.getElementById(id); if(el && el.classList.contains('open')) el.classList.remove('open');
+    });
+    return;
+  }
+  if(typing) return;
+  // N = new trade
+  if(e.key==='n' || e.key==='N'){
+    e.preventDefault();
+    openAddModal();
+  }
+  // Arrows for monthly page
+  if(currentPage==='monthly' && typeof monthShift==='function'){
+    if(e.key==='ArrowLeft'){ e.preventDefault(); monthShift(-1); }
+    if(e.key==='ArrowRight'){ e.preventDefault(); monthShift(1); }
+  }
+});
 
 renderOverview();
 </script>
