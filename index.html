@@ -134,10 +134,10 @@ input, select, textarea, button { font-family: inherit; }
 .calc-hint { color: var(--text3); font-size: .68rem; margin-top: 8px; }
 
 /* ── SETUPS REDESIGN ── */
-.setups-intro { background: linear-gradient(135deg, rgba(255,159,10,.10), rgba(10,132,255,.06)); border: 1px solid var(--sep); border-radius: 22px; padding: 20px 24px; margin-bottom: 22px; }
-.setups-intro-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
-.setups-intro-sub { color: var(--text2); font-size: .88rem; line-height: 1.5; }
-.setups-intro-sub b { color: var(--orange); }
+.setups-intro, .page-intro { background: linear-gradient(135deg, rgba(255,159,10,.10), rgba(10,132,255,.06)); border: 1px solid var(--sep); border-radius: 22px; padding: 20px 24px; margin-bottom: 22px; }
+.setups-intro-title, .page-intro-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+.setups-intro-sub, .page-intro-sub { color: var(--text2); font-size: .88rem; line-height: 1.5; }
+.setups-intro-sub b, .page-intro-sub b { color: var(--orange); }
 
 .best-worst-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .bw-card { border-radius: 20px; padding: 22px; border: 1px solid var(--sep); position: relative; overflow: hidden; }
@@ -828,7 +828,6 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 <!-- ══════════ OVERVIEW ══════════ -->
 <div id="page-overview" class="page active">
-  <div id="goal-card" class="goal-card"></div>
   <div id="welcome-card" class="welcome-card" style="display:none">
     <div class="welcome-emoji">📈</div>
     <div class="welcome-title">Bienvenue sur ton Journal</div>
@@ -872,6 +871,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 <!-- ══════════ TRADES ══════════ -->
 <div id="page-trades" class="page">
+  <div class="page-intro">
+    <div class="page-intro-title">📋 Tous tes trades, un seul endroit</div>
+    <div class="page-intro-sub">Filtre par <b>paire</b>, <b>time-frame</b>, <b>résultat</b>, <b>type d'ordre</b> ou <b>jour</b> pour retrouver instantanément n'importe quel trade. Clique sur une ligne pour voir le détail complet (screenshots, management, confluences, état psy…) et le modifier. Trie par date pour suivre ta progression chronologique.</div>
+  </div>
   <div class="table-card">
     <div class="table-toolbar">
       <input class="filter-select" id="t-pair" list="pair-list" placeholder="Toutes les devises" oninput="this.value=this.value.toUpperCase();renderTradesTable()" style="min-width:150px;border:1px solid var(--sep);background:var(--bg3);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.78rem">
@@ -964,6 +967,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 <!-- ══════════ CALENDRIER ══════════ -->
 <div id="page-calendar" class="page">
+  <div class="page-intro">
+    <div class="page-intro-title">📅 Vue calendrier de ton activité</div>
+    <div class="page-intro-sub">Chaque case du mois affiche le <b>P&L cumulé</b> et le <b>nombre de trades</b> de cette journée. Vert = journée gagnante, rouge = journée perdante. Repère d'un coup d'œil tes <b>jours de forme</b>, tes <b>périodes d'overtrading</b>, et les jours où tu aurais mieux fait de ne pas trader.</div>
+  </div>
   <div class="cal-wrap">
     <div class="cal-nav">
       <button class="cal-nav-btn" onclick="calMove(-1)">&#8592;</button>
@@ -978,6 +985,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 <!-- ══════════ MENSUEL ══════════ -->
 <div id="page-monthly" class="page">
+  <div class="page-intro">
+    <div class="page-intro-title">📆 Zoom sur un mois précis</div>
+    <div class="page-intro-sub">Sélectionne un mois pour analyser ta performance <b>isolée</b> : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour faire ton <b>bilan mensuel</b>, comparer ton évolution mois après mois, ou identifier un mois exceptionnel (bon ou mauvais) à étudier. Utilise <b>← →</b> pour naviguer rapidement.</div>
+  </div>
   <div class="month-toolbar">
     <button class="month-nav" onclick="monthShift(-1)" title="Mois précédent">‹</button>
     <div class="month-title-wrap">
@@ -1057,6 +1068,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 <!-- ══════════ PERFORMANCE ══════════ -->
 <div id="page-perf" class="page">
+  <div class="page-intro">
+    <div class="page-intro-title">📈 Analyse fine de ta performance</div>
+    <div class="page-intro-sub">Page de <b>data-mining</b> de tes trades. Combine plusieurs filtres (paire, TF, tendance, durée, résultat…) pour comparer des sous-ensembles entre eux. Découvre par exemple : <b>"mon WR sur EURUSD en H1 In Trend"</b> ou <b>"mon Profit Factor quand je trade contre les retails"</b>. Les patterns d'erreur t'aident à identifier tes <b>fuites récurrentes</b>.</div>
+  </div>
 
   <!-- Filters -->
   <div class="perf-filters">
@@ -1477,7 +1492,6 @@ function calcMaxDD(ts){
 function renderOverview(){
   const ts = tradesOfYear();
   const s = calcStats(ts);
-  renderGoalCard(ts);
   document.getElementById('welcome-card').style.display = (trades.length===0) ? 'block' : 'none';
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi"><div class="kpi-label">Total Trades</div><div class="kpi-value">${s.total}</div><div class="kpi-sub">${s.wins}W · ${s.losses}L</div></div>
