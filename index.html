@@ -2707,6 +2707,13 @@ function refreshCurrentPage(){
 const sb = supabase.createClient(SB_URL, SB_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
+console.log('[Supabase] Client créé. URL =', SB_URL);
+console.log('%c[SETUP REQUIS]%c Si tes trades n\'apparaissent pas après refresh, vérifie dans Supabase :\n' +
+  '  1. La colonne `user_id uuid default auth.uid()` existe sur `trades`\n' +
+  '  2. Une POLICY INSERT existe (ex: `(auth.uid() = user_id)` avec WITH CHECK)\n' +
+  '  3. Une POLICY SELECT existe (ex: `(auth.uid() = user_id)` avec USING)\n' +
+  '  4. Les anciens trades créés avant l\'auth ont user_id IS NULL → invisibles : `UPDATE trades SET user_id = \'<ton-uuid>\' WHERE user_id IS NULL;`',
+  'color:#ff9f0a;font-weight:bold','color:inherit');
 let currentUser = null;
 let authMode = 'login'; // 'login' | 'signup'
 
@@ -2792,11 +2799,21 @@ async function forgotPassword(){
 }
 
 async function logoutUser(){
+  console.log('[Auth] logoutUser() called');
   try {
-    await sb.auth.signOut();
+    // Race avec un timeout pour éviter de rester bloqué si le réseau hang
+    await Promise.race([
+      sb.auth.signOut(),
+      new Promise(r => setTimeout(()=>{ console.warn('[Auth] signOut timeout — forcing reload'); r(); }, 2500))
+    ]);
+    console.log('[Auth] signOut OK');
   } catch(e) {
-    console.warn('signOut error', e);
+    console.error('[Auth] signOut error', e);
   }
+  // Nettoyage de secours du token Supabase au cas où signOut a échoué
+  try {
+    Object.keys(localStorage).forEach(k => { if(k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k); });
+  } catch(_){}
   location.reload();
 }
 
@@ -2870,10 +2887,19 @@ function dbToLocal(r) {
 }
 
 async function loadTradesFromDb() {
-  if (!currentUser) return;
-  const { data, error } = await sb.from('trades').select('*').order('date', { ascending: false });
-  if (error) { console.error('load error', error); showToast('Erreur chargement : '+error.message, true); return; }
+  if (!currentUser) { console.warn('[Supabase] loadTradesFromDb: pas d\'utilisateur connecté, abandon'); return; }
+  console.log('[Supabase] SELECT trades pour user', currentUser.id, currentUser.email);
+  const { data, error, status } = await sb.from('trades').select('*').order('date', { ascending: false });
+  if (error) {
+    console.error('[Supabase] SELECT échec', { status, error, fullError: JSON.stringify(error) });
+    showToast('Erreur chargement : '+error.message, true);
+    return;
+  }
+  console.log('[Supabase] SELECT OK :', (data||[]).length, 'trades reçus', data);
   trades = (data||[]).map(dbToLocal);
+  if((data||[]).length === 0){
+    console.warn('[Supabase] Aucun trade trouvé. Causes possibles : (1) RLS bloque la lecture, (2) les trades existants ont user_id NULL, (3) le compte est vide.');
+  }
   rebuildPairDatalist();
   refreshCurrentPage();
 }
@@ -2896,23 +2922,31 @@ function showToast(msg, isErr=false){
 }
 
 async function dbUpsert(trade) {
-  if (!currentUser){ showToast('⚠️ Non connecté', true); return; }
-  try {
-    const row = localToDb(trade);
-    // user_id est rempli automatiquement côté DB (default auth.uid())
-    const { error } = await sb.from('trades').upsert(row, { onConflict: 'id' });
-    if (error) throw error;
-    showToast('✓ Sauvegardé');
-  } catch(e) {
-    showToast('Erreur : ' + (e.message||e), true);
-    console.error('dbUpsert error', e);
+  if (!currentUser){ console.warn('[Supabase] UPSERT abandonné — pas d\'utilisateur'); showToast('⚠️ Non connecté', true); return; }
+  const row = localToDb(trade);
+  // ⚠️ On n'envoie PAS user_id : Supabase le remplit via DEFAULT auth.uid()
+  if('user_id' in row){ delete row.user_id; }
+  console.log('[Supabase] UPSERT trade id=', row.id, row);
+  const { data, error, status } = await sb.from('trades').upsert(row, { onConflict: 'id' }).select();
+  if (error) {
+    console.error('[Supabase] UPSERT échec', { status, error, fullError: JSON.stringify(error), row });
+    showToast('Erreur : ' + (error.message || JSON.stringify(error)), true);
+    return;
   }
+  console.log('[Supabase] UPSERT OK', data);
+  showToast('✓ Sauvegardé');
 }
 
 async function dbDelete(id) {
-  if (!currentUser) return;
-  const { error } = await sb.from('trades').delete().eq('id', id);
-  if (error) console.error('delete error', error);
+  if (!currentUser){ console.warn('[Supabase] DELETE abandonné — pas d\'utilisateur'); return; }
+  console.log('[Supabase] DELETE trade id=', id);
+  const { error, status } = await sb.from('trades').delete().eq('id', id);
+  if (error) {
+    console.error('[Supabase] DELETE échec', { status, error, fullError: JSON.stringify(error) });
+    showToast('Erreur suppression : '+error.message, true);
+  } else {
+    console.log('[Supabase] DELETE OK');
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -2945,9 +2979,11 @@ renderYearSelect();
 
 // Réagit à chaque changement de session (login, logout, refresh token)
 sb.auth.onAuthStateChange(async (event, session) => {
+  console.log('[Auth] onAuthStateChange event=', event, 'session?', !!session, session?.user?.email);
   if (session && session.user) {
     setSignedInUI(session.user);
-    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+    if (event === 'SIGNED_IN') {
+      // Recharge les trades à chaque login (pas sur INITIAL_SESSION pour éviter le double-fetch)
       await loadTradesFromDb();
     }
   } else {
@@ -2957,11 +2993,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 // Vérifie s'il y a déjà une session (utilisateur déjà connecté lors d'un précédent passage)
 (async function initAuth(){
-  const { data: { session } } = await sb.auth.getSession();
+  console.log('[Auth] initAuth: récupération de la session existante…');
+  const { data: { session }, error } = await sb.auth.getSession();
+  if (error) console.error('[Auth] getSession error', error);
   if (session && session.user) {
+    console.log('[Auth] Session trouvée pour', session.user.email, '— user.id =', session.user.id);
     setSignedInUI(session.user);
     await loadTradesFromDb();
   } else {
+    console.log('[Auth] Aucune session — affichage du login');
     setSignedOutUI();
   }
 })();
