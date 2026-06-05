@@ -206,7 +206,9 @@ input, select, textarea, button { font-family: inherit; }
   background: var(--bg2); border: 1px solid var(--sep);
   border-radius: var(--r); padding: 18px 20px;
 }
-.chart-card-title { font-size: .78rem; font-weight: 600; color: var(--text2); margin-bottom: 14px; }
+.chart-card-title { font-size: .78rem; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.chart-card-sub { font-size: .72rem; color: var(--text3); line-height: 1.45; margin-bottom: 14px; }
+.chart-card-sub b { color: var(--orange); font-weight: 600; }
 .charts-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .chart-card-lg { grid-column: span 2; }
 
@@ -959,9 +961,21 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   <!-- CHARTS -->
   <div class="sec-title" style="margin:24px 0 12px">📈 Vues détaillées</div>
   <div class="charts-row">
-    <div class="chart-card"><div class="chart-card-title">Win Rate par Tendance</div><canvas id="tendChart" height="200"></canvas></div>
-    <div class="chart-card"><div class="chart-card-title">R Final par Type d'Ordre</div><canvas id="ordreChart" height="200"></canvas></div>
-    <div class="chart-card"><div class="chart-card-title">Drawdown Cumulé</div><canvas id="ddChart" height="200"></canvas></div>
+    <div class="chart-card">
+      <div class="chart-card-title">Win Rate par Tendance</div>
+      <div class="chart-card-sub">% de trades gagnants selon le contexte du marché (In Trend, Range, Counter Trend, Reversal). <b>Plus la barre est haute, mieux tu réussis dans ce type de marché.</b> Une barre &lt; 50% = tu perds plus que tu gagnes dans ce contexte.</div>
+      <canvas id="tendChart" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">R Final par Type d'Ordre</div>
+      <div class="chart-card-sub">Somme des R gagnés/perdus selon le type d'entrée utilisé (Market, Limit, Stop). Vert = ce type d'ordre est rentable pour toi, rouge = il te coûte de l'argent.</div>
+      <canvas id="ordreChart" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-title">Courbe de Drawdown</div>
+      <div class="chart-card-sub">Distance entre ton <b>pic de capital</b> et ta valeur actuelle, trade après trade. À 0 = tu es sur un nouveau plus haut. Plus la courbe descend, plus tu es éloigné de ton meilleur résultat. <b>Sert à voir tes périodes de baisse</b> et combien de R il te faut pour t'en remettre.</div>
+      <canvas id="ddChart" height="200"></canvas>
+    </div>
   </div>
 </div>
 
@@ -1816,9 +1830,9 @@ function renderSetups(){
     options:chartDefaults({responsive:true,animation:{duration:400}})
   });
 
-  // Drawdown
+  // Drawdown (négatif pour lecture intuitive : 0 = au plus haut, -X = X R sous le pic)
   let peak=0,eq=0;
-  const ddData=ts.map(t=>{ eq+=(t.rrf||0); if(eq>peak)peak=eq; return +(peak-eq).toFixed(2); });
+  const ddData=ts.map(t=>{ eq+=(t.rrf||0); if(eq>peak)peak=eq; return +(-(peak-eq)).toFixed(2); });
   dc('ddChart');
   ch['ddChart']=new Chart(document.getElementById('ddChart'),{
     type:'line',data:{labels:ts.map((_,i)=>i+1),datasets:[{data:ddData,borderColor:'#ff453a',backgroundColor:'rgba(255,69,58,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5}]},
