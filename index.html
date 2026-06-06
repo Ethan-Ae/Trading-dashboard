@@ -2969,6 +2969,29 @@ async function loadTradesFromDb() {
     if((data||[]).length === 0){
       console.warn('[Supabase] Aucun trade trouvé. Causes possibles : (1) RLS bloque la lecture, (2) les trades existants ont user_id NULL, (3) le compte est vraiment vide.');
     }
+
+    // ─── Auto-bascule vers l'année qui contient des trades ───
+    // Si l'année active n'a aucun trade mais qu'une autre année en a, on switch
+    // (évite "tous mes trades ont disparu" alors qu'ils sont juste sur une autre année)
+    const tradesInActiveYear = trades.filter(t => t.date && t.date.startsWith(String(currentYear)+'-'));
+    if (trades.length > 0 && tradesInActiveYear.length === 0) {
+      const yearsWithTrades = [...new Set(trades.map(t => t.date && t.date.slice(0,4)).filter(Boolean))]
+        .map(Number).sort((a,b) => b-a);
+      if (yearsWithTrades.length > 0) {
+        const bestYear = yearsWithTrades[0];
+        console.log('[Year] L\'année', currentYear, 'est vide mais des trades existent en', yearsWithTrades.join(', '), '— bascule auto sur', bestYear);
+        if (!JOURNAL_YEARS.includes(bestYear)) {
+          JOURNAL_YEARS.push(bestYear);
+          JOURNAL_YEARS.sort((a,b) => a-b);
+          localStorage.setItem('journal_years', JSON.stringify(JOURNAL_YEARS));
+        }
+        currentYear = bestYear;
+        localStorage.setItem('journal_active_year', String(currentYear));
+        renderYearSelect();
+        showToast('📅 Bascule sur ' + bestYear + ' (où sont tes trades)');
+      }
+    }
+
     rebuildPairDatalist();
     refreshCurrentPage();
   } catch(e) {
@@ -3223,18 +3246,61 @@ function importJSON(input){
     try {
       const data = JSON.parse(e.target.result);
       if(!Array.isArray(data.trades)) throw new Error('Format invalide');
-      if(!confirm(`Importer ${data.trades.length} trades ? Cela écrasera les trades portant le même ID.`)) { input.value=''; return; }
-      // Merge
-      data.trades.forEach(t => {
-        const idx = trades.findIndex(x=>x.id===t.id);
-        if(idx>=0) trades[idx] = t; else trades.push(t);
-        if(currentUser) dbUpsert(t);
-      });
+      if(!currentUser){ alert('Connecte-toi avant d\'importer.'); return; }
+      if(!confirm(`Importer ${data.trades.length} trades sur ce compte (${currentUser.email}) ?\n\nDe nouveaux IDs uniques seront générés pour éviter tout conflit.`)) { input.value=''; return; }
+
+      // ─── Génère un NOUVEL ID unique par trade ───
+      // Cela évite les collisions avec les trades d'autres utilisateurs (RLS rejette
+      // sinon les UPDATE car la ligne existante appartient à quelqu'un d'autre).
+      const base = Date.now();
+      const newTrades = data.trades.map((t, i) => ({
+        ...t,
+        id: base * 1000 + i // ID unique nano-précis + index, ne peut pas collisionner
+      }));
+
+      showToast('⏳ Import en cours… 0/' + newTrades.length);
+      let ok = 0, fail = 0;
+
+      // ─── Insert en séquentiel pour catcher les erreurs proprement ───
+      for (let i = 0; i < newTrades.length; i++) {
+        const t = newTrades[i];
+        trades.push(t);
+        try {
+          const row = localToDb(t);
+          if ('user_id' in row) delete row.user_id;
+          const { error } = await sb.from('trades').upsert(row, { onConflict: 'id' });
+          if (error) { fail++; console.error('[Import] échec trade', t.id, error); }
+          else ok++;
+        } catch(e) { fail++; console.error('[Import] exception', e); }
+        if (i % 5 === 0) showToast('⏳ Import… ' + (i+1) + '/' + newTrades.length);
+      }
+
       if(Array.isArray(data.checklist)){ CHECKLIST = data.checklist.slice(); saveChecklist(); }
       if(Array.isArray(data.years)){ JOURNAL_YEARS = data.years.slice(); localStorage.setItem('journal_years', JSON.stringify(JOURNAL_YEARS)); renderYearSelect(); }
       if(data.monthlyGoal) setGoal(data.monthlyGoal);
+
+      // Auto-bascule sur l'année qui contient les nouveaux trades
+      const importedYears = [...new Set(newTrades.map(t => t.date && t.date.slice(0,4)).filter(Boolean))].map(Number);
+      if (importedYears.length && !importedYears.includes(currentYear)) {
+        const targetYear = Math.max(...importedYears);
+        if (!JOURNAL_YEARS.includes(targetYear)) {
+          JOURNAL_YEARS.push(targetYear);
+          JOURNAL_YEARS.sort((a,b)=>a-b);
+          localStorage.setItem('journal_years', JSON.stringify(JOURNAL_YEARS));
+        }
+        currentYear = targetYear;
+        localStorage.setItem('journal_active_year', String(currentYear));
+        renderYearSelect();
+      }
+
+      rebuildPairDatalist();
       refreshCurrentPage();
-      showToast('✅ '+data.trades.length+' trades importés');
+
+      if (fail === 0) {
+        showToast('✅ ' + ok + ' trades importés');
+      } else {
+        showToast(`⚠️ ${ok} importés, ${fail} échecs (voir console)`, true);
+      }
     } catch(err){
       alert('Erreur import : '+err.message);
     }
