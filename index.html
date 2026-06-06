@@ -138,6 +138,24 @@ input, select, textarea, button { font-family: inherit; }
 .auth-forgot:hover { color: var(--orange); }
 .auth-footer { text-align: center; color: var(--text3); font-size: .72rem; margin-top: 22px; }
 
+/* ── PAYWALL PLANS ── */
+.pay-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pay-plan { position: relative; background: var(--bg1); border: 1px solid var(--sep); border-radius: 16px; padding: 18px 16px; text-align: left; cursor: pointer; transition: all .18s; color: var(--text); display: flex; flex-direction: column; gap: 4px; }
+.pay-plan:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(255,159,10,.12); }
+.pay-plan.featured { background: linear-gradient(160deg, rgba(255,159,10,.18), rgba(255,159,10,.04)); border-color: rgba(255,159,10,.5); }
+.pay-plan-badge { position: absolute; top: -8px; right: 12px; background: var(--orange); color: #000; font-size: .65rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; letter-spacing: .04em; }
+.pay-plan-name { font-size: .72rem; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+.pay-plan-price { font-size: 1.5rem; font-weight: 700; }
+.pay-plan-price span { font-size: .8rem; color: var(--text3); font-weight: 500; margin-left: 2px; }
+.pay-plan-hint { font-size: .7rem; color: var(--text3); margin-top: 2px; line-height: 1.4; }
+
+/* ── TRIAL BANNER ── */
+.trial-banner { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(90deg, rgba(255,159,10,.14), rgba(255,159,10,.08)); border-bottom: 1px solid rgba(255,159,10,.25); padding: 8px 16px; font-size: .8rem; color: var(--text); }
+.trial-banner .trial-icon { font-size: .95rem; }
+.trial-banner .trial-text b { color: var(--orange); font-weight: 700; }
+.trial-banner .trial-cta { background: var(--orange); color: #000; border: none; padding: 5px 14px; border-radius: 8px; font-size: .75rem; font-weight: 600; cursor: pointer; margin-left: 8px; transition: opacity .15s; }
+.trial-banner .trial-cta:hover { opacity: .88; }
+
 /* ── ACCOUNT + LOGOUT ── */
 .account-wrap { display: flex; align-items: center; gap: 6px; }
 .logout-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--bg2); border: 1px solid var(--sep); color: var(--text2); padding: 6px 12px; border-radius: 10px; cursor: pointer; font-size: .75rem; font-weight: 500; transition: all .15s; }
@@ -1190,6 +1208,50 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
     <div class="auth-footer">🔒 Tes trades sont protégés et chiffrés — seul toi y as accès.</div>
   </div>
+</div>
+
+<!-- ══════ PAYWALL GATE (plein écran) ══════ -->
+<div class="auth-gate" id="paywall-gate">
+  <div class="auth-card" style="max-width:480px">
+    <div class="auth-logo">
+      <svg viewBox="0 0 40 40" width="44" height="44">
+        <rect width="40" height="40" rx="11" fill="#ff9f0a"/>
+        <path d="M7 28 L14 18 L21 23 L30 11 L35 14" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+    <div class="auth-title">Ton essai gratuit est terminé</div>
+    <div class="auth-sub" style="margin-bottom:28px">
+      Continue à analyser tes trades, garder ton historique en sécurité et débloquer toutes les fonctionnalités du journal en passant à un abonnement.
+    </div>
+
+    <div class="pay-plans">
+      <button class="pay-plan" onclick="startCheckout('monthly')">
+        <div class="pay-plan-name">Mensuel</div>
+        <div class="pay-plan-price">12 €<span>/mois</span></div>
+        <div class="pay-plan-hint">Sans engagement, résilie quand tu veux</div>
+      </button>
+      <button class="pay-plan featured" onclick="startCheckout('yearly')">
+        <div class="pay-plan-badge">−17 %</div>
+        <div class="pay-plan-name">Annuel</div>
+        <div class="pay-plan-price">120 €<span>/an</span></div>
+        <div class="pay-plan-hint">Équivaut à 10 €/mois · 2 mois offerts</div>
+      </button>
+    </div>
+
+    <button class="logout-btn" onclick="logoutUser()" style="margin-top:18px;width:100%;justify-content:center">
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h3a1 1 0 011 1v10a1 1 0 01-1 1h-3M9 14l-4-4 4-4M5 10h11"/></svg>
+      Déconnexion
+    </button>
+
+    <div class="auth-footer">🔒 Paiement sécurisé · Tes données restent intactes</div>
+  </div>
+</div>
+
+<!-- ══════ TRIAL BANNER ══════ -->
+<div class="trial-banner" id="trial-banner" style="display:none">
+  <span class="trial-icon">⏳</span>
+  <span class="trial-text">Essai gratuit · <b id="trial-days">—</b></span>
+  <button class="trial-cta" onclick="startCheckout('yearly')">Passer Premium</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -2987,6 +3049,71 @@ async function dbDelete(id) {
   });
 })();
 
+// ─────────────────────────────────────────────
+//  SUBSCRIPTION / PAYWALL GATE
+// ─────────────────────────────────────────────
+let currentSubscription = null;
+
+async function checkSubscription() {
+  if (!currentUser) return { allowed: false, reason: 'no-user' };
+  console.log('[Sub] SELECT subscription pour user', currentUser.id);
+  const { data, error } = await sb
+    .from('subscriptions')
+    .select('status, trial_ends_at, stripe_subscription_id')
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[Sub] SELECT subscription échec', error);
+    return { allowed: false, reason: 'error', error };
+  }
+  if (!data) {
+    console.warn('[Sub] Aucune ligne subscription pour cet utilisateur — trigger handle_new_user peut-être absent ?');
+    return { allowed: false, reason: 'no-row' };
+  }
+
+  currentSubscription = data;
+  const now = Date.now();
+  const trialEnd = data.trial_ends_at ? new Date(data.trial_ends_at).getTime() : 0;
+  const isActive = data.status === 'active';
+  const isTrialing = trialEnd > now;
+  const daysLeft = Math.max(0, Math.ceil((trialEnd - now) / 86_400_000));
+
+  console.log('[Sub] status=', data.status, '· trial_ends_at=', data.trial_ends_at, '· daysLeft=', daysLeft);
+
+  return {
+    allowed: isActive || isTrialing,
+    isActive,
+    isTrialing: isTrialing && !isActive,
+    daysLeft,
+    status: data.status,
+  };
+}
+
+function showPaywall() {
+  document.getElementById('paywall-gate').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  hideTrialBanner();
+}
+function hidePaywall() {
+  document.getElementById('paywall-gate').classList.remove('on');
+  document.body.style.overflow = '';
+}
+function showTrialBanner(days) {
+  const el = document.getElementById('trial-banner');
+  const label = days <= 0 ? 'dernier jour' : (days === 1 ? '1 jour restant' : days + ' jours restants');
+  document.getElementById('trial-days').textContent = label;
+  el.style.display = 'flex';
+}
+function hideTrialBanner() {
+  const el = document.getElementById('trial-banner');
+  if (el) el.style.display = 'none';
+}
+
+function startCheckout(plan) {
+  console.log('[Checkout] Plan demandé :', plan, '— TODO : brancher Stripe Checkout ici');
+}
+
 // ─── Bootstrap auth ───
 renderYearSelect();
 
@@ -2998,6 +3125,8 @@ sb.auth.onAuthStateChange((event, session) => {
   console.log('[Auth] event=', event, '· session?', !!session, '· email=', session?.user?.email);
 
   if (event === 'SIGNED_OUT' || !session) {
+    hidePaywall();
+    hideTrialBanner();
     setSignedOutUI();
     return;
   }
@@ -3005,8 +3134,25 @@ sb.auth.onAuthStateChange((event, session) => {
   // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED → tous avec session
   setSignedInUI(session.user);
 
-  // Défère le chargement HORS du callback pour éviter le deadlock
-  setTimeout(() => { loadTradesFromDb(); }, 0);
+  // Défère HORS du callback pour éviter le deadlock supabase-js v2
+  setTimeout(async () => {
+    const access = await checkSubscription();
+
+    if (!access.allowed) {
+      console.warn('[Sub] Accès refusé — paywall affiché. Raison :', access.reason || access.status);
+      showPaywall();
+      return; // On NE charge PAS les trades si pas d'accès
+    }
+
+    hidePaywall();
+    if (access.isTrialing) {
+      showTrialBanner(access.daysLeft);
+    } else {
+      hideTrialBanner();
+    }
+
+    loadTradesFromDb();
+  }, 0);
 });
 
 // ─────────────────────────────────────────────
