@@ -150,7 +150,7 @@ input, select, textarea, button { font-family: inherit; }
 .pay-plan-hint { font-size: .7rem; color: var(--text3); margin-top: 2px; line-height: 1.4; }
 
 /* ── TRIAL BANNER ── */
-.trial-banner { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(90deg, rgba(255,159,10,.14), rgba(255,159,10,.08)); border-bottom: 1px solid rgba(255,159,10,.25); padding: 8px 16px; font-size: .8rem; color: var(--text); }
+.trial-banner { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(90deg, rgba(255,159,10,.14), rgba(255,159,10,.08)); border-bottom: 1px solid rgba(255,159,10,.25); padding: 8px 16px; font-size: .8rem; color: var(--text); position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
 .trial-banner .trial-icon { font-size: .95rem; }
 .trial-banner .trial-text b { color: var(--orange); font-weight: 700; }
 .trial-banner .trial-cta { background: var(--orange); color: #000; border: none; padding: 5px 14px; border-radius: 8px; font-size: .75rem; font-weight: 600; cursor: pointer; margin-left: 8px; transition: opacity .15s; }
@@ -822,6 +822,13 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 </head>
 <body>
 
+<!-- ══════ TRIAL BANNER ══════ -->
+<div class="trial-banner" id="trial-banner" style="display:none">
+  <span class="trial-icon">⏳</span>
+  <span class="trial-text">Essai gratuit · <b id="trial-days">—</b></span>
+  <button class="trial-cta" onclick="startCheckout('yearly')">Passer Premium</button>
+</div>
+
 <!-- TOP BAR -->
 <nav class="topbar">
   <a class="topbar-logo" href="#">
@@ -1245,13 +1252,6 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
     <div class="auth-footer">🔒 Paiement sécurisé · Tes données restent intactes</div>
   </div>
-</div>
-
-<!-- ══════ TRIAL BANNER ══════ -->
-<div class="trial-banner" id="trial-banner" style="display:none">
-  <span class="trial-icon">⏳</span>
-  <span class="trial-text">Essai gratuit · <b id="trial-days">—</b></span>
-  <button class="trial-cta" onclick="startCheckout('yearly')">Passer Premium</button>
 </div>
 
 <div class="toast" id="toast"></div>
