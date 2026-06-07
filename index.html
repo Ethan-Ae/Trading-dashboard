@@ -150,7 +150,10 @@ input, select, textarea, button { font-family: inherit; }
 .pay-plan-hint { font-size: .7rem; color: var(--text3); margin-top: 2px; line-height: 1.4; }
 
 /* ── TRIAL BANNER ── */
-.trial-banner { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(90deg, rgba(255,159,10,.14), rgba(255,159,10,.08)); border-bottom: 1px solid rgba(255,159,10,.25); padding: 8px 16px; font-size: .8rem; color: var(--text); position: sticky; top: 0; z-index: 50; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+.trial-banner { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(90deg, rgba(255,159,10,.20), rgba(255,159,10,.10)); border-bottom: 1px solid rgba(255,159,10,.4); padding: 8px 16px; font-size: .82rem; color: var(--text); position: fixed; top: 0; left: 0; right: 0; z-index: 60; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); height: 36px; box-sizing: border-box; }
+/* Quand le bandeau est visible, on pousse la topbar et le contenu vers le bas */
+body.has-trial-banner .topbar { top: 36px; }
+body.has-trial-banner .main { padding-top: 92px; }
 .trial-banner .trial-icon { font-size: .95rem; }
 .trial-banner .trial-text b { color: var(--orange); font-weight: 700; }
 .trial-banner .trial-cta { background: var(--orange); color: #000; border: none; padding: 5px 14px; border-radius: 8px; font-size: .75rem; font-weight: 600; cursor: pointer; margin-left: 8px; transition: opacity .15s; }
@@ -3127,10 +3130,13 @@ function showTrialBanner(days) {
   const label = days <= 0 ? 'dernier jour' : (days === 1 ? '1 jour restant' : days + ' jours restants');
   document.getElementById('trial-days').textContent = label;
   el.style.display = 'flex';
+  document.body.classList.add('has-trial-banner');
+  console.log('[Banner] affiché :', label);
 }
 function hideTrialBanner() {
   const el = document.getElementById('trial-banner');
   if (el) el.style.display = 'none';
+  document.body.classList.remove('has-trial-banner');
 }
 
 function startCheckout(plan) {
