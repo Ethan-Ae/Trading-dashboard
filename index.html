@@ -1484,33 +1484,81 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 let trades = [];
 
 // ── YEAR JOURNAL ──────────────────────
+// currentYear peut être :
+//   - un nombre (ex: 2025, 2026, 2023…) → on filtre sur cette année
+//   - la string 'all'                   → on affiche TOUTES les années cumulées
 let JOURNAL_YEARS = JSON.parse(localStorage.getItem('journal_years')||'null') || [2025, 2026];
-let currentYear = parseInt(localStorage.getItem('journal_active_year')||'') || (new Date()).getFullYear();
-if(!JOURNAL_YEARS.includes(currentYear)) currentYear = JOURNAL_YEARS[JOURNAL_YEARS.length-1];
+let currentYear = (() => {
+  const raw = localStorage.getItem('journal_active_year') || '';
+  if (raw === 'all') return 'all';
+  const n = parseInt(raw);
+  return isNaN(n) ? (new Date()).getFullYear() : n;
+})();
+// Si l'année stockée n'est plus dans la liste, on retombe sur la plus récente
+if (currentYear !== 'all' && !JOURNAL_YEARS.includes(currentYear)) {
+  currentYear = JOURNAL_YEARS[JOURNAL_YEARS.length-1] || (new Date()).getFullYear();
+}
 
 function saveYears(){ localStorage.setItem('journal_years', JSON.stringify(JOURNAL_YEARS)); }
+
+// ─── Auto-détecte les années présentes dans les trades (passé + futur) ───
+// À appeler après chaque chargement / import pour ne jamais avoir une année orpheline
+function ensureYearsCoverTrades(){
+  const yearsInTrades = [...new Set(
+    trades.map(t => t.date && parseInt(t.date.slice(0,4))).filter(y => !isNaN(y))
+  )];
+  let added = false;
+  yearsInTrades.forEach(y => {
+    if (!JOURNAL_YEARS.includes(y)) { JOURNAL_YEARS.push(y); added = true; }
+  });
+  if (added) {
+    JOURNAL_YEARS.sort((a,b)=>a-b);
+    saveYears();
+    renderYearSelect();
+  }
+}
+
 function renderYearSelect(){
   const sel = document.getElementById('year-select'); if(!sel) return;
   JOURNAL_YEARS.sort((a,b)=>a-b);
-  sel.innerHTML = JOURNAL_YEARS.map(y=>`<option value="${y}" ${y===currentYear?'selected':''}>Journal ${y}</option>`).join('');
+  const opts = [
+    `<option value="all" ${currentYear==='all'?'selected':''}>📊 Toutes les années</option>`,
+    ...JOURNAL_YEARS.map(y =>
+      `<option value="${y}" ${y===currentYear?'selected':''}>Journal ${y}</option>`
+    )
+  ];
+  sel.innerHTML = opts.join('');
 }
+
 function onYearChange(val){
-  currentYear = parseInt(val);
+  currentYear = (val === 'all') ? 'all' : parseInt(val);
   localStorage.setItem('journal_active_year', String(currentYear));
-  if(typeof calY !== 'undefined') calY = currentYear;
+  if (typeof calY !== 'undefined' && currentYear !== 'all') calY = currentYear;
   refreshCurrentPage();
 }
+
 function addYear(){
-  const val = prompt('Ajouter une année (ex: 2027) :');
-  if(!val) return;
+  const val = prompt('Ajouter une année (ex: 2023, 2027, 2030…) :');
+  if (!val) return;
   const y = parseInt(val);
-  if(isNaN(y) || y < 2000 || y > 2100){ alert('Année invalide'); return; }
-  if(JOURNAL_YEARS.includes(y)){ alert('Année déjà présente'); return; }
-  JOURNAL_YEARS.push(y); saveYears();
-  currentYear = y; localStorage.setItem('journal_active_year', String(y));
+  if (isNaN(y) || y < 1900 || y > 2200) { alert('Année invalide (entre 1900 et 2200)'); return; }
+  if (JOURNAL_YEARS.includes(y)) {
+    // Déjà présente → on bascule juste dessus
+    currentYear = y;
+    localStorage.setItem('journal_active_year', String(y));
+    renderYearSelect(); refreshCurrentPage();
+    return;
+  }
+  JOURNAL_YEARS.push(y);
+  JOURNAL_YEARS.sort((a,b)=>a-b);
+  saveYears();
+  currentYear = y;
+  localStorage.setItem('journal_active_year', String(y));
   renderYearSelect(); refreshCurrentPage();
 }
+
 function tradesOfYear(){
+  if (currentYear === 'all') return trades.slice();
   return trades.filter(t => t.date && t.date.startsWith(String(currentYear)+'-'));
 }
 
@@ -2973,11 +3021,19 @@ async function loadTradesFromDb() {
       console.warn('[Supabase] Aucun trade trouvé. Causes possibles : (1) RLS bloque la lecture, (2) les trades existants ont user_id NULL, (3) le compte est vraiment vide.');
     }
 
+    // ─── Ajoute automatiquement à JOURNAL_YEARS toutes les années
+    //     présentes dans les trades (passé ou futur) — l'utilisateur n'a pas
+    //     besoin de créer manuellement 2023 ou 2027 ───
+    ensureYearsCoverTrades();
+
     // ─── Auto-bascule vers l'année qui contient des trades ───
     // Si l'année active n'a aucun trade mais qu'une autre année en a, on switch
     // (évite "tous mes trades ont disparu" alors qu'ils sont juste sur une autre année)
-    const tradesInActiveYear = trades.filter(t => t.date && t.date.startsWith(String(currentYear)+'-'));
-    if (trades.length > 0 && tradesInActiveYear.length === 0) {
+    // En mode 'all', pas d'auto-bascule (on voit déjà tout)
+    const tradesInActiveYear = currentYear === 'all'
+      ? trades
+      : trades.filter(t => t.date && t.date.startsWith(String(currentYear)+'-'));
+    if (currentYear !== 'all' && trades.length > 0 && tradesInActiveYear.length === 0) {
       const yearsWithTrades = [...new Set(trades.map(t => t.date && t.date.slice(0,4)).filter(Boolean))]
         .map(Number).sort((a,b) => b-a);
       if (yearsWithTrades.length > 0) {
@@ -3332,9 +3388,12 @@ function importJSON(input){
       if(Array.isArray(data.years)){ JOURNAL_YEARS = data.years.slice(); localStorage.setItem('journal_years', JSON.stringify(JOURNAL_YEARS)); renderYearSelect(); }
       if(data.monthlyGoal) setGoal(data.monthlyGoal);
 
-      // Auto-bascule sur l'année qui contient les nouveaux trades
+      // S'assure que toutes les années importées sont disponibles dans le sélecteur
+      ensureYearsCoverTrades();
+
+      // Auto-bascule sur l'année qui contient les nouveaux trades (sauf si on est en mode "all")
       const importedYears = [...new Set(newTrades.map(t => t.date && t.date.slice(0,4)).filter(Boolean))].map(Number);
-      if (importedYears.length && !importedYears.includes(currentYear)) {
+      if (currentYear !== 'all' && importedYears.length && !importedYears.includes(currentYear)) {
         const targetYear = Math.max(...importedYears);
         if (!JOURNAL_YEARS.includes(targetYear)) {
           JOURNAL_YEARS.push(targetYear);
