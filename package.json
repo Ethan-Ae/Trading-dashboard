@@ -1,0 +1,11 @@
+{
+  "name": "onertrade",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Journal de trading — Vercel static + serverless functions",
+  "dependencies": {
+    "stripe": "^14.25.0",
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}
