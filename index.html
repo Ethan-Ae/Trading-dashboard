@@ -3635,22 +3635,116 @@ function buildColumnIndex(header) {
 
 // Normalisation date → YYYY-MM-DD (accepte DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD…)
 function normalizeDate(raw) {
-  if (!raw) return null;
+  if (raw == null || raw === '') return null;
   const s = String(raw).trim();
-  // Déjà au bon format
-  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (!s) return null;
+
+  // 1) ISO YYYY-MM-DD (avec ou sans temps)
+  let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
   if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
-  // DD/MM/YYYY ou MM/DD/YYYY (on assume DD/MM/YYYY format européen)
+
+  // 2) DD/MM/YYYY (européen) ou DD-MM-YYYY ou DD.MM.YYYY (avec ou sans temps après)
   m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
   if (m) {
     let [_, d, mo, y] = m;
     if (y.length === 2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+    // Sanity check : si jour > 12 et mois <= 12 → DD/MM ; si mois > 12 → MM/DD
+    if (parseInt(d) > 12 && parseInt(mo) <= 12) {
+      return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    }
+    if (parseInt(mo) > 12 && parseInt(d) <= 12) {
+      // C'était en réalité MM/DD/YYYY → on swap
+      return `${y}-${d.padStart(2,'0')}-${mo.padStart(2,'0')}`;
+    }
+    // Cas ambigu (les deux ≤ 12) → on assume DD/MM (format français/européen)
     return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
   }
-  // Fallback : essaie Date.parse
+
+  // 3) Excel serial date (nombre brut, ex: 45813)
+  if (/^\d{4,6}(\.\d+)?$/.test(s)) {
+    const n = parseFloat(s);
+    if (n > 25569 && n < 100000) {
+      // Excel epoch = 1899-12-30 (bug Lotus inclus), jour = n
+      const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+      const ts = excelEpoch.getTime() + n * 86400000;
+      const d = new Date(ts);
+      if (!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+    }
+  }
+
+  // 4) Texte français "5 juin 2026" ou "5 juin 26"
+  const MOIS_FR = {jan:1,janv:1,janvier:1, fev:2,fév:2,fevr:2,févr:2,fevrier:2,février:2,
+    mar:3,mars:3, avr:4,avril:4, mai:5, juin:6,jun:6,
+    juil:7,juillet:7,jul:7, aou:8,aoû:8,aout:8,août:8,aug:8,
+    sep:9,sept:9,septembre:9, oct:10,octobre:10,
+    nov:11,novembre:11, dec:12,déc:12,decembre:12,décembre:12};
+  m = s.toLowerCase().match(/^(\d{1,2})\s+([a-zûéè]+)\.?\s+(\d{2,4})/);
+  if (m) {
+    const d = m[1], moStr = m[2].replace(/\.$/,''), yRaw = m[3];
+    const mo = MOIS_FR[moStr];
+    if (mo) {
+      let y = yRaw;
+      if (y.length === 2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+      return `${y}-${String(mo).padStart(2,'0')}-${d.padStart(2,'0')}`;
+    }
+  }
+
+  // 5) Fallback : Date.parse (gère ISO complet, anglais "Jun 5, 2026", etc.)
   const ts = Date.parse(s);
-  if (!isNaN(ts)) return new Date(ts).toISOString().slice(0,10);
+  if (!isNaN(ts)) {
+    const d = new Date(ts);
+    return d.toISOString().slice(0,10);
+  }
+
   return null;
+}
+
+// ─── Normalise une durée vers un bucket HOLD_OPTIONS ───
+// Accepte : "30min", "2h", "8h", "2j", "2 days", "2d", "1 semaine", "10 jours", chiffres bruts…
+// Retourne une des valeurs : '< 1H', '< 5H', '< 24H', '< 3J', '< 5J', '< 10J', '< 15J', '> 15J'
+function normalizeHold(raw) {
+  if (raw == null || raw === '') return null;
+  let s = String(raw).trim();
+  if (!s) return null;
+
+  // 1) Si déjà au format attendu (ex: "< 24H") → on le retourne tel quel
+  if (HOLD_OPTIONS.includes(s)) return s;
+  const sNoSpace = s.replace(/\s+/g,'').toUpperCase();
+  const matchExact = HOLD_OPTIONS.find(o => o.replace(/\s+/g,'').toUpperCase() === sNoSpace);
+  if (matchExact) return matchExact;
+
+  // 2) Parse une valeur numérique + unité
+  // Patterns : "2h", "2H", "2 h", "2 hours", "30 min", "30m", "2j", "2 jours", "2d", "2 days", "1w", "1 week", "1 semaine"
+  const norm = s.toLowerCase()
+    .replace(',','.')
+    .replace(/[^a-z0-9.]/g,'');  // strip tout sauf alphanum et point décimal
+
+  const m = norm.match(/^(\d+(?:\.\d+)?)([a-z]*)$/);
+  if (!m) return null;
+
+  const val = parseFloat(m[1]);
+  const unit = m[2] || '';
+  let hours = NaN;
+
+  if (/^(min|m|minute|minutes|mn)$/.test(unit)) hours = val / 60;
+  else if (/^(h|hr|hrs|heure|heures|hour|hours)$/.test(unit)) hours = val;
+  else if (/^(j|d|jour|jours|day|days)$/.test(unit)) hours = val * 24;
+  else if (/^(w|sem|semaine|semaines|week|weeks)$/.test(unit)) hours = val * 24 * 7;
+  else if (/^(mois|month|months|mo)$/.test(unit)) hours = val * 24 * 30;
+  else if (unit === '' && val < 100) hours = val * 24; // pas d'unité + petit nombre → jours
+  else if (unit === '' && val >= 100) hours = val;     // gros nombre sans unité → heures
+
+  if (isNaN(hours)) return null;
+
+  // 3) Map vers le bucket HOLD_OPTIONS le plus proche
+  if (hours < 1)     return '< 1H';
+  if (hours < 5)     return '< 5H';
+  if (hours < 24)    return '< 24H';
+  if (hours < 72)    return '< 3J';   // 3 jours
+  if (hours < 120)   return '< 5J';   // 5 jours
+  if (hours < 240)   return '< 10J';  // 10 jours
+  if (hours < 360)   return '< 15J';  // 15 jours
+  return '> 15J';
 }
 
 // Parse une valeur boolean tolérante : vrai/faux, true/false, 1/0, oui/non, yes/no, ✅, ❌
@@ -3723,7 +3817,7 @@ function csvRowToTrade(row, colIdx, baseId, i) {
     result:      get('result') || 'En cours',
     rrf:         num('rrf'),
     jour:        JOURS[new Date(date).getDay()],
-    hold:        get('hold') || null,
+    hold:        normalizeHold(get('hold')),
     type:        get('type') || '100% Technique',
     tend:        get('tend') || 'In Trend',
     retails:     get('retails') || '',
