@@ -3598,12 +3598,12 @@ function parseCSV(text) {
 
 // Normalise un nom de colonne pour matching tolérant
 const normCol = s => (s||'').toString().toLowerCase()
-  .normalize('NFD').replace(/[̀-ͯ]/g,'')  // strip accents
-  .replace(/[^a-z0-9]/g,'');                          // strip non-alphanum
+  .normalize('NFD').replace(/[̀-ͯ]/g,'')  // strip accents (sûr)
+  .replace(/[^a-z0-9]/g,'');                         // strip non-alphanum
 
 // Mapping {variantes_csv → champ_interne}
 const CSV_FIELD_MAP = {
-  pair:        ['pair','paire','symbol','symbole','asset','actif','instrument','devise'],
+  pair:        ['pair','paire','symbol','symbole','symbol','symbols','asset','actif','actifs','instrument','devise','devises','ticker','nom','name','crosse','crosspair','currencypair','currency','marche','market'],
   date:        ['date','day','jour'],
   tf:          ['tf','timeframe','timeframe','tframe','ut'],
   ordre:       ['ordre','order','type','typeordre','typedordre'],
@@ -3671,6 +3671,35 @@ function parseErrs(v) {
   return s.split(/[;,|]/).map(x => x.trim()).filter(Boolean);
 }
 
+// Nettoie une chaîne de paire/actif : "eur/usd" → "EURUSD", "BTC-USD" → "BTCUSD", "Gold" → "GOLD"
+function cleanPair(raw){
+  if(!raw) return '';
+  return String(raw)
+    .toUpperCase()
+    .replace(/[\/\-\._\s]+/g, '')   // enlève / - . _ et espaces
+    .replace(/[^A-Z0-9]/g, '')      // ne garde que lettres+chiffres
+    .trim();
+}
+
+// Si la colonne "pair" n'a pas été identifiée par le header, on scanne les cellules
+// pour trouver une colonne qui contient des valeurs ressemblant à des paires forex
+function autoDetectPairColumn(rows, header){
+  const PAIR_REGEX = /^[A-Z]{3,8}(?:\/[A-Z]{3,8})?$/;
+  const sample = rows.slice(1, Math.min(rows.length, 20)); // 20 premières lignes
+  if (!sample.length) return -1;
+  let bestCol = -1, bestScore = 0;
+  for (let col = 0; col < header.length; col++) {
+    let hits = 0;
+    sample.forEach(r => {
+      const v = (r[col] || '').toString().trim().toUpperCase().replace(/[\/\-\._\s]+/g,'');
+      if (PAIR_REGEX.test(v) || /^[A-Z]{6}$/.test(v) || /^XAU|XAG|BTC|ETH/.test(v)) hits++;
+    });
+    if (hits > bestScore) { bestScore = hits; bestCol = col; }
+  }
+  // Au moins 30% des lignes doivent matcher pour qu'on considère ça comme une vraie colonne paire
+  return bestScore >= Math.ceil(sample.length * 0.3) ? bestCol : -1;
+}
+
 function csvRowToTrade(row, colIdx, baseId, i) {
   const get = field => colIdx[field] != null ? (row[colIdx[field]] || '').toString().trim() : '';
   const num = field => { const v = get(field); if (v === '') return null; const n = parseFloat(v.replace(',','.')); return isNaN(n) ? null : n; };
@@ -3678,9 +3707,13 @@ function csvRowToTrade(row, colIdx, baseId, i) {
   const date = normalizeDate(get('date')) || new Date().toISOString().slice(0,10);
   const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 
+  // Pair : on garde la valeur brute du CSV (nettoyée), sans jamais retomber sur INCONNU
+  // si on a quoi que ce soit d'utile
+  const pairClean = cleanPair(get('pair'));
+
   return {
     id:          baseId * 1000 + i,
-    pair:        (get('pair') || 'INCONNU').toUpperCase(),
+    pair:        pairClean || 'INCONNU',
     date,
     prise:       true,
     tf:          get('tf') || '1h',
@@ -3716,6 +3749,17 @@ function importCSV(input) {
 
       const header = rows[0];
       const colIdx = buildColumnIndex(header);
+
+      // Si on n'a pas trouvé la colonne paire via le header, on la détecte automatiquement
+      // en scannant les valeurs (cherche des patterns type "EURUSD", "XAU/USD", etc.)
+      if (colIdx.pair == null) {
+        const auto = autoDetectPairColumn(rows, header);
+        if (auto >= 0) {
+          colIdx.pair = auto;
+          console.log('[Import CSV] colonne "pair" auto-détectée à l\'index', auto, '— header :', header[auto]);
+        }
+      }
+
       const detected = Object.keys(colIdx);
 
       if (detected.length === 0) {
@@ -3727,9 +3771,21 @@ function importCSV(input) {
       const base = Date.now();
       const newTrades = dataRows.map((row, i) => csvRowToTrade(row, colIdx, base, i));
 
+      // Compte combien d'actifs uniques on a réussi à extraire
+      const uniquePairs = [...new Set(newTrades.map(t => t.pair).filter(p => p && p !== 'INCONNU'))];
+      const unknownCount = newTrades.filter(t => t.pair === 'INCONNU').length;
+
+      const pairLine = uniquePairs.length
+        ? `Actifs détectés (${uniquePairs.length}) : ${uniquePairs.slice(0,12).join(', ')}${uniquePairs.length>12?`, +${uniquePairs.length-12} autres`:''}`
+        : `⚠️ Aucun actif détecté dans le CSV — tous les trades seront marqués "INCONNU"`;
+      const unknownLine = unknownCount > 0
+        ? `\n⚠️ ${unknownCount} trade(s) sans actif lisible → marqués "INCONNU"`
+        : '';
+
       const msg = `Importer ${newTrades.length} trades depuis ce CSV sur le compte ${currentUser.email} ?\n\n` +
         `Colonnes détectées : ${detected.join(', ')}\n` +
         `Colonnes ignorées : ${header.filter((_,i)=>!Object.values(colIdx).includes(i)).join(', ') || '(aucune)'}\n\n` +
+        pairLine + unknownLine + `\n\n` +
         `De nouveaux IDs uniques seront générés.`;
       if (!confirm(msg)) { input.value = ''; return; }
 
