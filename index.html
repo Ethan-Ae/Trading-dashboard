@@ -829,7 +829,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 <div class="trial-banner" id="trial-banner" style="display:none">
   <span class="trial-icon">⏳</span>
   <span class="trial-text">Essai gratuit · <b id="trial-days">—</b></span>
-  <button class="trial-cta" onclick="startCheckout('yearly')">Passer Premium</button>
+  <button class="trial-cta" onclick="showPaywall()">Passer Premium</button>
 </div>
 
 <!-- TOP BAR -->
@@ -3139,8 +3139,55 @@ function hideTrialBanner() {
   document.body.classList.remove('has-trial-banner');
 }
 
-function startCheckout(plan) {
-  console.log('[Checkout] Plan demandé :', plan, '— TODO : brancher Stripe Checkout ici');
+// ─── Stripe price IDs (mode test) ───
+const STRIPE_PRICES = {
+  monthly: 'price_1TgHg4V05rss2qD0X9WrHiZU',
+  yearly:  'price_1TgHflV05rss2qD0yASvuqAH',
+};
+
+async function startCheckout(plan) {
+  const priceId = STRIPE_PRICES[plan];
+  if (!priceId) { showToast('Plan inconnu : ' + plan, true); return; }
+
+  // Empêche les doubles-clics : on désactive tous les boutons de plan
+  const allBtns = document.querySelectorAll('.pay-plan, .trial-cta');
+  allBtns.forEach(b => b.disabled = true);
+  showToast('⏳ Redirection vers le paiement…');
+
+  try {
+    // 1) Récupérer le JWT Supabase de l'utilisateur courant
+    const { data: { session }, error: sessErr } = await sb.auth.getSession();
+    if (sessErr || !session) {
+      throw new Error('Tu dois être connecté pour t\'abonner.');
+    }
+
+    console.log('[Checkout] POST /api/create-checkout', { plan, priceId });
+
+    // 2) Appel à la function serverless Vercel
+    const res = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        priceId,
+        accessToken: session.access_token,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data.url) {
+      throw new Error(data.error || `Erreur serveur (HTTP ${res.status})`);
+    }
+
+    console.log('[Checkout] Redirection vers', data.url);
+
+    // 3) Rediriger vers Stripe Checkout
+    window.location.href = data.url;
+  } catch (err) {
+    console.error('[Checkout] échec', err);
+    showToast('❌ ' + (err.message || 'Erreur inconnue'), true);
+    allBtns.forEach(b => b.disabled = false);
+  }
 }
 
 // ─── Bootstrap auth ───
