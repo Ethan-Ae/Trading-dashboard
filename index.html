@@ -183,6 +183,27 @@ body.has-trial-banner .main { padding-top: 92px; }
 .calc-hint { color: var(--text3); font-size: .68rem; margin-top: 8px; }
 
 /* ── SETUPS REDESIGN ── */
+/* ── PAGE RÉGLAGES ── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .settings-grid { grid-template-columns: 1fr; } }
+.settings-card { background: var(--bg2); border: 1px solid var(--sep); border-radius: 18px; padding: 20px; }
+.settings-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.settings-card-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+.settings-card-sub { font-size: .76rem; color: var(--text3); }
+.settings-reset { background: transparent; border: 1px solid var(--sep); color: var(--text3); padding: 5px 10px; border-radius: 8px; font-size: .7rem; cursor: pointer; transition: all .15s; flex-shrink: 0; }
+.settings-reset:hover { border-color: var(--orange); color: var(--orange); }
+.settings-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.settings-row { display: flex; align-items: center; gap: 8px; background: var(--bg1); border: 1px solid var(--sep); border-radius: 10px; padding: 10px 12px; transition: border-color .15s; }
+.settings-row:hover { border-color: rgba(255,159,10,.25); }
+.settings-row-text { flex: 1; font-size: .85rem; color: var(--text); }
+.settings-row-actions { display: flex; gap: 4px; }
+.settings-row-actions button { background: transparent; border: none; color: var(--text3); cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: .82rem; transition: all .15s; }
+.settings-row-actions button:hover { background: var(--bg3); color: var(--orange); }
+.settings-row-actions .del:hover { color: #ff453a; }
+.settings-add { background: transparent; border: 1.5px dashed var(--bg4); border-radius: 10px; color: var(--text3); cursor: pointer; padding: 11px; font-size: .82rem; transition: all .15s; width: 100%; }
+.settings-add:hover { border-color: var(--orange); color: var(--orange); }
+.settings-empty { text-align: center; color: var(--text3); font-size: .82rem; padding: 24px; font-style: italic; }
+
 .setups-intro, .page-intro { background: linear-gradient(135deg, rgba(255,159,10,.10), rgba(10,132,255,.06)); border: 1px solid var(--sep); border-radius: 22px; padding: 20px 24px; margin-bottom: 22px; }
 .setups-intro-title, .page-intro-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
 .setups-intro-sub, .page-intro-sub { color: var(--text2); font-size: .88rem; line-height: 1.5; }
@@ -865,6 +886,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 10h14M7 14h2M11 14h2"/></svg>
     Mensuel
   </button>
+  <button class="nav-pill" onclick="showPage('settings',this)" title="Réglages">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M2 10h2M16 10h2M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"/></svg>
+    Réglages
+  </button>
   <div class="topbar-right">
     <select class="year-select" id="year-select" onchange="onYearChange(this.value)" title="Année du journal"></select>
     <button class="year-add" onclick="addYear()" title="Ajouter une année">＋</button>
@@ -1166,6 +1191,42 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 </div>
 
+<!-- ══════════ RÉGLAGES ══════════ -->
+<div id="page-settings" class="page">
+  <div class="page-intro">
+    <div class="page-intro-title">⚙️ Réglages</div>
+    <div class="page-intro-sub">Personnalise ta <b>checklist pré-trade</b> et la liste de tes <b>erreurs types</b>. Tes réglages sont sauvegardés sur ton compte et synchronisés sur tous tes appareils.</div>
+  </div>
+
+  <div class="settings-grid">
+    <!-- ─── Checklist ─── -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title">📋 Checklist pré-trade</div>
+          <div class="settings-card-sub">Liste des contrôles que tu valides avant chaque entrée</div>
+        </div>
+        <button class="settings-reset" onclick="resetChecklist()" title="Restaurer les valeurs par défaut">↺ Reset</button>
+      </div>
+      <div class="settings-list" id="settings-checklist"></div>
+      <button class="settings-add" onclick="addChecklistItem()">＋ Ajouter un élément</button>
+    </div>
+
+    <!-- ─── Erreurs ─── -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title">⚠️ Erreurs types</div>
+          <div class="settings-card-sub">Tags que tu peux assigner à tes trades pour identifier tes biais récurrents</div>
+        </div>
+        <button class="settings-reset" onclick="resetErrors()" title="Restaurer les valeurs par défaut">↺ Reset</button>
+      </div>
+      <div class="settings-list" id="settings-errors"></div>
+      <button class="settings-add" onclick="addError()">＋ Ajouter une erreur</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /main -->
 
 <!-- ══════ DETAIL PANEL ══════ -->
@@ -1427,7 +1488,7 @@ const FOREX_PAIRS = {
 };
 const ALL_PAIRS = Object.values(FOREX_PAIRS).flat();
 
-const ERRORS = [
+const ERRORS_DEFAULT = [
   'FOMO',
   'Avarice',
   'Mauvaise analyse',
@@ -1439,6 +1500,7 @@ const ERRORS = [
   'Mauvais timing',
   'Raisons Perso',
 ];
+let ERRORS = ERRORS_DEFAULT.slice();
 
 const CHECKLIST_DEFAULT = [
   'Minimum 4 confluences',
@@ -1447,13 +1509,73 @@ const CHECKLIST_DEFAULT = [
   'SL invalide mon idée',
   'Tu n\'es pas sur-exposé sur ces devises',
 ];
-let CHECKLIST = JSON.parse(localStorage.getItem('checklist_items')||'null') || CHECKLIST_DEFAULT.slice();
-function saveChecklist(){ localStorage.setItem('checklist_items', JSON.stringify(CHECKLIST)); }
+let CHECKLIST = CHECKLIST_DEFAULT.slice();
+
+// ─── Sauvegarde locale (fallback) + Supabase (source de vérité) ───
+function saveChecklist(){
+  localStorage.setItem('checklist_items', JSON.stringify(CHECKLIST));
+  saveUserPreferences();
+}
+function saveErrors(){
+  localStorage.setItem('errors_items', JSON.stringify(ERRORS));
+  saveUserPreferences();
+}
+
+let _savePrefsTimer = null;
+async function saveUserPreferences(){
+  if (!currentUser) return;
+  // Debounce 400ms pour éviter de spammer la DB pendant les éditions rapides
+  clearTimeout(_savePrefsTimer);
+  _savePrefsTimer = setTimeout(async () => {
+    try {
+      const { error } = await sb.from('user_preferences').upsert({
+        user_id:  currentUser.id,
+        checklist: CHECKLIST,
+        errors:    ERRORS,
+      }, { onConflict: 'user_id' });
+      if (error) console.error('[Prefs] save error', error);
+      else console.log('[Prefs] sauvegardé');
+    } catch(e) { console.error('[Prefs] exception', e); }
+  }, 400);
+}
+
+async function loadUserPreferences(){
+  if (!currentUser) return;
+  try {
+    const { data, error } = await sb
+      .from('user_preferences')
+      .select('checklist, errors')
+      .eq('user_id', currentUser.id)
+      .maybeSingle();
+    if (error) { console.error('[Prefs] load error', error); return; }
+
+    if (data) {
+      if (Array.isArray(data.checklist) && data.checklist.length) {
+        CHECKLIST = data.checklist.slice();
+      }
+      if (Array.isArray(data.errors) && data.errors.length) {
+        ERRORS = data.errors.slice();
+      }
+      console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs');
+    } else {
+      // Pas de ligne → on crée avec les valeurs par défaut
+      console.log('[Prefs] première fois — création avec valeurs par défaut');
+      await sb.from('user_preferences').insert({
+        user_id:  currentUser.id,
+        checklist: CHECKLIST,
+        errors:    ERRORS,
+      });
+    }
+  } catch(e) { console.error('[Prefs] exception load', e); }
+}
+
+// ─── CHECKLIST ───
 function addChecklistItem(){
   const label = prompt('Nouvel élément de checklist :');
   if(!label||!label.trim()) return;
   CHECKLIST.push(label.trim()); saveChecklist();
   if(activeTrade){ if(!activeTrade.checklist) activeTrade.checklist=[]; activeTrade.checklist.push(false); dbUpsert(activeTrade); openPanel(activeTrade.id); }
+  if(currentPage==='settings') renderSettings();
 }
 function editChecklistItem(i){
   const label = prompt('Modifier l\'élément :', CHECKLIST[i]);
@@ -1461,11 +1583,44 @@ function editChecklistItem(i){
   if(!label.trim()){ delChecklistItem(i); return; }
   CHECKLIST[i] = label.trim(); saveChecklist();
   if(activeTrade) openPanel(activeTrade.id);
+  if(currentPage==='settings') renderSettings();
 }
 function delChecklistItem(i){
   if(!confirm('Supprimer cet élément ?')) return;
   CHECKLIST.splice(i,1); saveChecklist();
   if(activeTrade){ if(activeTrade.checklist) activeTrade.checklist.splice(i,1); dbUpsert(activeTrade); openPanel(activeTrade.id); }
+  if(currentPage==='settings') renderSettings();
+}
+
+// ─── ERREURS (même logique) ───
+function addError(){
+  const label = prompt('Nouvelle erreur :');
+  if(!label||!label.trim()) return;
+  if(ERRORS.includes(label.trim())) { alert('Cette erreur existe déjà'); return; }
+  ERRORS.push(label.trim()); saveErrors();
+  if(currentPage==='settings') renderSettings();
+}
+function editError(i){
+  const label = prompt('Modifier l\'erreur :', ERRORS[i]);
+  if(label===null) return;
+  if(!label.trim()){ delError(i); return; }
+  ERRORS[i] = label.trim(); saveErrors();
+  if(currentPage==='settings') renderSettings();
+}
+function delError(i){
+  if(!confirm('Supprimer cette erreur ?\n\nLes trades qui la portaient gardent leur tag historique, mais elle ne pourra plus être ajoutée.')) return;
+  ERRORS.splice(i,1); saveErrors();
+  if(currentPage==='settings') renderSettings();
+}
+function resetChecklist(){
+  if(!confirm('Réinitialiser la checklist aux valeurs par défaut ?')) return;
+  CHECKLIST = CHECKLIST_DEFAULT.slice(); saveChecklist();
+  if(currentPage==='settings') renderSettings();
+}
+function resetErrors(){
+  if(!confirm('Réinitialiser les erreurs aux valeurs par défaut ?')) return;
+  ERRORS = ERRORS_DEFAULT.slice(); saveErrors();
+  if(currentPage==='settings') renderSettings();
 }
 function toggleCheck(id, i){
   const t = trades.find(x=>x.id===id); if(!t) return;
@@ -2064,16 +2219,15 @@ function buildPanelHTML(t){
     ?'var(--purple)':t.type.includes('Technique')&&t.type.startsWith('75')
     ?'var(--blue)':'var(--orange)';
 
-  const checkItems = CHECKLIST.map((c,i)=>`
-    <div class="check-item">
-      <div class="check-box ${(t.checklist||[])[i]?'checked':''}" onclick="toggleCheck(${t.id},${i})">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </div>
-      <div class="check-label" style="flex:1;cursor:pointer" onclick="toggleCheck(${t.id},${i})">${c}</div>
-      <button onclick="event.stopPropagation();editChecklistItem(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 6px;font-size:.75rem" title="Modifier">✏️</button>
-      <button onclick="event.stopPropagation();delChecklistItem(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 6px;font-size:.75rem" title="Supprimer">✕</button>
-    </div>`).join('') + `
-    <button onclick="addChecklistItem()" style="margin-top:6px;background:none;border:1.5px dashed var(--bg4);border-radius:8px;color:var(--text3);cursor:pointer;padding:8px;font-size:.78rem;transition:border-color .15s,color .15s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--bg4)';this.style.color='var(--text3)'">＋ Ajouter un élément</button>`;
+  const checkItems = CHECKLIST.length === 0
+    ? `<div style="color:var(--text3);font-size:.78rem;font-style:italic;padding:10px 0">Aucun élément de checklist. <a href="#" onclick="event.preventDefault();closePanel();showPage('settings',document.querySelector('[onclick*=\\'settings\\']'))" style="color:var(--orange);text-decoration:underline">Configure-la dans Réglages</a>.</div>`
+    : CHECKLIST.map((c,i)=>`
+      <div class="check-item">
+        <div class="check-box ${(t.checklist||[])[i]?'checked':''}" onclick="toggleCheck(${t.id},${i})">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="check-label" style="flex:1;cursor:pointer" onclick="toggleCheck(${t.id},${i})">${c}</div>
+      </div>`).join('');
 
   const ssSlot=(key,label,icon)=>{
     const has=t.screenshots&&t.screenshots[key];
@@ -2812,6 +2966,43 @@ function refreshCurrentPage(){
   else if(currentPage==='calendar') renderCalendar();
   else if(currentPage==='perf') renderPerf();
   else if(currentPage==='monthly') renderMonthly();
+  else if(currentPage==='settings') renderSettings();
+}
+
+function renderSettings(){
+  const clEl = document.getElementById('settings-checklist');
+  const erEl = document.getElementById('settings-errors');
+  if(!clEl || !erEl) return;
+
+  if(CHECKLIST.length === 0){
+    clEl.innerHTML = '<div class="settings-empty">Aucun élément. Clique sur « + Ajouter un élément » pour commencer.</div>';
+  } else {
+    clEl.innerHTML = CHECKLIST.map((c,i) => `
+      <div class="settings-row">
+        <div class="settings-row-text">${escapeHtml(c)}</div>
+        <div class="settings-row-actions">
+          <button onclick="editChecklistItem(${i})" title="Modifier">✏️</button>
+          <button class="del" onclick="delChecklistItem(${i})" title="Supprimer">✕</button>
+        </div>
+      </div>`).join('');
+  }
+
+  if(ERRORS.length === 0){
+    erEl.innerHTML = '<div class="settings-empty">Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.</div>';
+  } else {
+    erEl.innerHTML = ERRORS.map((e,i) => `
+      <div class="settings-row">
+        <div class="settings-row-text">${escapeHtml(e)}</div>
+        <div class="settings-row-actions">
+          <button onclick="editError(${i})" title="Modifier">✏️</button>
+          <button class="del" onclick="delError(${i})" title="Supprimer">✕</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 // ─────────────────────────────────────────────
@@ -3283,6 +3474,9 @@ sb.auth.onAuthStateChange((event, session) => {
       hideTrialBanner();
     }
 
+    // Charge les préférences (checklist + erreurs) AVANT les trades
+    // pour que le rendu utilise déjà les valeurs personnalisées
+    await loadUserPreferences();
     loadTradesFromDb();
   }, 0);
 });
