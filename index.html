@@ -3611,7 +3611,17 @@ const CSV_FIELD_MAP = {
   rri:         ['rri','rrinitial','rrinit','rri','riskreward','rrr'],
   result:      ['result','resultat','resultat','outcome'],
   rrf:         ['rrf','rrfinal','rfinal','r','rresult'],
-  hold:        ['hold','holding','duree','durede','dureetrade','time'],
+  hold:        [
+    // Anglais
+    'hold','holding','holdingperiod','holdperiod','holdtime','holdingtime',
+    'duration','tradeduration','timeintrade','timeinposition','positionduration',
+    'tradetime','time','timeheld','heldfor',
+    // Français
+    'duree','dureede','dureedetention','dureetrade','dureeposition','dureedutrade','dureedelaposition',
+    'periode','periodedetention','periodededetention','periodedetrade','periodeposition','periodedutrade',
+    'tempsdetention','tempsdetrade','tempspasseentrade','tempsentrade','tempsenposition',
+    'detention','duree',
+  ],
   type:        ['typetrade','typedetrade','tradetype','techfond','methode'],
   tend:        ['tend','tendance','trend','contextemarche'],
   retails:     ['retails','retail','positionretails','versretails'],
