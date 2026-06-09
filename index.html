@@ -1672,7 +1672,7 @@ function renderOverview(){
 
   // Type de trade
   const typeR={};
-  ts.forEach(t=>{ const k=t.type.split(' ').slice(0,2).join(' '); typeR[k]=(typeR[k]||[]).concat(t.rrf||0); });
+  ts.forEach(t=>{ if(!t.type) return; const k=t.type.split(' ').slice(0,2).join(' '); typeR[k]=(typeR[k]||[]).concat(t.rrf||0); });
   const typeKeys=Object.keys(typeR);
   dc('typeChart');
   ch['typeChart'] = new Chart(document.getElementById('typeChart'),{
