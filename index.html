@@ -869,8 +869,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     <select class="year-select" id="year-select" onchange="onYearChange(this.value)" title="Année du journal"></select>
     <button class="year-add" onclick="addYear()" title="Ajouter une année">＋</button>
     <button class="icon-btn" onclick="exportJSON()" title="Exporter (télécharger sauvegarde JSON)">↑</button>
-    <button class="icon-btn" onclick="document.getElementById('import-file').click()" title="Importer une sauvegarde">↓</button>
-    <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importJSON(this)">
+    <button class="icon-btn" onclick="document.getElementById('import-file').click()" title="Importer une sauvegarde (JSON ou CSV)">↓</button>
+    <input type="file" id="import-file" accept="application/json,.json,.csv,text/csv" style="display:none" onchange="importFile(this)">
     <div class="account-wrap" id="account-wrap" style="display:none">
       <div class="sb-status" title="Compte connecté">
         <div class="sb-dot connected"></div>
@@ -3348,6 +3348,228 @@ function exportJSON(){
   URL.revokeObjectURL(url);
   showToast('💾 Sauvegarde exportée');
 }
+// ═══════════════════════════════════════════════════════════════
+//  IMPORT — dispatcher JSON / CSV
+// ═══════════════════════════════════════════════════════════════
+function importFile(input){
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const name = (f.name || '').toLowerCase();
+  if (name.endsWith('.csv')) {
+    importCSV(input);
+  } else {
+    importJSON(input);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CSV — parser robuste + mapping flexible des colonnes
+// ═══════════════════════════════════════════════════════════════
+
+// Mini parser CSV qui gère :
+//  - le BOM UTF-8 au début
+//  - les délimiteurs , ; ou \t (auto-détectés sur la 1ère ligne)
+//  - les valeurs entre guillemets avec virgules et "" échappés
+//  - les \r\n / \n
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // strip BOM
+
+  // Auto-détection du séparateur sur la 1ère ligne (avant le premier \n hors quote)
+  const firstLine = text.split(/\r?\n/)[0] || '';
+  const sep = (firstLine.match(/;/g)?.length||0) > (firstLine.match(/,/g)?.length||0) ? ';'
+            : (firstLine.match(/\t/g)?.length||0) > 0 ? '\t'
+            : ',';
+
+  const rows = [];
+  let row = [], cell = '', inQuote = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], next = text[i+1];
+    if (inQuote) {
+      if (c === '"' && next === '"') { cell += '"'; i++; }
+      else if (c === '"') { inQuote = false; }
+      else { cell += c; }
+    } else {
+      if (c === '"') { inQuote = true; }
+      else if (c === sep) { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && next === '\n') i++;
+        row.push(cell); rows.push(row); row = []; cell = '';
+      }
+      else { cell += c; }
+    }
+  }
+  if (cell.length || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(v => v && v.trim().length));
+}
+
+// Normalise un nom de colonne pour matching tolérant
+const normCol = s => (s||'').toString().toLowerCase()
+  .normalize('NFD').replace(/[̀-ͯ]/g,'')  // strip accents
+  .replace(/[^a-z0-9]/g,'');                          // strip non-alphanum
+
+// Mapping {variantes_csv → champ_interne}
+const CSV_FIELD_MAP = {
+  pair:        ['pair','paire','symbol','symbole','asset','actif','instrument','devise'],
+  date:        ['date','day','jour'],
+  tf:          ['tf','timeframe','timeframe','tframe','ut'],
+  ordre:       ['ordre','order','type','typeordre','typedordre'],
+  risk:        ['risk','risque','risqu'],
+  rri:         ['rri','rrinitial','rrinit','rri','riskreward','rrr'],
+  result:      ['result','resultat','resultat','outcome'],
+  rrf:         ['rrf','rrfinal','rfinal','r','rresult'],
+  hold:        ['hold','holding','duree','durede','dureetrade','time'],
+  type:        ['typetrade','typedetrade','tradetype','techfond','methode'],
+  tend:        ['tend','tendance','trend','contextemarche'],
+  retails:     ['retails','retail','positionretails','versretails'],
+  confluences: ['confluences','raisons','reasons','setup','notes','commentaire'],
+  psy:         ['psy','psychologie','etatpsy','psychology','mood','emotion'],
+  bonTrade:    ['bontrade','goodtrade','bon','ok'],
+  manageTrade: ['managetrade','management','manage','gestion'],
+  errs:        ['errs','erreur','erreurs','errors','mistakes'],
+};
+
+function buildColumnIndex(header) {
+  const idx = {};
+  header.forEach((rawName, i) => {
+    const norm = normCol(rawName);
+    for (const [field, variants] of Object.entries(CSV_FIELD_MAP)) {
+      if (variants.includes(norm)) { idx[field] = i; break; }
+    }
+  });
+  return idx;
+}
+
+// Normalisation date → YYYY-MM-DD (accepte DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD…)
+function normalizeDate(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  // Déjà au bon format
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  // DD/MM/YYYY ou MM/DD/YYYY (on assume DD/MM/YYYY format européen)
+  m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+  if (m) {
+    let [_, d, mo, y] = m;
+    if (y.length === 2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+    return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  // Fallback : essaie Date.parse
+  const ts = Date.parse(s);
+  if (!isNaN(ts)) return new Date(ts).toISOString().slice(0,10);
+  return null;
+}
+
+// Parse une valeur boolean tolérante : vrai/faux, true/false, 1/0, oui/non, yes/no, ✅, ❌
+function parseBool(v) {
+  if (v == null) return null;
+  const s = String(v).trim().toLowerCase();
+  if (['true','1','vrai','oui','yes','y','o','✅','x','si'].includes(s)) return true;
+  if (['false','0','faux','non','no','n','❌'].includes(s)) return false;
+  return null;
+}
+
+// Parse les erreurs : "FOMO; Avarice" ou "FOMO, Avarice" ou JSON ["FOMO","Avarice"]
+function parseErrs(v) {
+  if (!v) return [];
+  const s = String(v).trim();
+  if (!s) return [];
+  if (s.startsWith('[')) { try { return JSON.parse(s); } catch(_){} }
+  return s.split(/[;,|]/).map(x => x.trim()).filter(Boolean);
+}
+
+function csvRowToTrade(row, colIdx, baseId, i) {
+  const get = field => colIdx[field] != null ? (row[colIdx[field]] || '').toString().trim() : '';
+  const num = field => { const v = get(field); if (v === '') return null; const n = parseFloat(v.replace(',','.')); return isNaN(n) ? null : n; };
+
+  const date = normalizeDate(get('date')) || new Date().toISOString().slice(0,10);
+  const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+  return {
+    id:          baseId * 1000 + i,
+    pair:        (get('pair') || 'INCONNU').toUpperCase(),
+    date,
+    prise:       true,
+    tf:          get('tf') || '1h',
+    ordre:       get('ordre') || 'MARKET BUY',
+    risk:        get('risk') || '1.00%',
+    rri:         num('rri'),
+    result:      get('result') || 'En cours',
+    rrf:         num('rrf'),
+    jour:        JOURS[new Date(date).getDay()],
+    hold:        get('hold') || null,
+    type:        get('type') || '100% Technique',
+    tend:        get('tend') || 'In Trend',
+    retails:     get('retails') || '',
+    errs:        parseErrs(get('errs')),
+    bonTrade:    parseBool(get('bonTrade')),
+    manageTrade: get('manageTrade') || null,
+    confluences: get('confluences') || '',
+    psy:         get('psy') || '',
+    checklist:   [false,false,false,false,false],
+    screenshots: {},
+  };
+}
+
+function importCSV(input) {
+  const f = input.files && input.files[0]; if (!f) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      if (!currentUser) { alert('Connecte-toi avant d\'importer.'); return; }
+
+      const rows = parseCSV(e.target.result);
+      if (rows.length < 2) throw new Error('CSV vide ou sans en-tête.');
+
+      const header = rows[0];
+      const colIdx = buildColumnIndex(header);
+      const detected = Object.keys(colIdx);
+
+      if (detected.length === 0) {
+        throw new Error('Aucune colonne reconnue. Première ligne lue :\n' + header.join(' | ') +
+          '\n\nColonnes attendues (au moins une) : pair, date, tf, ordre, risk, rri, result, rrf, hold, type, tend…');
+      }
+
+      const dataRows = rows.slice(1).filter(r => r.length > 0 && r.some(v => v && v.trim()));
+      const base = Date.now();
+      const newTrades = dataRows.map((row, i) => csvRowToTrade(row, colIdx, base, i));
+
+      const msg = `Importer ${newTrades.length} trades depuis ce CSV sur le compte ${currentUser.email} ?\n\n` +
+        `Colonnes détectées : ${detected.join(', ')}\n` +
+        `Colonnes ignorées : ${header.filter((_,i)=>!Object.values(colIdx).includes(i)).join(', ') || '(aucune)'}\n\n` +
+        `De nouveaux IDs uniques seront générés.`;
+      if (!confirm(msg)) { input.value = ''; return; }
+
+      showToast('⏳ Import CSV en cours… 0/' + newTrades.length);
+      let ok = 0, fail = 0;
+
+      for (let i = 0; i < newTrades.length; i++) {
+        const t = newTrades[i];
+        trades.push(t);
+        try {
+          const row = localToDb(t);
+          if ('user_id' in row) delete row.user_id;
+          const { error } = await sb.from('trades').upsert(row, { onConflict: 'id' });
+          if (error) { fail++; console.error('[Import CSV] échec trade', t.id, error); }
+          else ok++;
+        } catch(err) { fail++; console.error('[Import CSV] exception', err); }
+        if (i % 5 === 0) showToast('⏳ Import CSV… ' + (i+1) + '/' + newTrades.length);
+      }
+
+      ensureYearsCoverTrades();
+      rebuildPairDatalist();
+      refreshCurrentPage();
+
+      if (fail === 0) showToast('✅ ' + ok + ' trades importés depuis le CSV');
+      else showToast(`⚠️ ${ok} importés, ${fail} échecs (voir console)`, true);
+    } catch(err){
+      console.error('[Import CSV] erreur', err);
+      alert('Erreur import CSV :\n\n' + err.message);
+    }
+    input.value = '';
+  };
+  reader.readAsText(f);
+}
+
 function importJSON(input){
   const f = input.files && input.files[0]; if(!f) return;
   const reader = new FileReader();
