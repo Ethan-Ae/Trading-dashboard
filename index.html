@@ -3722,8 +3722,8 @@ const normCol = s => (s||'').toString().toLowerCase()
 
 // Mapping {variantes_csv → champ_interne}
 const CSV_FIELD_MAP = {
-  pair:        ['pair','paire','symbol','symbole','symbol','symbols','asset','actif','actifs','instrument','devise','devises','ticker','nom','name','crosse','crosspair','currencypair','currency','marche','market'],
-  date:        ['date','tradedate','datedetrade','datedutrade','datedeposition','datedouverture','datecreated','createddate'],
+  pair:        ['pair','paire','symbol','symbole','symbols','asset','actif','actifs','instrument','crosse','crosspair','currencypair','ticker','nom','name','marche','market'],
+  date:        ['date','tradedate','datedetrade','datedutrade','dateprisedeposition','datedeposition','datedouverture','datedecreation','datecreation','datecreated','createddate','dateentree','dateentry','tradedt'],
   jour:        ['jour','day','dayofweek','jourdelasemaine','weekday','dow'],
   tf:          ['tf','timeframe','timeframe','tframe','ut'],
   ordre:       ['ordre','order','type','typeordre','typedordre'],
@@ -3745,25 +3745,44 @@ const CSV_FIELD_MAP = {
   type:        ['typetrade','typedetrade','tradetype','techfond','methode'],
   tend:        ['tend','tendance','trend','contextemarche'],
   retails:     ['retails','retail','positionretails','versretails'],
-  confluences: ['confluences','raisons','reasons','setup','notes','commentaire'],
-  psy:         ['psy','psychologie','etatpsy','psychology','mood','emotion'],
+  confluences: ['confluences','confluence','raisons','reasons','setup','notes','commentaire','commentaires','reasonsofentry','tradereasons','justifications'],
+  psy:         ['psy','psychologie','etatpsy','psychology','mood','emotion','scenarioenvisager','scenario','scenarios','planning','plan','idea','idee'],
   bonTrade:    ['bontrade','goodtrade','bon','ok','bontrad'],
   manageTrade: ['managetrade','management','manage','gestion','trademanagementimpact','managementimpact','impactmanagement','impactdumanagement','impactmanage'],
   errs:        ['errs','erreur','erreurs','errors','mistakes','mistake'],
   prise:       ['prise','prisedeposition','priseposition','position','positiontaken','taken','positiontaken','traded','positionprise'],
 };
 
-function buildColumnIndex(header) {
-  const idx = {};
+function buildColumnIndex(header, dataRows) {
+  // Étape 1 : pour chaque champ, collecte TOUTES les colonnes candidates
+  const candidates = {}; // field → [colIndex, ...]
   header.forEach((rawName, i) => {
     const norm = normCol(rawName);
     for (const [field, variants] of Object.entries(CSV_FIELD_MAP)) {
-      // FIRST-COME-FIRST-SERVED : si un champ est déjà mappé, on n'écrase pas.
-      // Évite le bug où "Jour" écrasait "DATE" sur le même champ `date`.
-      if (idx[field] != null) continue;
-      if (variants.includes(norm)) { idx[field] = i; break; }
+      if (variants.includes(norm)) {
+        (candidates[field] = candidates[field] || []).push(i);
+        break; // une colonne ne mappe qu'à UN champ
+      }
     }
   });
+
+  // Étape 2 : pour chaque champ avec plusieurs candidats, on choisit celle
+  // qui a le plus de valeurs non-vides dans les données (résout le cas où
+  // l'export Notion a "Date Prise de Position" vide et "Date de Création" remplie).
+  const idx = {};
+  for (const [field, cols] of Object.entries(candidates)) {
+    if (cols.length === 1) { idx[field] = cols[0]; continue; }
+    let best = cols[0], bestFilled = -1;
+    cols.forEach(c => {
+      let filled = 0;
+      const sample = (dataRows || []).slice(0, 50);
+      sample.forEach(r => { if (r[c] && r[c].toString().trim()) filled++; });
+      if (filled > bestFilled) { bestFilled = filled; best = c; }
+    });
+    idx[field] = best;
+    console.log(`[Import CSV] champ "${field}" : ${cols.length} candidats (${cols.map(c=>header[c]).join(', ')}) — choisi "${header[best]}" (${bestFilled}/50 lignes remplies)`);
+  }
+
   return idx;
 }
 
@@ -3972,7 +3991,7 @@ function autoDetectPairColumn(rows, header){
 }
 
 // ─── Transforme une ligne CSV en trade VALIDE ou en raison de skip ───
-function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber) {
+function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber, header) {
   const get = field => colIdx[field] != null ? (row[colIdx[field]] || '').toString().trim() : '';
   const num = field => {
     const v = get(field);
@@ -3982,6 +4001,22 @@ function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber) {
     const n = parseFloat(cleaned);
     return isNaN(n) ? null : n;
   };
+
+  // Indexes des colonnes utilisées par un champ mappé
+  const usedIndexes = new Set(Object.values(colIdx));
+
+  // ─── Collecte TOUT le contenu des colonnes non-mappées ───
+  // Pour ne RIEN perdre des données utilisateur. Stockage propre sous forme texte.
+  const extraLines = [];
+  if (header) {
+    header.forEach((rawHeader, colI) => {
+      if (usedIndexes.has(colI)) return;
+      const val = (row[colI] || '').toString().trim();
+      if (!val) return;
+      const headerClean = (rawHeader || `Col${colI+1}`).toString().trim();
+      extraLines.push(`${headerClean} : ${val}`);
+    });
+  }
 
   // ─── Validation actif ───
   const rawPair = get('pair');
@@ -4021,7 +4056,17 @@ function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber) {
     errs:        parseErrs(get('errs')),
     bonTrade:    parseBool(get('bonTrade')),
     manageTrade: get('manageTrade') || null,
-    confluences: get('confluences') || '',
+    confluences: (() => {
+      // Concatène la valeur de "confluences" + les colonnes non-mappées
+      // → AUCUNE donnée perdue, tout est visible dans le panel du trade
+      const base = get('confluences');
+      const parts = [];
+      if (base) parts.push(base);
+      if (extraLines.length) {
+        parts.push('— Données importées —\n' + extraLines.join('\n'));
+      }
+      return parts.join('\n\n');
+    })(),
     psy:         get('psy') || '',
     checklist:   [false,false,false,false,false],
     screenshots: {},
@@ -4043,7 +4088,9 @@ function importCSV(input) {
       if (rows.length < 2) throw new Error('CSV vide ou sans en-tête.');
 
       const header = rows[0].map(h => (h || '').toString().trim());
-      const colIdx = buildColumnIndex(header);
+      const dataRows = rows.slice(1);
+      // colIdx tient compte des candidats multiples et choisit celui le plus rempli
+      const colIdx = buildColumnIndex(header, dataRows);
 
       // Si la colonne pair n'a pas été identifiée via header, scan auto
       if (colIdx.pair == null) {
@@ -4071,7 +4118,7 @@ function importCSV(input) {
         // Skip lignes complètement vides
         if (!row.length || !row.some(v => v && v.toString().trim())) continue;
 
-        const res = csvRowToTradeOrSkip(row, colIdx, base, counter, lineNumber);
+        const res = csvRowToTradeOrSkip(row, colIdx, base, counter, lineNumber, header);
         if (res.skip) {
           skipped.push({ line: res.line, reason: res.reason });
         } else {
@@ -4114,11 +4161,14 @@ function openCsvPreview() {
     <div class="csv-stat"><div class="csv-stat-label">Actifs uniques</div><div class="csv-stat-val">${[...new Set(st.validTrades.map(t=>t.pair))].length}</div></div>
   `;
 
-  // Colonnes détectées
-  const ignoredCols = st.header.filter((_,i) => !Object.values(st.colIdx).includes(i));
+  // Colonnes détectées + colonnes conservées dans les confluences
+  const usedIdxs = new Set(Object.values(st.colIdx));
+  const extraCols = st.header.filter((_,i) => !usedIdxs.has(i));
   document.getElementById('csv-cols-detected').innerHTML =
-    `<b>Colonnes détectées :</b> ${st.detected.join(', ')}<br>` +
-    `<b>Colonnes ignorées :</b> ${ignoredCols.length ? ignoredCols.join(', ') : '(aucune)'}`;
+    `<b>Colonnes mappées</b> (${st.detected.length}) : ${st.detected.join(', ')}<br>` +
+    (extraCols.length
+      ? `<b>Colonnes conservées dans "confluences"</b> (${extraCols.length}, zéro perte) : ${extraCols.join(', ')}`
+      : `<b>Toutes les colonnes ont été mappées</b>`);
 
   // Lignes ignorées
   const skipBox = document.getElementById('csv-skipped-box');
