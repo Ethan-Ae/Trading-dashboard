@@ -121,6 +121,10 @@ input, select, textarea, button { font-family: inherit; }
 .auth-gate.on { display: flex; }
 .auth-card { background: linear-gradient(160deg, var(--bg2), var(--bg1)); border: 1px solid var(--sep); border-radius: 24px; padding: 40px 36px; width: 100%; max-width: 420px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
 .auth-logo { display: flex; justify-content: center; margin-bottom: 18px; }
+.brand-logo { max-width: 240px; max-height: 80px; width: auto; height: auto; object-fit: contain; }
+.auth-help-line { text-align: center; color: var(--text3); font-size: .72rem; margin-top: 10px; }
+.auth-help-line a { color: var(--orange); text-decoration: none; }
+.auth-help-line a:hover { text-decoration: underline; }
 .auth-title { text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
 .auth-sub { text-align: center; color: var(--text3); font-size: .85rem; margin-bottom: 24px; }
 .auth-tabs { display: flex; background: var(--bg1); border-radius: 12px; padding: 4px; margin-bottom: 22px; border: 1px solid var(--sep); }
@@ -203,6 +207,9 @@ body.has-trial-banner .main { padding-top: 92px; }
 .settings-add { background: transparent; border: 1.5px dashed var(--bg4); border-radius: 10px; color: var(--text3); cursor: pointer; padding: 11px; font-size: .82rem; transition: all .15s; width: 100%; }
 .settings-add:hover { border-color: var(--orange); color: var(--orange); }
 .settings-empty { text-align: center; color: var(--text3); font-size: .82rem; padding: 24px; font-style: italic; }
+.settings-contact { display: flex; align-items: center; gap: 14px; background: var(--bg1); border: 1px solid var(--sep); border-radius: 12px; padding: 16px 18px; text-decoration: none; color: var(--text); transition: all .15s; }
+.settings-contact:hover { border-color: var(--orange); background: rgba(255,159,10,.05); }
+.settings-contact b { color: var(--orange); font-weight: 600; }
 
 .setups-intro, .page-intro { background: linear-gradient(135deg, rgba(255,159,10,.10), rgba(10,132,255,.06)); border: 1px solid var(--sep); border-radius: 22px; padding: 20px 24px; margin-bottom: 22px; }
 .setups-intro-title, .page-intro-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
@@ -976,7 +983,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       </select>
       <select class="filter-select" id="t-result" onchange="renderTradesTable()">
         <option value="">Résultat</option>
-        <option>TP Total</option><option>TP Partiel</option><option>SL Total</option><option>SL Partiel</option><option>BE</option><option>En cours</option>
+        <option>TP Total</option><option>Profit Partiel</option><option>SL Total</option><option>SL Partiel</option><option>BE</option><option>En cours</option>
       </select>
       <select class="filter-select" id="t-type" onchange="renderTradesTable()">
         <option value="">Type d'Ordre</option>
@@ -1224,6 +1231,33 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       <div class="settings-list" id="settings-errors"></div>
       <button class="settings-add" onclick="addError()">＋ Ajouter une erreur</button>
     </div>
+
+    <!-- ─── Tendances ─── -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title">📈 Tendances de marché</div>
+          <div class="settings-card-sub">Contextes dans lesquels tu trades (In Trend, Range, etc.)</div>
+        </div>
+        <button class="settings-reset" onclick="resetTendances()" title="Restaurer les valeurs par défaut">↺ Reset</button>
+      </div>
+      <div class="settings-list" id="settings-tendances"></div>
+      <button class="settings-add" onclick="addTendance()">＋ Ajouter une tendance</button>
+    </div>
+
+    <!-- ─── Contact / About ─── -->
+    <div class="settings-card" style="grid-column:span 2">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title">📬 Contact & À propos</div>
+          <div class="settings-card-sub">Une question, une suggestion, un bug ? Écris-nous.</div>
+        </div>
+      </div>
+      <a href="mailto:onertrade@outlook.com" class="settings-contact">
+        <span style="font-size:1.2rem">✉️</span>
+        <span><b>onertrade@outlook.com</b><br><span style="color:var(--text3);font-size:.75rem">Réponse sous 24h en semaine</span></span>
+      </a>
+    </div>
   </div>
 </div>
 
@@ -1249,10 +1283,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 <div class="auth-gate" id="auth-gate">
   <div class="auth-card">
     <div class="auth-logo">
-      <svg viewBox="0 0 40 40" width="44" height="44">
-        <rect width="40" height="40" rx="11" fill="#ff9f0a"/>
-        <path d="M7 28 L14 18 L21 23 L30 11 L35 14" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
+      <img src="/logo.png" alt="OneRtrade" class="brand-logo"
+           onerror="this.outerHTML='<svg viewBox=\'0 0 40 40\' width=\'44\' height=\'44\'><rect width=\'40\' height=\'40\' rx=\'11\' fill=\'#ff9f0a\'/><path d=\'M7 28 L14 18 L21 23 L30 11 L35 14\' stroke=\'#000\' stroke-width=\'3\' stroke-linecap=\'round\' stroke-linejoin=\'round\' fill=\'none\'/></svg>'">
     </div>
     <div class="auth-title" id="auth-title">Connexion</div>
     <div class="auth-sub" id="auth-sub">Accède à ton journal de trading</div>
@@ -1278,6 +1310,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     </form>
 
     <div class="auth-footer">🔒 Tes trades sont protégés et chiffrés — seul toi y as accès.</div>
+    <div class="auth-help-line">Une question ? <a href="mailto:onertrade@outlook.com">onertrade@outlook.com</a></div>
   </div>
 </div>
 
@@ -1285,10 +1318,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 <div class="auth-gate" id="paywall-gate">
   <div class="auth-card" style="max-width:480px">
     <div class="auth-logo">
-      <svg viewBox="0 0 40 40" width="44" height="44">
-        <rect width="40" height="40" rx="11" fill="#ff9f0a"/>
-        <path d="M7 28 L14 18 L21 23 L30 11 L35 14" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
+      <img src="/logo.png" alt="OneRtrade" class="brand-logo"
+           onerror="this.outerHTML='<svg viewBox=\'0 0 40 40\' width=\'44\' height=\'44\'><rect width=\'40\' height=\'40\' rx=\'11\' fill=\'#ff9f0a\'/><path d=\'M7 28 L14 18 L21 23 L30 11 L35 14\' stroke=\'#000\' stroke-width=\'3\' stroke-linecap=\'round\' stroke-linejoin=\'round\' fill=\'none\'/></svg>'">
     </div>
     <div class="auth-title">Ton essai gratuit est terminé</div>
     <div class="auth-sub" style="margin-bottom:28px">
@@ -1315,6 +1346,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     </button>
 
     <div class="auth-footer">🔒 Paiement sécurisé · Tes données restent intactes</div>
+    <div class="auth-help-line">Besoin d'aide ? <a href="mailto:onertrade@outlook.com">onertrade@outlook.com</a></div>
   </div>
 </div>
 
@@ -1377,7 +1409,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       </div>
       <div class="form-group"><label>Résultat</label>
         <select id="m-result">
-          <option>En cours</option><option>TP Total</option><option>TP Partiel</option>
+          <option>En cours</option><option>TP Total</option><option>Profit Partiel</option>
           <option>SL Total</option><option>SL Partiel</option><option>BE</option>
         </select>
       </div>
@@ -1435,21 +1467,6 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
           <div class="ss-slot-label" id="m-ss-label">Glisser une image ou <span style="color:var(--orange)">Ctrl+V</span></div>
         </div>
       </div>
-      <div class="form-group" style="grid-column:span 2">
-        <details class="calc-details">
-          <summary>📐 Calculateur de taille de position</summary>
-          <div class="calc-grid">
-            <div><label>Capital ($)</label><input type="number" id="calc-cap" placeholder="ex: 10000" oninput="updateLotCalc()"></div>
-            <div><label>Stop (pips)</label><input type="number" id="calc-pips" placeholder="ex: 25" oninput="updateLotCalc()"></div>
-            <div><label>Valeur pip ($/lot)</label><input type="number" id="calc-pipval" value="10" step=".01" oninput="updateLotCalc()"></div>
-            <div class="calc-result">
-              <div class="calc-r-label">Risque</div><div class="calc-r-val" id="calc-risk-out">—</div>
-              <div class="calc-r-label">Taille (lots)</div><div class="calc-r-val ora" id="calc-lots-out">—</div>
-            </div>
-          </div>
-          <div class="calc-hint">Astuce : EUR/USD ≈ 10$/lot · XAUUSD ≈ 1$/lot · JPY pairs ≈ ajuste manuellement</div>
-        </details>
-      </div>
     </div>
     <div class="form-actions">
       <button class="btn-ghost" onclick="closeAddModal()">Annuler</button>
@@ -1463,8 +1480,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 //  DATA MODEL
 // ───────────────────────────────────────────
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-const RESULT_EMOJI = { 'TP Total':'✅', 'TP Partiel':'👍', 'SL Total':'❌', 'SL Partiel':'🟠', 'BE':'⚖️', 'En cours':'🔵' };
-const RESULT_OPTIONS = ['En cours','TP Total','TP Partiel','SL Total','SL Partiel','BE'];
+const RESULT_EMOJI = { 'TP Total':'✅', 'Profit Partiel':'👍', 'SL Total':'❌', 'SL Partiel':'🟠', 'BE':'⚖️', 'En cours':'🔵' };
+const RESULT_OPTIONS = ['En cours','TP Total','Profit Partiel','SL Total','SL Partiel','BE'];
 const RETAILS_OPTIONS = ['—','Avec les Retails','Contre les Retails'];
 const TYPE_OPTIONS = [
   '50% Technique 50% Fondamental',
@@ -1476,7 +1493,8 @@ const TYPE_OPTIONS = [
 const ORDRE_OPTIONS = ['MARKET BUY','MARKET SELL','BUY LIMIT','SELL LIMIT','BUY STOP','SELL STOP'];
 const TF_OPTIONS = ['Weekly','Daily','12h','8h','4h','2h','1h','30mins','15mins','10mins','5mins','1min'];
 const HOLD_OPTIONS = ['< 1H','< 5H','< 24H','< 3J','< 5J','< 10J','< 15J','> 15J'];
-const TEND_OPTIONS = ['In Trend','Range Trade','Counter Trend','Reversal'];
+const TEND_OPTIONS_DEFAULT = ['In Trend','Range Trade','Counter Trend','Reversal'];
+let TEND_OPTIONS = TEND_OPTIONS_DEFAULT.slice();
 const FOREX_PAIRS = {
   'Majeures':   ['EURUSD','GBPUSD','USDJPY','USDCHF','USDCAD','AUDUSD','NZDUSD'],
   'EUR Croisés':['EURGBP','EURJPY','EURCHF','EURCAD','EURAUD','EURNZD'],
@@ -1520,6 +1538,10 @@ function saveErrors(){
   localStorage.setItem('errors_items', JSON.stringify(ERRORS));
   saveUserPreferences();
 }
+function saveTendances(){
+  localStorage.setItem('tendances_items', JSON.stringify(TEND_OPTIONS));
+  saveUserPreferences();
+}
 
 let _savePrefsTimer = null;
 async function saveUserPreferences(){
@@ -1529,9 +1551,10 @@ async function saveUserPreferences(){
   _savePrefsTimer = setTimeout(async () => {
     try {
       const { error } = await sb.from('user_preferences').upsert({
-        user_id:  currentUser.id,
+        user_id:   currentUser.id,
         checklist: CHECKLIST,
         errors:    ERRORS,
+        tendances: TEND_OPTIONS,
       }, { onConflict: 'user_id' });
       if (error) console.error('[Prefs] save error', error);
       else console.log('[Prefs] sauvegardé');
@@ -1544,7 +1567,7 @@ async function loadUserPreferences(){
   try {
     const { data, error } = await sb
       .from('user_preferences')
-      .select('checklist, errors')
+      .select('checklist, errors, tendances')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     if (error) { console.error('[Prefs] load error', error); return; }
@@ -1556,14 +1579,18 @@ async function loadUserPreferences(){
       if (Array.isArray(data.errors) && data.errors.length) {
         ERRORS = data.errors.slice();
       }
-      console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs');
+      if (Array.isArray(data.tendances) && data.tendances.length) {
+        TEND_OPTIONS = data.tendances.slice();
+      }
+      console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs,', TEND_OPTIONS.length, 'tendances');
     } else {
       // Pas de ligne → on crée avec les valeurs par défaut
       console.log('[Prefs] première fois — création avec valeurs par défaut');
       await sb.from('user_preferences').insert({
-        user_id:  currentUser.id,
+        user_id:   currentUser.id,
         checklist: CHECKLIST,
         errors:    ERRORS,
+        tendances: TEND_OPTIONS,
       });
     }
   } catch(e) { console.error('[Prefs] exception load', e); }
@@ -1620,6 +1647,32 @@ function resetChecklist(){
 function resetErrors(){
   if(!confirm('Réinitialiser les erreurs aux valeurs par défaut ?')) return;
   ERRORS = ERRORS_DEFAULT.slice(); saveErrors();
+  if(currentPage==='settings') renderSettings();
+}
+
+// ─── TENDANCES ───
+function addTendance(){
+  const label = prompt('Nouvelle tendance :');
+  if(!label||!label.trim()) return;
+  if(TEND_OPTIONS.includes(label.trim())) { alert('Cette tendance existe déjà'); return; }
+  TEND_OPTIONS.push(label.trim()); saveTendances();
+  if(currentPage==='settings') renderSettings();
+}
+function editTendance(i){
+  const label = prompt('Modifier la tendance :', TEND_OPTIONS[i]);
+  if(label===null) return;
+  if(!label.trim()){ delTendance(i); return; }
+  TEND_OPTIONS[i] = label.trim(); saveTendances();
+  if(currentPage==='settings') renderSettings();
+}
+function delTendance(i){
+  if(!confirm('Supprimer cette tendance ?\n\nLes trades qui la portaient gardent leur tag historique.')) return;
+  TEND_OPTIONS.splice(i,1); saveTendances();
+  if(currentPage==='settings') renderSettings();
+}
+function resetTendances(){
+  if(!confirm('Réinitialiser les tendances aux valeurs par défaut ?')) return;
+  TEND_OPTIONS = TEND_OPTIONS_DEFAULT.slice(); saveTendances();
   if(currentPage==='settings') renderSettings();
 }
 function toggleCheck(id, i){
@@ -1734,7 +1787,7 @@ const chartDefaults = (extra={}) => ({
 
 function resultChip(r){
   if(!r) return '';
-  const cls = r==='TP Total'||r==='TP Partiel'?'chip-tp':r==='SL Total'?'chip-sl':r==='BE'?'chip-be':'chip-enc';
+  const cls = r==='TP Total'||r==='Profit Partiel'?'chip-tp':r==='SL Total'?'chip-sl':r==='BE'?'chip-be':'chip-enc';
   return `<span class="chip ${cls}">${RESULT_EMOJI[r]||''} ${r}</span>`;
 }
 function ordreChip(o){
@@ -1747,7 +1800,7 @@ function rStr(v){ if(v===null||v===undefined)return '—'; return (v>0?'+':'')+v
 
 function calcStats(ts){
   const withR = ts.filter(t=>t.rrf!==null&&t.rrf!==undefined);
-  const wins = ts.filter(t=>t.result==='TP Total'||t.result==='TP Partiel');
+  const wins = ts.filter(t=>t.result==='TP Total'||t.result==='Profit Partiel');
   const losses = ts.filter(t=>t.result==='SL Total');
   const totalR = withR.reduce((s,t)=>s+t.rrf,0);
   const winR  = wins.map(t=>t.rrf).filter(r=>r>0).reduce((s,r)=>s+r,0);
@@ -1761,7 +1814,7 @@ function calcStats(ts){
     totalR:+totalR.toFixed(2), avgR:withR.length?(+(totalR/withR.length).toFixed(2)):0,
     avgWin:+avgWin.toFixed(2), avgLoss:+avgLoss.toFixed(2),
     pf:+pf.toFixed(2),
-    maxStreak: maxStreak(ts,'TP Total')+maxStreak(ts,'TP Partiel'),
+    maxStreak: maxStreak(ts,'TP Total')+maxStreak(ts,'Profit Partiel'),
     maxDD: calcMaxDD(ts),
   };
 }
@@ -1851,7 +1904,7 @@ function renderOverview(){
 
   // Wins by weekday
   const wdNames = ['Lun','Mar','Mer','Jeu','Ven'];
-  const wdWins = wdNames.map((_,i)=>ts.filter(t=>new Date(t.date).getDay()===(i+1)&&(t.result==='TP Total'||t.result==='TP Partiel')).length);
+  const wdWins = wdNames.map((_,i)=>ts.filter(t=>new Date(t.date).getDay()===(i+1)&&(t.result==='TP Total'||t.result==='Profit Partiel')).length);
   const wdTotal= wdNames.map((_,i)=>ts.filter(t=>new Date(t.date).getDay()===(i+1)).length);
   dc('weekChart');
   ch['weekChart'] = new Chart(document.getElementById('weekChart'),{
@@ -2088,7 +2141,7 @@ function renderSetups(){
   const tMap={};
   TEND_OPTIONS.forEach(t=>{
     const tt=ts.filter(x=>x.tend===t);
-    const w=tt.filter(x=>x.result==='TP Total'||x.result==='TP Partiel').length;
+    const w=tt.filter(x=>x.result==='TP Total'||x.result==='Profit Partiel').length;
     tMap[t]=tt.length?+(w/tt.length*100).toFixed(1):0;
   });
   dc('tendChart');
@@ -2655,7 +2708,7 @@ function renderPerfFilters(){
 function bdRow(dim, ts, val){
   const sub=ts.filter(t=>dim.get(t)===val);
   if(!sub.length) return null;
-  const wins=sub.filter(t=>t.result==='TP Total'||t.result==='TP Partiel').length;
+  const wins=sub.filter(t=>t.result==='TP Total'||t.result==='Profit Partiel').length;
   const losses=sub.filter(t=>t.result==='SL Total').length;
   const wr=+(wins/sub.length*100).toFixed(1);
   const withR=sub.filter(t=>t.rrf!==null&&t.rrf!==undefined);
@@ -2663,7 +2716,7 @@ function bdRow(dim, ts, val){
   const avgR=withR.length?+(totalR/withR.length).toFixed(2):0;
   const bestR=withR.length?+(Math.max(...withR.map(t=>t.rrf))).toFixed(2):0;
   const worstR=withR.length?+(Math.min(...withR.map(t=>t.rrf))).toFixed(2):0;
-  const pf=()=>{ const lR=sub.filter(t=>t.result==='SL Total').reduce((s,t)=>s+Math.abs(t.rrf||0),0); const wR=sub.filter(t=>t.result==='TP Total'||t.result==='TP Partiel').reduce((s,t)=>s+(t.rrf||0),0); return lR>0?+(wR/lR).toFixed(2):'—'; };
+  const pf=()=>{ const lR=sub.filter(t=>t.result==='SL Total').reduce((s,t)=>s+Math.abs(t.rrf||0),0); const wR=sub.filter(t=>t.result==='TP Total'||t.result==='Profit Partiel').reduce((s,t)=>s+(t.rrf||0),0); return lR>0?+(wR/lR).toFixed(2):'—'; };
   const wrColor=wr>=60?'var(--green)':wr>=45?'var(--orange)':'var(--red)';
   const fillColor=wr>=60?'#30d158':wr>=45?'#ff9f0a':'#ff453a';
   return `<tr>
@@ -2735,7 +2788,7 @@ function renderMonthly(){
 
   // Stats
   const closed = ts.filter(t => t.result !== 'En cours');
-  const wins = closed.filter(t => t.result==='TP Total' || t.result==='TP Partiel');
+  const wins = closed.filter(t => t.result==='TP Total' || t.result==='Profit Partiel');
   const losses = closed.filter(t => t.result==='SL Total');
   const totalR = +closed.reduce((s,t)=>s+(t.rrf||0),0).toFixed(2);
   const wr = closed.length ? (wins.length/closed.length*100) : 0;
@@ -2764,7 +2817,7 @@ function renderMonthly(){
   // Streaks
   let bestW=0,bestL=0,curW=0,curL=0;
   closed.forEach(t=>{
-    if(t.result==='TP Total'||t.result==='TP Partiel'){ curW++; curL=0; bestW=Math.max(bestW,curW); }
+    if(t.result==='TP Total'||t.result==='Profit Partiel'){ curW++; curL=0; bestW=Math.max(bestW,curW); }
     else if(t.result==='SL Total'){ curL++; curW=0; bestL=Math.max(bestL,curL); }
     else { curW=0; curL=0; }
   });
@@ -2972,33 +3025,24 @@ function refreshCurrentPage(){
 function renderSettings(){
   const clEl = document.getElementById('settings-checklist');
   const erEl = document.getElementById('settings-errors');
-  if(!clEl || !erEl) return;
+  const tdEl = document.getElementById('settings-tendances');
+  if(!clEl || !erEl || !tdEl) return;
 
-  if(CHECKLIST.length === 0){
-    clEl.innerHTML = '<div class="settings-empty">Aucun élément. Clique sur « + Ajouter un élément » pour commencer.</div>';
-  } else {
-    clEl.innerHTML = CHECKLIST.map((c,i) => `
+  const buildList = (arr, editFn, delFn, emptyMsg) => {
+    if(arr.length === 0) return `<div class="settings-empty">${emptyMsg}</div>`;
+    return arr.map((item, i) => `
       <div class="settings-row">
-        <div class="settings-row-text">${escapeHtml(c)}</div>
+        <div class="settings-row-text">${escapeHtml(item)}</div>
         <div class="settings-row-actions">
-          <button onclick="editChecklistItem(${i})" title="Modifier">✏️</button>
-          <button class="del" onclick="delChecklistItem(${i})" title="Supprimer">✕</button>
+          <button onclick="${editFn}(${i})" title="Modifier">✏️</button>
+          <button class="del" onclick="${delFn}(${i})" title="Supprimer">✕</button>
         </div>
       </div>`).join('');
-  }
+  };
 
-  if(ERRORS.length === 0){
-    erEl.innerHTML = '<div class="settings-empty">Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.</div>';
-  } else {
-    erEl.innerHTML = ERRORS.map((e,i) => `
-      <div class="settings-row">
-        <div class="settings-row-text">${escapeHtml(e)}</div>
-        <div class="settings-row-actions">
-          <button onclick="editError(${i})" title="Modifier">✏️</button>
-          <button class="del" onclick="delError(${i})" title="Supprimer">✕</button>
-        </div>
-      </div>`).join('');
-  }
+  clEl.innerHTML = buildList(CHECKLIST,   'editChecklistItem', 'delChecklistItem', 'Aucun élément. Clique sur « + Ajouter un élément » pour commencer.');
+  erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         'Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.');
+  tdEl.innerHTML = buildList(TEND_OPTIONS,'editTendance',      'delTendance',      'Aucune tendance. Clique sur « + Ajouter une tendance » pour commencer.');
 }
 
 function escapeHtml(s){
@@ -3996,33 +4040,6 @@ function importJSON(input){
   };
   reader.readAsText(f);
 }
-
-// ─────────────────────────────────────────────
-//  POSITION SIZE CALCULATOR (in New Trade modal)
-// ─────────────────────────────────────────────
-function updateLotCalc(){
-  const cap = +document.getElementById('calc-cap').value || 0;
-  const pips = +document.getElementById('calc-pips').value || 0;
-  const pipVal = +document.getElementById('calc-pipval').value || 10;
-  const riskPctStr = document.getElementById('m-risk').value || '1%';
-  const riskPct = parseFloat(riskPctStr) || 1;
-  const riskUsd = cap * riskPct / 100;
-  const lots = (pips>0 && pipVal>0) ? (riskUsd / (pips * pipVal)) : 0;
-  document.getElementById('calc-risk-out').textContent = cap>0 ? '$'+riskUsd.toFixed(2)+' ('+riskPct+'%)' : '—';
-  document.getElementById('calc-lots-out').textContent = lots>0 ? lots.toFixed(2)+' lots' : '—';
-  // also remember capital
-  if(cap>0) localStorage.setItem('calc_capital', cap);
-}
-// Restore capital on modal open
-(function(){
-  const origOpen = window.openAddModal;
-  window.openAddModal = function(){
-    origOpen.apply(this, arguments);
-    const cap = localStorage.getItem('calc_capital');
-    if(cap) document.getElementById('calc-cap').value = cap;
-    updateLotCalc();
-  };
-})();
 
 // ─────────────────────────────────────────────
 //  KEYBOARD SHORTCUTS
