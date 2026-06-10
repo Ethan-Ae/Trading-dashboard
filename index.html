@@ -3723,7 +3723,8 @@ const normCol = s => (s||'').toString().toLowerCase()
 // Mapping {variantes_csv → champ_interne}
 const CSV_FIELD_MAP = {
   pair:        ['pair','paire','symbol','symbole','symbol','symbols','asset','actif','actifs','instrument','devise','devises','ticker','nom','name','crosse','crosspair','currencypair','currency','marche','market'],
-  date:        ['date','day','jour'],
+  date:        ['date','tradedate','datedetrade','datedutrade','datedeposition','datedouverture','datecreated','createddate'],
+  jour:        ['jour','day','dayofweek','jourdelasemaine','weekday','dow'],
   tf:          ['tf','timeframe','timeframe','tframe','ut'],
   ordre:       ['ordre','order','type','typeordre','typedordre'],
   risk:        ['risk','risque','risqu'],
@@ -3757,6 +3758,9 @@ function buildColumnIndex(header) {
   header.forEach((rawName, i) => {
     const norm = normCol(rawName);
     for (const [field, variants] of Object.entries(CSV_FIELD_MAP)) {
+      // FIRST-COME-FIRST-SERVED : si un champ est déjà mappé, on n'écrase pas.
+      // Évite le bug où "Jour" écrasait "DATE" sur le même champ `date`.
+      if (idx[field] != null) continue;
       if (variants.includes(norm)) { idx[field] = i; break; }
     }
   });
