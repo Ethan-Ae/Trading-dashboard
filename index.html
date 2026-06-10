@@ -218,6 +218,31 @@ body.has-trial-banner .main { padding-top: 92px; }
 .settings-contact:hover { border-color: var(--orange); background: rgba(255,159,10,.05); }
 .settings-contact b { color: var(--orange); font-weight: 600; }
 
+/* ── CSV PREVIEW MODAL ── */
+.csv-preview { max-width: 900px; width: 92%; max-height: 85vh; overflow: auto; }
+.csv-preview h2 { margin: 0 0 8px; font-size: 1.15rem; }
+.csv-preview-sub { color: var(--text3); font-size: .82rem; margin-bottom: 16px; }
+.csv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.csv-stat { background: var(--bg1); border: 1px solid var(--sep); border-radius: 12px; padding: 12px 14px; }
+.csv-stat-label { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.csv-stat-val { font-size: 1.2rem; font-weight: 700; }
+.csv-stat.ok .csv-stat-val { color: #30d158; }
+.csv-stat.skip .csv-stat-val { color: #ff9f0a; }
+.csv-skipped-box { background: rgba(255,159,10,.08); border: 1px solid rgba(255,159,10,.25); border-radius: 10px; padding: 12px; margin-bottom: 16px; max-height: 140px; overflow: auto; }
+.csv-skipped-box h4 { margin: 0 0 6px; font-size: .8rem; color: var(--orange); }
+.csv-skipped-box ul { margin: 0; padding-left: 18px; font-size: .75rem; color: var(--text2); }
+.csv-skipped-box li { margin-bottom: 2px; }
+.csv-cols-detected { background: var(--bg1); border: 1px solid var(--sep); border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; font-size: .75rem; color: var(--text2); }
+.csv-cols-detected b { color: var(--orange); font-weight: 600; }
+.csv-table-wrap { overflow: auto; max-height: 320px; border: 1px solid var(--sep); border-radius: 10px; margin-bottom: 16px; }
+.csv-table-wrap table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.csv-table-wrap th { position: sticky; top: 0; background: var(--bg2); color: var(--text3); font-weight: 600; text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--sep); font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; }
+.csv-table-wrap td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.csv-table-wrap tr:hover td { background: rgba(255,255,255,.02); }
+.csv-table-wrap td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.csv-table-wrap td.pos { color: #30d158; }
+.csv-table-wrap td.neg { color: #ff453a; }
+
 .setups-intro, .page-intro { background: linear-gradient(135deg, rgba(255,159,10,.10), rgba(10,132,255,.06)); border: 1px solid var(--sep); border-radius: 22px; padding: 20px 24px; margin-bottom: 22px; }
 .setups-intro-title, .page-intro-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
 .setups-intro-sub, .page-intro-sub { color: var(--text2); font-size: .88rem; line-height: 1.5; }
@@ -1295,8 +1320,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 <div class="auth-gate" id="auth-gate">
   <div class="auth-card">
     <div class="auth-logo">
-      <img src="/onertrade_horizontal.png" alt="OneRtrade" class="brand-logo"
-           onerror="this.outerHTML='<svg viewBox=\'0 0 40 40\' width=\'44\' height=\'44\'><rect width=\'40\' height=\'40\' rx=\'11\' fill=\'#ff9f0a\'/><path d=\'M7 28 L14 18 L21 23 L30 11 L35 14\' stroke=\'#000\' stroke-width=\'3\' stroke-linecap=\'round\' stroke-linejoin=\'round\' fill=\'none\'/></svg>'">
+      <svg viewBox="0 0 40 40" width="44" height="44">
+        <rect width="40" height="40" rx="11" fill="#ff9f0a"/>
+        <path d="M7 28 L14 18 L21 23 L30 11 L35 14" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
     </div>
     <div class="auth-title" id="auth-title">Connexion</div>
     <div class="auth-sub" id="auth-sub">Accède à ton journal de trading</div>
@@ -1485,6 +1512,32 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     <div class="form-actions">
       <button class="btn-ghost" onclick="closeAddModal()">Annuler</button>
       <button class="btn-orange" onclick="saveTrade()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ CSV PREVIEW MODAL ══════ -->
+<div class="modal-overlay" id="csvPreviewModal">
+  <div class="modal csv-preview">
+    <h2>📊 Aperçu de l'import CSV</h2>
+    <div class="csv-preview-sub" id="csv-preview-sub">Vérifie les données avant import — rien ne sera écrit en base tant que tu n'as pas validé.</div>
+
+    <div class="csv-stats" id="csv-stats"></div>
+    <div class="csv-cols-detected" id="csv-cols-detected"></div>
+    <div class="csv-skipped-box" id="csv-skipped-box" style="display:none">
+      <h4>⚠️ Lignes ignorées</h4>
+      <ul id="csv-skipped-list"></ul>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0;font-size:.9rem">Aperçu (50 premières lignes valides)</h3>
+      <span style="color:var(--text3);font-size:.7rem" id="csv-preview-count">—</span>
+    </div>
+    <div class="csv-table-wrap" id="csv-preview-table"></div>
+
+    <div class="form-actions">
+      <button class="btn-ghost" onclick="closeCsvPreview()">Annuler</button>
+      <button class="btn-orange" id="csv-preview-confirm" onclick="confirmCsvImport()">Importer</button>
     </div>
   </div>
 </div>
@@ -3624,7 +3677,15 @@ function importFile(input){
 //  - les valeurs entre guillemets avec virgules et "" échappés
 //  - les \r\n / \n
 function parseCSV(text) {
-  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // strip BOM
+  // Strip BOM (peut apparaître en début de fichier exports Notion/Excel)
+  // On strip 0xFEFF mais aussi 0xEF 0xBB 0xBF si la lecture donne ça en bytes
+  while (text.length && (text.charCodeAt(0) === 0xFEFF || text.charCodeAt(0) === 0xFFFE)) {
+    text = text.slice(1);
+  }
+  // Et au cas où le BOM se présente comme la séquence ï»¿ (mal décodée)
+  if (text.startsWith('﻿') || text.startsWith('ï»¿')) {
+    text = text.replace(/^(﻿|ï»¿)/, '');
+  }
 
   // Auto-détection du séparateur sur la 1ère ligne (avant le premier \n hors quote)
   const firstLine = text.split(/\r?\n/)[0] || '';
@@ -3685,9 +3746,10 @@ const CSV_FIELD_MAP = {
   retails:     ['retails','retail','positionretails','versretails'],
   confluences: ['confluences','raisons','reasons','setup','notes','commentaire'],
   psy:         ['psy','psychologie','etatpsy','psychology','mood','emotion'],
-  bonTrade:    ['bontrade','goodtrade','bon','ok'],
-  manageTrade: ['managetrade','management','manage','gestion'],
-  errs:        ['errs','erreur','erreurs','errors','mistakes'],
+  bonTrade:    ['bontrade','goodtrade','bon','ok','bontrad'],
+  manageTrade: ['managetrade','management','manage','gestion','trademanagementimpact','managementimpact','impactmanagement','impactdumanagement','impactmanage'],
+  errs:        ['errs','erreur','erreurs','errors','mistakes','mistake'],
+  prise:       ['prise','prisedeposition','priseposition','position','positiontaken','taken','positiontaken','traded','positionprise'],
 };
 
 function buildColumnIndex(header) {
@@ -3836,12 +3898,55 @@ function parseErrs(v) {
 // Nettoie une chaîne de paire/actif : "eur/usd" → "EURUSD", "BTC-USD" → "BTCUSD", "Gold" → "GOLD"
 function cleanPair(raw){
   if(!raw) return '';
-  return String(raw)
-    .toUpperCase()
-    .replace(/[\/\-\._\s]+/g, '')   // enlève / - . _ et espaces
-    .replace(/[^A-Z0-9]/g, '')      // ne garde que lettres+chiffres
-    .trim();
+  let s = String(raw).trim().toUpperCase();
+  // Retire tout suffixe entre parenthèses : "NZDCHF (Add-IN)" → "NZDCHF", "SPX(Edge)" → "SPX"
+  s = s.replace(/\s*\([^)]*\)\s*/g, '');
+  s = s.replace(/\s*\(.*$/, ''); // parenthèses non fermées
+  // Retire les séparateurs internes : "EUR/USD" → "EURUSD", "BTC-USD" → "BTCUSD"
+  s = s.replace(/[\/\-\._\s]+/g, '');
+  // Ne garde que lettres et chiffres
+  s = s.replace(/[^A-Z0-9]/g, '');
+  return s.trim();
 }
+
+// ─── Date stricte au format français DD/MM/YYYY ───
+// Ne fait JAMAIS de fallback Date.parse — si le format n'est pas DD/MM/YYYY, retourne null
+function parseFrenchDate(raw) {
+  if (raw == null || raw === '') return null;
+  let s = String(raw).trim();
+  if (!s) return null;
+  // Retire un éventuel horaire après la date (ex: "05/06/2026 14:30")
+  s = s.split(/[\sT]/)[0];
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if (!m) return null;
+  let [_, dStr, moStr, yStr] = m;
+  let d = parseInt(dStr, 10);
+  let mo = parseInt(moStr, 10);
+  if (isNaN(d) || isNaN(mo) || d < 1 || d > 31 || mo < 1 || mo > 12) return null;
+  let y = yStr;
+  if (y.length === 2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+  const yi = parseInt(y, 10);
+  if (isNaN(yi) || yi < 1900 || yi > 2200) return null;
+  // Sanity check : valider que le jour existe vraiment pour ce mois (ex: 31/02 → null)
+  const dt = new Date(Date.UTC(yi, mo - 1, d));
+  if (dt.getUTCDate() !== d || dt.getUTCMonth() !== mo - 1) return null;
+  return `${yi}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+// ─── Risk : normalise les formats mixtes ("2.5", "2%", "0,50%", "1.00%") → "X.XX%" ───
+function normalizeRisk(raw) {
+  if (raw == null || raw === '') return null;
+  let s = String(raw).trim().replace(',', '.');
+  // Extraire le nombre + le % éventuel
+  const m = s.match(/^([0-9]+(?:\.[0-9]+)?)\s*(%?)\s*$/);
+  if (!m) return null;
+  const num = parseFloat(m[1]);
+  if (isNaN(num) || num < 0 || num > 100) return null;
+  return num.toFixed(2) + '%';
+}
+
+// Valeurs d'actifs à ignorer (lignes parasites des exports Notion)
+const SKIP_PAIR_VALUES = new Set(['', 'NOUVEAU', 'NEW', 'INCONNU', 'UNKNOWN', 'EMPTY', 'NULL']);
 
 // Si la colonne "pair" n'a pas été identifiée par le header, on scanne les cellules
 // pour trouver une colonne qui contient des valeurs ressemblant à des paires forex
@@ -3862,29 +3967,49 @@ function autoDetectPairColumn(rows, header){
   return bestScore >= Math.ceil(sample.length * 0.3) ? bestCol : -1;
 }
 
-function csvRowToTrade(row, colIdx, baseId, i) {
+// ─── Transforme une ligne CSV en trade VALIDE ou en raison de skip ───
+function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber) {
   const get = field => colIdx[field] != null ? (row[colIdx[field]] || '').toString().trim() : '';
-  const num = field => { const v = get(field); if (v === '') return null; const n = parseFloat(v.replace(',','.')); return isNaN(n) ? null : n; };
+  const num = field => {
+    const v = get(field);
+    if (v === '') return null;
+    // Remplace la virgule décimale par un point AVANT parseFloat
+    const cleaned = v.replace(/[^0-9.,\-]/g, '').replace(',', '.');
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? null : n;
+  };
 
-  const date = normalizeDate(get('date')) || new Date().toISOString().slice(0,10);
+  // ─── Validation actif ───
+  const rawPair = get('pair');
+  const pairClean = cleanPair(rawPair);
+  if (!pairClean || SKIP_PAIR_VALUES.has(pairClean)) {
+    return { skip: true, line: lineNumber, reason: `actif vide ou parasite ("${rawPair}")` };
+  }
+
+  // ─── Validation date (STRICTEMENT DD/MM/YYYY) ───
+  const rawDate = get('date');
+  const date = parseFrenchDate(rawDate);
+  if (!date) {
+    return { skip: true, line: lineNumber, reason: `date invalide ("${rawDate}") — format attendu JJ/MM/AAAA` };
+  }
+
   const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  // Reconstruit la date en UTC pour éviter les décalages de timezone
+  const [yy, mm, dd] = date.split('-').map(Number);
+  const dateObj = new Date(Date.UTC(yy, mm - 1, dd));
 
-  // Pair : on garde la valeur brute du CSV (nettoyée), sans jamais retomber sur INCONNU
-  // si on a quoi que ce soit d'utile
-  const pairClean = cleanPair(get('pair'));
-
-  return {
+  const trade = {
     id:          baseId * 1000 + i,
-    pair:        pairClean || 'INCONNU',
+    pair:        pairClean,
     date,
-    prise:       true,
+    prise:       parseBool(get('prise')) !== false, // true par défaut sauf si explicitement false
     tf:          get('tf') || '1h',
     ordre:       get('ordre') || 'MARKET BUY',
-    risk:        get('risk') || '1.00%',
+    risk:        normalizeRisk(get('risk')) || '1.00%',
     rri:         num('rri'),
     result:      get('result') || 'En cours',
     rrf:         num('rrf'),
-    jour:        JOURS[new Date(date).getDay()],
+    jour:        get('jour') || JOURS[dateObj.getUTCDay()],
     hold:        normalizeHold(get('hold')),
     type:        get('type') || '100% Technique',
     tend:        get('tend') || 'In Trend',
@@ -3897,23 +4022,26 @@ function csvRowToTrade(row, colIdx, baseId, i) {
     checklist:   [false,false,false,false,false],
     screenshots: {},
   };
+  return { trade };
 }
+
+// ─── État global pour le preview en cours ───
+let _csvPreviewState = null;
 
 function importCSV(input) {
   const f = input.files && input.files[0]; if (!f) return;
   const reader = new FileReader();
-  reader.onload = async e => {
+  reader.onload = e => {
     try {
       if (!currentUser) { alert('Connecte-toi avant d\'importer.'); return; }
 
       const rows = parseCSV(e.target.result);
       if (rows.length < 2) throw new Error('CSV vide ou sans en-tête.');
 
-      const header = rows[0];
+      const header = rows[0].map(h => (h || '').toString().trim());
       const colIdx = buildColumnIndex(header);
 
-      // Si on n'a pas trouvé la colonne paire via le header, on la détecte automatiquement
-      // en scannant les valeurs (cherche des patterns type "EURUSD", "XAU/USD", etc.)
+      // Si la colonne pair n'a pas été identifiée via header, scan auto
       if (colIdx.pair == null) {
         const auto = autoDetectPairColumn(rows, header);
         if (auto >= 0) {
@@ -3923,56 +4051,44 @@ function importCSV(input) {
       }
 
       const detected = Object.keys(colIdx);
-
       if (detected.length === 0) {
-        throw new Error('Aucune colonne reconnue. Première ligne lue :\n' + header.join(' | ') +
-          '\n\nColonnes attendues (au moins une) : pair, date, tf, ordre, risk, rri, result, rrf, hold, type, tend…');
+        throw new Error('Aucune colonne reconnue.\nPremière ligne lue : ' + header.join(' | '));
       }
 
-      const dataRows = rows.slice(1).filter(r => r.length > 0 && r.some(v => v && v.trim()));
+      // ─── Validation ligne par ligne ───
       const base = Date.now();
-      const newTrades = dataRows.map((row, i) => csvRowToTrade(row, colIdx, base, i));
+      const validTrades = [];
+      const skipped = [];
+      let counter = 0;
 
-      // Compte combien d'actifs uniques on a réussi à extraire
-      const uniquePairs = [...new Set(newTrades.map(t => t.pair).filter(p => p && p !== 'INCONNU'))];
-      const unknownCount = newTrades.filter(t => t.pair === 'INCONNU').length;
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r];
+        const lineNumber = r + 1; // ligne humaine (1-indexée, header = 1)
+        // Skip lignes complètement vides
+        if (!row.length || !row.some(v => v && v.toString().trim())) continue;
 
-      const pairLine = uniquePairs.length
-        ? `Actifs détectés (${uniquePairs.length}) : ${uniquePairs.slice(0,12).join(', ')}${uniquePairs.length>12?`, +${uniquePairs.length-12} autres`:''}`
-        : `⚠️ Aucun actif détecté dans le CSV — tous les trades seront marqués "INCONNU"`;
-      const unknownLine = unknownCount > 0
-        ? `\n⚠️ ${unknownCount} trade(s) sans actif lisible → marqués "INCONNU"`
-        : '';
-
-      const msg = `Importer ${newTrades.length} trades depuis ce CSV sur le compte ${currentUser.email} ?\n\n` +
-        `Colonnes détectées : ${detected.join(', ')}\n` +
-        `Colonnes ignorées : ${header.filter((_,i)=>!Object.values(colIdx).includes(i)).join(', ') || '(aucune)'}\n\n` +
-        pairLine + unknownLine + `\n\n` +
-        `De nouveaux IDs uniques seront générés.`;
-      if (!confirm(msg)) { input.value = ''; return; }
-
-      showToast('⏳ Import CSV en cours… 0/' + newTrades.length);
-      let ok = 0, fail = 0;
-
-      for (let i = 0; i < newTrades.length; i++) {
-        const t = newTrades[i];
-        trades.push(t);
-        try {
-          const row = localToDb(t);
-          if ('user_id' in row) delete row.user_id;
-          const { error } = await sb.from('trades').upsert(row, { onConflict: 'id' });
-          if (error) { fail++; console.error('[Import CSV] échec trade', t.id, error); }
-          else ok++;
-        } catch(err) { fail++; console.error('[Import CSV] exception', err); }
-        if (i % 5 === 0) showToast('⏳ Import CSV… ' + (i+1) + '/' + newTrades.length);
+        const res = csvRowToTradeOrSkip(row, colIdx, base, counter, lineNumber);
+        if (res.skip) {
+          skipped.push({ line: res.line, reason: res.reason });
+        } else {
+          validTrades.push(res.trade);
+          counter++;
+        }
       }
 
-      ensureYearsCoverTrades();
-      rebuildPairDatalist();
-      refreshCurrentPage();
+      // Stocke l'état et affiche le preview
+      _csvPreviewState = { validTrades, skipped, detected, header, colIdx };
+      openCsvPreview();
 
-      if (fail === 0) showToast('✅ ' + ok + ' trades importés depuis le CSV');
-      else showToast(`⚠️ ${ok} importés, ${fail} échecs (voir console)`, true);
+      console.log('[Import CSV] résumé parsing :', {
+        total: rows.length - 1,
+        valides: validTrades.length,
+        ignorees: skipped.length,
+        colonnes: detected,
+        skippedDetails: skipped,
+        firstThreeTrades: validTrades.slice(0, 3),
+      });
+
     } catch(err){
       console.error('[Import CSV] erreur', err);
       alert('Erreur import CSV :\n\n' + err.message);
@@ -3980,6 +4096,113 @@ function importCSV(input) {
     input.value = '';
   };
   reader.readAsText(f);
+}
+
+// ─── Affiche le modal d'aperçu ───
+function openCsvPreview() {
+  const st = _csvPreviewState;
+  if (!st) return;
+
+  // Stats
+  document.getElementById('csv-stats').innerHTML = `
+    <div class="csv-stat ok"><div class="csv-stat-label">Trades valides</div><div class="csv-stat-val">${st.validTrades.length}</div></div>
+    <div class="csv-stat skip"><div class="csv-stat-label">Lignes ignorées</div><div class="csv-stat-val">${st.skipped.length}</div></div>
+    <div class="csv-stat"><div class="csv-stat-label">Actifs uniques</div><div class="csv-stat-val">${[...new Set(st.validTrades.map(t=>t.pair))].length}</div></div>
+  `;
+
+  // Colonnes détectées
+  const ignoredCols = st.header.filter((_,i) => !Object.values(st.colIdx).includes(i));
+  document.getElementById('csv-cols-detected').innerHTML =
+    `<b>Colonnes détectées :</b> ${st.detected.join(', ')}<br>` +
+    `<b>Colonnes ignorées :</b> ${ignoredCols.length ? ignoredCols.join(', ') : '(aucune)'}`;
+
+  // Lignes ignorées
+  const skipBox = document.getElementById('csv-skipped-box');
+  const skipList = document.getElementById('csv-skipped-list');
+  if (st.skipped.length === 0) {
+    skipBox.style.display = 'none';
+  } else {
+    skipBox.style.display = 'block';
+    const shown = st.skipped.slice(0, 20);
+    skipList.innerHTML = shown.map(s => `<li>Ligne ${s.line} : ${escapeHtml(s.reason)}</li>`).join('')
+      + (st.skipped.length > 20 ? `<li>… +${st.skipped.length - 20} autres</li>` : '');
+  }
+
+  // Tableau preview (50 premiers)
+  const preview = st.validTrades.slice(0, 50);
+  const tbody = preview.map(t => `
+    <tr>
+      <td>${escapeHtml(t.pair)}</td>
+      <td>${t.date}</td>
+      <td>${escapeHtml(t.tf || '')}</td>
+      <td>${escapeHtml(t.result || '')}</td>
+      <td class="num">${t.rri != null ? t.rri.toFixed(2) : '—'}</td>
+      <td class="num ${t.rrf > 0 ? 'pos' : t.rrf < 0 ? 'neg' : ''}">${t.rrf != null ? (t.rrf>0?'+':'') + t.rrf.toFixed(2) : '—'}</td>
+      <td>${escapeHtml(t.risk || '')}</td>
+      <td>${escapeHtml(t.hold || '')}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('csv-preview-table').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Actif</th><th>Date</th><th>TF</th><th>Résultat</th>
+        <th style="text-align:right">R/R initial</th>
+        <th style="text-align:right">R/R final</th>
+        <th>Risk</th><th>Holding</th>
+      </tr></thead>
+      <tbody>${tbody}</tbody>
+    </table>
+  `;
+
+  document.getElementById('csv-preview-count').textContent =
+    `${Math.min(preview.length, st.validTrades.length)} / ${st.validTrades.length} affichés`;
+
+  document.getElementById('csv-preview-confirm').textContent =
+    st.validTrades.length > 0 ? `Importer ${st.validTrades.length} trades` : 'Aucun trade à importer';
+  document.getElementById('csv-preview-confirm').disabled = st.validTrades.length === 0;
+
+  document.getElementById('csvPreviewModal').classList.add('open');
+}
+
+function closeCsvPreview() {
+  document.getElementById('csvPreviewModal').classList.remove('open');
+  _csvPreviewState = null;
+}
+
+// ─── Insertion réelle après validation utilisateur ───
+async function confirmCsvImport() {
+  const st = _csvPreviewState;
+  if (!st || !st.validTrades.length) return;
+
+  // Disable bouton, ferme le modal preview
+  const btn = document.getElementById('csv-preview-confirm');
+  btn.disabled = true; btn.textContent = '⏳ Import en cours…';
+  closeCsvPreview();
+
+  const newTrades = st.validTrades;
+  showToast('⏳ Import CSV… 0/' + newTrades.length);
+  let ok = 0, fail = 0;
+
+  for (let i = 0; i < newTrades.length; i++) {
+    const t = newTrades[i];
+    trades.push(t);
+    try {
+      const row = localToDb(t);
+      if ('user_id' in row) delete row.user_id;
+      const { error } = await sb.from('trades').upsert(row, { onConflict: 'id' });
+      if (error) { fail++; console.error('[Import CSV] échec trade', t.id, error); }
+      else ok++;
+    } catch(err) { fail++; console.error('[Import CSV] exception', err); }
+    if (i % 5 === 0) showToast('⏳ Import CSV… ' + (i+1) + '/' + newTrades.length);
+  }
+
+  ensureYearsCoverTrades();
+  rebuildPairDatalist();
+  refreshCurrentPage();
+
+  if (fail === 0) showToast('✅ ' + ok + ' trades importés depuis le CSV');
+  else showToast(`⚠️ ${ok} importés, ${fail} échecs (voir console)`, true);
 }
 
 function importJSON(input){
