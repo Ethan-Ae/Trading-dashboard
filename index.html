@@ -1120,9 +1120,9 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   <div class="sec-title" style="margin:24px 0 12px">🧘 Discipline & exécution</div>
   <div class="discipline-grid" id="discipline-grid"></div>
 
-  <!-- CUSTOM BREAKDOWNS (auto-générés à partir des champs importés) -->
+  <!-- CUSTOM BREAKDOWNS — désactivés tant que l'affichage des champs extra n'est pas branché -->
   <div id="custom-breakdowns-section" style="display:none">
-    <div class="sec-title" style="margin:24px 0 12px">📥 Analyses personnalisées <span style="color:var(--text3);font-weight:500;font-size:.75rem;margin-left:8px">basées sur les champs que tu as importés</span></div>
+    <div class="sec-title" style="margin:24px 0 12px">📥 Analyses personnalisées</div>
     <div class="custom-breakdowns" id="custom-breakdowns"></div>
   </div>
 
@@ -2365,9 +2365,6 @@ function renderSetups(){
       <div class="disc-hint">R moyen attendu par trade</div>
     </div>`;
 
-  // ─── Custom breakdowns : auto-détecte les champs custom avec valeurs discrètes ───
-  renderCustomBreakdowns(ts);
-
   // Tendance chart
   const tMap={};
   TEND_OPTIONS.forEach(t=>{
@@ -2575,7 +2572,6 @@ function buildPanelHTML(t){
     <textarea class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
     <div class="panel-section-title">Checklist</div>
     <div class="checklist-wrap">${checkItems}</div>
-    ${customFieldsHTML(t)}
     ${photoSectionHTML(t,'exec','📸 Exécution','(toutes tes prises de position)')}
     ${photoSectionHTML(t,'mgmt','🔄 Management','(suis ton raisonnement étape par étape)')}
     ${photoSectionHTML(t,'close','🏁 Clôture','(le moment où tu sors)')}
@@ -3498,7 +3494,7 @@ function localToDb(t) {
     psy:          t.psy          || '',
     checklist:    t.checklist    || [false,false,false,false,false],
     screenshots:  t.screenshots  || {},
-    custom:       t.custom       || {},
+    extra_data:   t.extra_data   || {},
   };
 }
 function dbToLocal(r) {
@@ -3525,7 +3521,7 @@ function dbToLocal(r) {
     psy:         r.psy          || '',
     checklist:   r.checklist    || [false,false,false,false,false],
     screenshots: r.screenshots  || {},
-    custom:      r.custom       || {},
+    extra_data:  r.extra_data   || {},
   };
 }
 
@@ -4233,16 +4229,16 @@ function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber, header) {
   // Indexes des colonnes utilisées par un champ mappé
   const usedIndexes = new Set(Object.values(colIdx));
 
-  // ─── Collecte les colonnes non-mappées comme CHAMPS STRUCTURÉS ───
-  // Stockés dans trade.custom → visibles dans le panel + analysables dans Setups
-  const customData = {};
+  // ─── Collecte les colonnes non-mappées comme champs supplémentaires ───
+  // Stockés dans trade.extra_data (jsonb côté DB) — pas affiché pour l'instant
+  const extraData = {};
   if (header) {
     header.forEach((rawHeader, colI) => {
       if (usedIndexes.has(colI)) return;
       const val = (row[colI] || '').toString().trim();
       if (!val) return;
       const headerClean = (rawHeader || `Col${colI+1}`).toString().trim();
-      customData[headerClean] = val;
+      extraData[headerClean] = val;
     });
   }
 
@@ -4288,7 +4284,7 @@ function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber, header) {
     psy:         get('psy') || '',
     checklist:   [false,false,false,false,false],
     screenshots: {},
-    custom:      customData,  // ← Champs structurés des colonnes Notion non standard
+    extra_data:  extraData,  // ← Colonnes CSV non standard préservées tel quel
   };
   return { trade };
 }
