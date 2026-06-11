@@ -218,6 +218,15 @@ body.has-trial-banner .main { padding-top: 92px; }
 .settings-contact:hover { border-color: var(--orange); background: rgba(255,159,10,.05); }
 .settings-contact b { color: var(--orange); font-weight: 600; }
 
+/* ── DANGER ZONE ── */
+.settings-card.danger-zone { background: linear-gradient(135deg, rgba(255,69,58,.08), rgba(255,69,58,.02)); border: 1px solid rgba(255,69,58,.25); }
+.danger-action { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--bg1); border: 1px solid rgba(255,69,58,.2); border-radius: 12px; padding: 14px 16px; }
+.danger-action b { color: var(--orange); }
+.btn-danger { background: rgba(255,69,58,.12); border: 1px solid rgba(255,69,58,.4); color: #ff6961; padding: 9px 16px; border-radius: 10px; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .15s; flex-shrink: 0; white-space: nowrap; }
+.btn-danger:hover { background: rgba(255,69,58,.22); border-color: #ff453a; color: #fff; }
+.btn-danger:disabled { opacity: .5; cursor: wait; }
+@media (max-width: 600px) { .danger-action { flex-direction: column; align-items: stretch; } .btn-danger { width: 100%; } }
+
 /* ── CSV PREVIEW MODAL ── */
 .csv-preview { max-width: 900px; width: 92%; max-height: 85vh; overflow: auto; }
 .csv-preview h2 { margin: 0 0 8px; font-size: 1.15rem; }
@@ -1290,6 +1299,23 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <span><b>onertrade@outlook.com</b><br><span style="color:var(--text3);font-size:.75rem">Réponse sous 24h en semaine</span></span>
       </a>
     </div>
+
+    <!-- ─── Zone dangereuse ─── -->
+    <div class="settings-card danger-zone" style="grid-column:span 2">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title" style="color:#ff453a">⚠️ Zone dangereuse</div>
+          <div class="settings-card-sub">Actions irréversibles — réfléchis bien avant de cliquer.</div>
+        </div>
+      </div>
+      <div class="danger-action">
+        <div>
+          <div style="font-weight:600;margin-bottom:2px">Supprimer tous mes trades</div>
+          <div style="color:var(--text3);font-size:.75rem">Efface définitivement <b id="danger-count">—</b> trades de la base de données. <b>Conseil :</b> fais d'abord un export JSON (↑ dans la barre) pour sauvegarder.</div>
+        </div>
+        <button class="btn-danger" onclick="deleteAllTrades()">🗑 Tout supprimer</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1741,6 +1767,53 @@ function resetTendances(){
   if(!confirm('Réinitialiser les tendances aux valeurs par défaut ?')) return;
   TEND_OPTIONS = TEND_OPTIONS_DEFAULT.slice(); saveTendances();
   if(currentPage==='settings') renderSettings();
+}
+
+// ─── DELETE ALL TRADES (zone dangereuse) ───
+async function deleteAllTrades(){
+  if(!currentUser){ alert('Tu dois être connecté.'); return; }
+  const count = trades.length;
+  if(count === 0){ alert('Tu n\'as aucun trade à supprimer.'); return; }
+
+  // Double confirmation : un yes/no + une saisie manuelle pour éviter les clics accidentels
+  const first = confirm(
+    `⚠️ ATTENTION — SUPPRESSION TOTALE\n\n` +
+    `Tu vas supprimer DÉFINITIVEMENT tes ${count} trades de la base de données.\n\n` +
+    `Cette action est IRRÉVERSIBLE. Veux-tu continuer ?`
+  );
+  if(!first) return;
+
+  const typed = prompt(
+    `Dernière confirmation.\n\n` +
+    `Tape exactement le mot SUPPRIMER (en majuscules) pour confirmer la suppression de tes ${count} trades :`
+  );
+  if(typed !== 'SUPPRIMER'){
+    if(typed !== null) alert('Mot incorrect — suppression annulée.');
+    return;
+  }
+
+  const btn = document.querySelector('.btn-danger');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Suppression en cours…'; }
+
+  console.log('[Delete All] suppression de', count, 'trades pour user', currentUser.id);
+
+  try {
+    // Supprime côté DB — la RLS s'assure qu'on ne touche que SES trades
+    const { error } = await sb.from('trades').delete().eq('user_id', currentUser.id);
+    if (error) throw error;
+
+    console.log('[Delete All] OK');
+    trades = [];
+    rebuildPairDatalist();
+    refreshCurrentPage();
+    showToast('🗑 Tous tes trades ont été supprimés (' + count + ')');
+  } catch(e) {
+    console.error('[Delete All] échec', e);
+    alert('Erreur lors de la suppression : ' + (e.message || e));
+  } finally {
+    if(btn){ btn.disabled = false; btn.textContent = '🗑 Tout supprimer'; }
+    if(currentPage==='settings') renderSettings();
+  }
 }
 function toggleCheck(id, i){
   const t = trades.find(x=>x.id===id); if(!t) return;
@@ -3110,6 +3183,10 @@ function renderSettings(){
   clEl.innerHTML = buildList(CHECKLIST,   'editChecklistItem', 'delChecklistItem', 'Aucun élément. Clique sur « + Ajouter un élément » pour commencer.');
   erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         'Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.');
   tdEl.innerHTML = buildList(TEND_OPTIONS,'editTendance',      'delTendance',      'Aucune tendance. Clique sur « + Ajouter une tendance » pour commencer.');
+
+  // Compteur de trades pour la zone dangereuse
+  const cnt = document.getElementById('danger-count');
+  if (cnt) cnt.textContent = trades.length;
 }
 
 function escapeHtml(s){
