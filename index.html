@@ -1769,47 +1769,30 @@ function resetTendances(){
   if(currentPage==='settings') renderSettings();
 }
 
-// ─── DELETE ALL TRADES (zone dangereuse) ───
+// ─── DELETE ALL TRADES (quick wipe pour tester les imports) ───
 async function deleteAllTrades(){
   if(!currentUser){ alert('Tu dois être connecté.'); return; }
   const count = trades.length;
-  if(count === 0){ alert('Tu n\'as aucun trade à supprimer.'); return; }
+  if(count === 0){ showToast('Aucun trade à supprimer'); return; }
 
-  // Double confirmation : un yes/no + une saisie manuelle pour éviter les clics accidentels
-  const first = confirm(
-    `⚠️ ATTENTION — SUPPRESSION TOTALE\n\n` +
-    `Tu vas supprimer DÉFINITIVEMENT tes ${count} trades de la base de données.\n\n` +
-    `Cette action est IRRÉVERSIBLE. Veux-tu continuer ?`
-  );
-  if(!first) return;
-
-  const typed = prompt(
-    `Dernière confirmation.\n\n` +
-    `Tape exactement le mot SUPPRIMER (en majuscules) pour confirmer la suppression de tes ${count} trades :`
-  );
-  if(typed !== 'SUPPRIMER'){
-    if(typed !== null) alert('Mot incorrect — suppression annulée.');
-    return;
-  }
+  if(!confirm(`Supprimer tes ${count} trades ?`)) return;
 
   const btn = document.querySelector('.btn-danger');
-  if(btn){ btn.disabled = true; btn.textContent = '⏳ Suppression en cours…'; }
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Suppression…'; }
 
   console.log('[Delete All] suppression de', count, 'trades pour user', currentUser.id);
 
   try {
-    // Supprime côté DB — la RLS s'assure qu'on ne touche que SES trades
     const { error } = await sb.from('trades').delete().eq('user_id', currentUser.id);
     if (error) throw error;
-
     console.log('[Delete All] OK');
     trades = [];
     rebuildPairDatalist();
     refreshCurrentPage();
-    showToast('🗑 Tous tes trades ont été supprimés (' + count + ')');
+    showToast('🗑 ' + count + ' trades supprimés');
   } catch(e) {
     console.error('[Delete All] échec', e);
-    alert('Erreur lors de la suppression : ' + (e.message || e));
+    alert('Erreur : ' + (e.message || e));
   } finally {
     if(btn){ btn.disabled = false; btn.textContent = '🗑 Tout supprimer'; }
     if(currentPage==='settings') renderSettings();
