@@ -336,6 +336,14 @@ body.has-trial-banner .main { padding-top: 92px; }
 
 /* ── STAT CARDS ── */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.pris-counter { display: flex; align-items: center; gap: 10px; margin: 2px 0 16px; font-size: .8rem; color: var(--text3); }
+.pris-counter:empty { display: none; }
+.pris-counter .pc-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; background: var(--card2, #1c1c1e); border: 1px solid var(--border, #2c2c2e); }
+.pris-counter .pc-dot { width: 7px; height: 7px; border-radius: 50%; }
+.pris-counter .pc-pris .pc-dot { background: #30d158; }
+.pris-counter .pc-missed .pc-dot { background: #636366; }
+.pris-counter .pc-num { color: var(--text); font-weight: 600; }
+.pris-counter .pc-missed { color: var(--text3); }
 .kpi {
   background: var(--bg2); border-radius: var(--r);
   padding: 18px 16px; display: flex; flex-direction: column; gap: 6px;
@@ -1016,6 +1024,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       <div><b>N</b> Nouveau trade</div><div><b>Esc</b> Fermer</div><div><b>← →</b> Naviguer le mois</div>
     </div>
   </div>
+  <div id="pris-counter" class="pris-counter"></div>
   <div class="kpi-grid" id="kpi-grid"></div>
   <div class="gauge-row" id="gauge-row"></div>
   <div class="charts-row">
@@ -1950,6 +1959,31 @@ function tradesOfYear(){
 }
 
 // ───────────────────────────────────────────
+//  TRADE PRIS vs TRADE MANQUÉ
+//  Un trade est "pris" SAUF si au moins un signal indique le contraire :
+//   1) le champ core `prise` vaut explicitement false (No / Non)
+//   2) extra_data["Missed Trade"] (insensible à la casse) vaut "Yes"
+//  Si aucun signal ne contredit → le trade est considéré pris.
+// ───────────────────────────────────────────
+function isTradePris(t){
+  if (!t) return false;
+  // Signal 1 : champ core "prise" explicitement faux
+  if (t.prise === false) return false;
+  // Signal 2 : extra_data "Missed Trade" === "Yes" (clé insensible à la casse)
+  const ed = t.extra_data;
+  if (ed && typeof ed === 'object'){
+    const key = Object.keys(ed).find(k => k.trim().toLowerCase() === 'missed trade');
+    if (key){
+      const v = String(ed[key] ?? '').trim().toLowerCase();
+      if (v === 'yes') return false;
+    }
+  }
+  return true;
+}
+// Trades pris de l'année courante (base de toutes les analyses de perf réelle)
+function tradesPris(){ return tradesOfYear().filter(isTradePris); }
+
+// ───────────────────────────────────────────
 //  HELPERS
 // ───────────────────────────────────────────
 const ch = {}; // chart registry
@@ -2012,9 +2046,21 @@ function calcMaxDD(ts){
 //  OVERVIEW
 // ───────────────────────────────────────────
 function renderOverview(){
-  const ts = tradesOfYear();
+  const all = tradesOfYear();
+  // ── Toutes les analyses de perf réelle ne comptent QUE les trades pris ──
+  const ts = all.filter(isTradePris);
+  const nPris = ts.length;
+  const nMissed = all.length - nPris;
   const s = calcStats(ts);
   document.getElementById('welcome-card').style.display = (trades.length===0) ? 'block' : 'none';
+
+  // ── Compteur discret trades pris / trades manqués ──
+  const pc = document.getElementById('pris-counter');
+  if (pc){
+    pc.innerHTML = (all.length === 0) ? '' : `
+      <span class="pc-pill pc-pris"><span class="pc-dot"></span><span class="pc-num">${nPris}</span> trade${nPris>1?'s':''} pris</span>
+      <span class="pc-pill pc-missed"><span class="pc-dot"></span><span class="pc-num">${nMissed}</span> trade${nMissed>1?'s':''} manqué${nMissed>1?'s':''}</span>`;
+  }
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi"><div class="kpi-label">Total Trades</div><div class="kpi-value">${s.total}</div><div class="kpi-sub">${s.wins}W · ${s.losses}L</div></div>
     <div class="kpi"><div class="kpi-label">Win Rate</div><div class="kpi-value ora">${s.winRate.toFixed(1)}%</div></div>
@@ -2595,6 +2641,7 @@ function buildPanelHTML(t){
     <textarea class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
     <div class="panel-section-title">Checklist</div>
     <div class="checklist-wrap">${checkItems}</div>
+    ${customFieldsHTML(t)}
     ${photoSectionHTML(t,'exec','📸 Exécution','(toutes tes prises de position)')}
     ${photoSectionHTML(t,'mgmt','🔄 Management','(suis ton raisonnement étape par étape)')}
     ${photoSectionHTML(t,'close','🏁 Clôture','(le moment où tu sors)')}
@@ -2638,7 +2685,7 @@ function handleScreenshot(id,key,input){
 // ── MGMT MULTI-PHOTOS ──────────────────────
 // ─── Affichage des champs personnalisés (colonnes importées non standard) ───
 function customFieldsHTML(t){
-  const c = t.custom || {};
+  const c = t.extra_data || {};
   const keys = Object.keys(c).filter(k => c[k] != null && String(c[k]).trim() !== '');
   if (keys.length === 0) return '';
 
@@ -2657,26 +2704,26 @@ function customFieldsHTML(t){
   }).join('');
 
   return `
-    <div class="panel-section-title">📥 Données importées <span style="color:var(--text3);font-weight:400;font-size:.7rem">(${keys.length} champs personnalisés)</span></div>
+    <div class="panel-section-title">Informations supplémentaires <span style="color:var(--text3);font-weight:400;font-size:.7rem">(${keys.length} champ${keys.length>1?'s':''})</span></div>
     <div class="custom-fields-wrap">
       ${rows}
-      <button class="custom-field-add" onclick="addCustomField(${t.id})">＋ Ajouter un champ personnalisé</button>
+      <button class="custom-field-add" onclick="addCustomField(${t.id})">＋ Ajouter un champ</button>
     </div>`;
 }
 
-// ─── Édition d'un champ custom (debounced) ───
+// ─── Édition d'un champ extra_data (debounced) ───
 let _customSaveTimer = null;
 function updateCustomField(tradeId, key, value){
   const t = trades.find(x => x.id === tradeId); if(!t) return;
-  if(!t.custom) t.custom = {};
-  t.custom[key] = value;
+  if(!t.extra_data) t.extra_data = {};
+  t.extra_data[key] = value;
   clearTimeout(_customSaveTimer);
   _customSaveTimer = setTimeout(() => dbUpsert(t), 600);
 }
 function delCustomField(tradeId, key){
   const t = trades.find(x => x.id === tradeId); if(!t) return;
   if(!confirm(`Supprimer le champ "${key}" de ce trade ?`)) return;
-  if(t.custom) delete t.custom[key];
+  if(t.extra_data) delete t.extra_data[key];
   dbUpsert(t);
   openPanel(tradeId);
 }
@@ -2684,11 +2731,11 @@ function addCustomField(tradeId){
   const t = trades.find(x => x.id === tradeId); if(!t) return;
   const name = prompt('Nom du champ :');
   if(!name || !name.trim()) return;
-  if(!t.custom) t.custom = {};
-  if(t.custom[name.trim()] != null){ alert('Ce champ existe déjà'); return; }
+  if(!t.extra_data) t.extra_data = {};
+  if(t.extra_data[name.trim()] != null){ alert('Ce champ existe déjà'); return; }
   const val = prompt('Valeur :', '');
   if(val === null) return;
-  t.custom[name.trim()] = val;
+  t.extra_data[name.trim()] = val;
   dbUpsert(t);
   openPanel(tradeId);
 }
