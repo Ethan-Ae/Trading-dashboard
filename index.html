@@ -296,6 +296,20 @@ body.has-trial-banner .main { padding-top: 92px; }
 .setup-rank-empty { text-align: center; color: var(--text3); padding: 30px; font-size: .85rem; }
 
 .discipline-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+
+/* ── CUSTOM BREAKDOWNS ── */
+.custom-breakdowns { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; }
+.custom-bd-card { background: var(--bg2); border: 1px solid var(--sep); border-radius: 16px; padding: 16px; }
+.custom-bd-head { margin-bottom: 12px; }
+.custom-bd-name { font-size: .95rem; font-weight: 700; color: var(--text); }
+.custom-bd-sub { font-size: .72rem; color: var(--text3); margin-top: 2px; }
+.custom-bd-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+.custom-bd-table th { color: var(--text3); font-weight: 600; text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--sep); font-size: .65rem; text-transform: uppercase; letter-spacing: .05em; }
+.custom-bd-table th.ar, .custom-bd-table td.ar { text-align: right; }
+.custom-bd-table td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.custom-bd-table tr:hover td { background: rgba(255,255,255,.02); }
+.custom-bd-table td.pos { color: #30d158; font-weight: 600; }
+.custom-bd-table td.neg { color: #ff453a; font-weight: 600; }
 .disc-card { background: var(--bg2); border: 1px solid var(--sep); border-radius: 16px; padding: 18px; }
 .disc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .disc-label { color: var(--text2); font-size: .82rem; font-weight: 600; }
@@ -467,6 +481,19 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 
 /* ── CHECKLIST ── */
 .checklist-wrap { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+
+/* ── CHAMPS PERSONNALISÉS (colonnes importées) ── */
+.custom-fields-wrap { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.custom-field-row { display: grid; grid-template-columns: 160px 1fr auto; gap: 10px; align-items: center; background: var(--bg1); border: 1px solid var(--sep); border-radius: 10px; padding: 8px 12px; transition: border-color .15s; }
+.custom-field-row:hover { border-color: rgba(255,159,10,.25); }
+.custom-field-label { font-size: .72rem; color: var(--text3); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.custom-field-value { font-size: .82rem; color: var(--text); outline: none; padding: 2px 4px; border-radius: 4px; word-break: break-word; min-height: 1.4em; cursor: text; }
+.custom-field-value:focus { background: var(--bg3); }
+.custom-field-del { background: transparent; border: none; color: var(--text3); cursor: pointer; padding: 2px 6px; border-radius: 4px; font-size: .75rem; opacity: .5; transition: all .15s; }
+.custom-field-row:hover .custom-field-del { opacity: 1; }
+.custom-field-del:hover { background: rgba(255,69,58,.12); color: #ff453a; }
+.custom-field-add { background: transparent; border: 1.5px dashed var(--bg4); border-radius: 10px; color: var(--text3); cursor: pointer; padding: 8px; font-size: .75rem; transition: all .15s; margin-top: 4px; }
+.custom-field-add:hover { border-color: var(--orange); color: var(--orange); }
 .check-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .check-box {
   width: 18px; height: 18px; border-radius: 5px;
@@ -1092,6 +1119,12 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   <!-- DISCIPLINE -->
   <div class="sec-title" style="margin:24px 0 12px">🧘 Discipline & exécution</div>
   <div class="discipline-grid" id="discipline-grid"></div>
+
+  <!-- CUSTOM BREAKDOWNS (auto-générés à partir des champs importés) -->
+  <div id="custom-breakdowns-section" style="display:none">
+    <div class="sec-title" style="margin:24px 0 12px">📥 Analyses personnalisées <span style="color:var(--text3);font-weight:500;font-size:.75rem;margin-left:8px">basées sur les champs que tu as importés</span></div>
+    <div class="custom-breakdowns" id="custom-breakdowns"></div>
+  </div>
 
   <!-- CHARTS -->
   <div class="sec-title" style="margin:24px 0 12px">📈 Vues détaillées</div>
@@ -2117,6 +2150,78 @@ function togglePrise(id, btn){
 // ───────────────────────────────────────────
 //  SETUPS PAGE
 // ───────────────────────────────────────────
+// ─── Détecte et affiche les breakdowns pour les champs personnalisés ───
+function renderCustomBreakdowns(ts){
+  const section = document.getElementById('custom-breakdowns-section');
+  const container = document.getElementById('custom-breakdowns');
+  if (!section || !container) return;
+
+  // 1) Collecte : pour chaque champ custom, on map valeur → liste de trades
+  const fieldValues = {}; // field → { value(string) → trades[] }
+  ts.forEach(t => {
+    if (!t.custom || typeof t.custom !== 'object') return;
+    Object.entries(t.custom).forEach(([k, v]) => {
+      if (v == null || v === '') return;
+      // Si la valeur contient "," on considère que c'est multi-valeurs (tags)
+      const valStr = String(v).trim();
+      const vals = valStr.includes(',') ? valStr.split(/\s*,\s*/).filter(Boolean) : [valStr];
+      vals.forEach(val => {
+        if (!fieldValues[k]) fieldValues[k] = {};
+        if (!fieldValues[k][val]) fieldValues[k][val] = [];
+        fieldValues[k][val].push(t);
+      });
+    });
+  });
+
+  // 2) Filtre : on garde les champs avec 2-15 valeurs distinctes (discret, pertinent)
+  const breakdowns = [];
+  Object.entries(fieldValues).forEach(([field, valMap]) => {
+    const unique = Object.keys(valMap);
+    if (unique.length < 2 || unique.length > 15) return;
+    // Calcule stats par valeur
+    const stats = unique.map(v => {
+      const arr = valMap[v];
+      const closed = arr.filter(t => t.rrf != null);
+      const wins = closed.filter(t => (t.rrf||0) > 0).length;
+      const wr = closed.length ? (wins / closed.length * 100) : 0;
+      const totalR = closed.reduce((s, t) => s + (t.rrf||0), 0);
+      const avgR = closed.length ? totalR / closed.length : 0;
+      return { value: v, count: arr.length, wr, totalR, avgR };
+    }).sort((a, b) => b.totalR - a.totalR);
+    breakdowns.push({ field, stats, totalTrades: unique.reduce((s, v) => s + valMap[v].length, 0) });
+  });
+
+  if (breakdowns.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+
+  // 3) Rendu
+  container.innerHTML = breakdowns.map(b => `
+    <div class="custom-bd-card">
+      <div class="custom-bd-head">
+        <div class="custom-bd-name">${escapeHtml(b.field)}</div>
+        <div class="custom-bd-sub">${b.stats.length} valeurs distinctes · ${b.totalTrades} trades</div>
+      </div>
+      <table class="custom-bd-table">
+        <thead><tr><th>Valeur</th><th class="ar">Trades</th><th class="ar">Win Rate</th><th class="ar">Total R</th><th class="ar">Avg R</th></tr></thead>
+        <tbody>
+          ${b.stats.map(s => `
+            <tr>
+              <td>${escapeHtml(s.value)}</td>
+              <td class="ar">${s.count}</td>
+              <td class="ar ${s.wr>=50?'pos':'neg'}">${s.wr.toFixed(0)}%</td>
+              <td class="ar ${s.totalR>=0?'pos':'neg'}">${s.totalR>0?'+':''}${s.totalR.toFixed(2)}R</td>
+              <td class="ar ${s.avgR>=0?'pos':'neg'}">${s.avgR>0?'+':''}${s.avgR.toFixed(2)}R</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `).join('');
+}
+
 function statsOf(arr){
   const closed = arr.filter(t=>t.rrf!==null && t.rrf!==undefined);
   const n = closed.length;
@@ -2259,6 +2364,9 @@ function renderSetups(){
       <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,Math.max(0,sGlobal.exp*80))}%;background:${sGlobal.exp>=0.3?'#30d158':sGlobal.exp>=0?'#ff9f0a':'#ff453a'}"></div></div>
       <div class="disc-hint">R moyen attendu par trade</div>
     </div>`;
+
+  // ─── Custom breakdowns : auto-détecte les champs custom avec valeurs discrètes ───
+  renderCustomBreakdowns(ts);
 
   // Tendance chart
   const tMap={};
@@ -2467,6 +2575,7 @@ function buildPanelHTML(t){
     <textarea class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
     <div class="panel-section-title">Checklist</div>
     <div class="checklist-wrap">${checkItems}</div>
+    ${customFieldsHTML(t)}
     ${photoSectionHTML(t,'exec','📸 Exécution','(toutes tes prises de position)')}
     ${photoSectionHTML(t,'mgmt','🔄 Management','(suis ton raisonnement étape par étape)')}
     ${photoSectionHTML(t,'close','🏁 Clôture','(le moment où tu sors)')}
@@ -2508,6 +2617,63 @@ function handleScreenshot(id,key,input){
   reader.readAsDataURL(input.files[0]);
 }
 // ── MGMT MULTI-PHOTOS ──────────────────────
+// ─── Affichage des champs personnalisés (colonnes importées non standard) ───
+function customFieldsHTML(t){
+  const c = t.custom || {};
+  const keys = Object.keys(c).filter(k => c[k] != null && String(c[k]).trim() !== '');
+  if (keys.length === 0) return '';
+
+  const rows = keys.map(k => {
+    const val = c[k];
+    const safeKey = escapeHtml(k);
+    const safeVal = escapeHtml(String(val));
+    return `
+      <div class="custom-field-row">
+        <div class="custom-field-label">${safeKey}</div>
+        <div class="custom-field-value" contenteditable="true"
+             oninput="updateCustomField(${t.id}, ${JSON.stringify(k).replace(/"/g,'&quot;')}, this.textContent)"
+             onblur="this.scrollLeft=0">${safeVal}</div>
+        <button class="custom-field-del" onclick="delCustomField(${t.id}, ${JSON.stringify(k).replace(/"/g,'&quot;')})" title="Supprimer ce champ">✕</button>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="panel-section-title">📥 Données importées <span style="color:var(--text3);font-weight:400;font-size:.7rem">(${keys.length} champs personnalisés)</span></div>
+    <div class="custom-fields-wrap">
+      ${rows}
+      <button class="custom-field-add" onclick="addCustomField(${t.id})">＋ Ajouter un champ personnalisé</button>
+    </div>`;
+}
+
+// ─── Édition d'un champ custom (debounced) ───
+let _customSaveTimer = null;
+function updateCustomField(tradeId, key, value){
+  const t = trades.find(x => x.id === tradeId); if(!t) return;
+  if(!t.custom) t.custom = {};
+  t.custom[key] = value;
+  clearTimeout(_customSaveTimer);
+  _customSaveTimer = setTimeout(() => dbUpsert(t), 600);
+}
+function delCustomField(tradeId, key){
+  const t = trades.find(x => x.id === tradeId); if(!t) return;
+  if(!confirm(`Supprimer le champ "${key}" de ce trade ?`)) return;
+  if(t.custom) delete t.custom[key];
+  dbUpsert(t);
+  openPanel(tradeId);
+}
+function addCustomField(tradeId){
+  const t = trades.find(x => x.id === tradeId); if(!t) return;
+  const name = prompt('Nom du champ :');
+  if(!name || !name.trim()) return;
+  if(!t.custom) t.custom = {};
+  if(t.custom[name.trim()] != null){ alert('Ce champ existe déjà'); return; }
+  const val = prompt('Valeur :', '');
+  if(val === null) return;
+  t.custom[name.trim()] = val;
+  dbUpsert(t);
+  openPanel(tradeId);
+}
+
 function photoSectionHTML(t, key, title, hint){
   const arr = getPhotoArr(t, key);
   const n = arr.length;
@@ -3332,6 +3498,7 @@ function localToDb(t) {
     psy:          t.psy          || '',
     checklist:    t.checklist    || [false,false,false,false,false],
     screenshots:  t.screenshots  || {},
+    custom:       t.custom       || {},
   };
 }
 function dbToLocal(r) {
@@ -3358,6 +3525,7 @@ function dbToLocal(r) {
     psy:         r.psy          || '',
     checklist:   r.checklist    || [false,false,false,false,false],
     screenshots: r.screenshots  || {},
+    custom:      r.custom       || {},
   };
 }
 
@@ -4065,16 +4233,16 @@ function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber, header) {
   // Indexes des colonnes utilisées par un champ mappé
   const usedIndexes = new Set(Object.values(colIdx));
 
-  // ─── Collecte TOUT le contenu des colonnes non-mappées ───
-  // Pour ne RIEN perdre des données utilisateur. Stockage propre sous forme texte.
-  const extraLines = [];
+  // ─── Collecte les colonnes non-mappées comme CHAMPS STRUCTURÉS ───
+  // Stockés dans trade.custom → visibles dans le panel + analysables dans Setups
+  const customData = {};
   if (header) {
     header.forEach((rawHeader, colI) => {
       if (usedIndexes.has(colI)) return;
       const val = (row[colI] || '').toString().trim();
       if (!val) return;
       const headerClean = (rawHeader || `Col${colI+1}`).toString().trim();
-      extraLines.push(`${headerClean} : ${val}`);
+      customData[headerClean] = val;
     });
   }
 
@@ -4116,20 +4284,11 @@ function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber, header) {
     errs:        parseErrs(get('errs')),
     bonTrade:    parseBool(get('bonTrade')),
     manageTrade: get('manageTrade') || null,
-    confluences: (() => {
-      // Concatène la valeur de "confluences" + les colonnes non-mappées
-      // → AUCUNE donnée perdue, tout est visible dans le panel du trade
-      const base = get('confluences');
-      const parts = [];
-      if (base) parts.push(base);
-      if (extraLines.length) {
-        parts.push('— Données importées —\n' + extraLines.join('\n'));
-      }
-      return parts.join('\n\n');
-    })(),
+    confluences: get('confluences') || '',
     psy:         get('psy') || '',
     checklist:   [false,false,false,false,false],
     screenshots: {},
+    custom:      customData,  // ← Champs structurés des colonnes Notion non standard
   };
   return { trade };
 }
