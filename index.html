@@ -251,6 +251,21 @@ body.has-trial-banner .main { padding-top: 92px; }
 .csv-table-wrap td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .csv-table-wrap td.pos { color: #30d158; }
 .csv-table-wrap td.neg { color: #ff453a; }
+.csv-table-wrap th.ar, .csv-table-wrap td.ar { text-align: right; }
+
+/* ── MAPPING SCREEN ── */
+.csv-section-title { font-size: .85rem; font-weight: 700; margin: 20px 0 10px; color: var(--text); }
+.csv-mapping { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px 14px; background: var(--bg1); border: 1px solid var(--sep); border-radius: 12px; padding: 14px; }
+.csv-map-row { display: flex; flex-direction: column; gap: 4px; }
+.csv-map-label { font-size: .72rem; color: var(--text2); font-weight: 500; }
+.csv-required { color: #ff453a; font-weight: 700; }
+.csv-map-select { background: var(--bg2); color: var(--text); border: 1px solid var(--sep); border-radius: 8px; padding: 7px 10px; font-size: .8rem; cursor: pointer; transition: border-color .15s; }
+.csv-map-select:hover, .csv-map-select:focus { border-color: var(--orange); outline: none; }
+.csv-mapping-hint { color: var(--text3); font-size: .7rem; margin: 6px 0 12px; }
+.csv-extra-info-box { background: var(--bg1); border: 1px solid var(--sep); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; font-size: .76rem; color: var(--text2); }
+.csv-extra-info-box code { background: rgba(255,159,10,.12); color: var(--orange); padding: 1px 6px; border-radius: 4px; font-size: .72rem; }
+.csv-extra-info-box b { color: var(--orange); font-weight: 600; }
+.csv-preview-sub code { background: rgba(255,159,10,.12); color: var(--orange); padding: 1px 6px; border-radius: 4px; font-size: .75rem; }
 
 .setups-intro, .page-intro { background: linear-gradient(135deg, rgba(255,159,10,.10), rgba(10,132,255,.06)); border: 1px solid var(--sep); border-radius: 22px; padding: 20px 24px; margin-bottom: 22px; }
 .setups-intro-title, .page-intro-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
@@ -1576,27 +1591,35 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 </div>
 
 <!-- ══════ CSV PREVIEW MODAL ══════ -->
-<div class="modal-overlay" id="csvPreviewModal">
+<!-- ══════ NOUVEAU MODAL CSV IMPORT avec mapping ══════ -->
+<div class="modal-overlay" id="csvImportModal">
   <div class="modal csv-preview">
-    <h2>📊 Aperçu de l'import CSV</h2>
-    <div class="csv-preview-sub" id="csv-preview-sub">Vérifie les données avant import — rien ne sera écrit en base tant que tu n'as pas validé.</div>
+    <h2>📊 Configuration de l'import CSV</h2>
+    <div class="csv-preview-sub">
+      Associe chaque champ du journal à une colonne de ton fichier. Les colonnes non mappées sont préservées dans <code>extra_data</code> — <b>aucune donnée perdue</b>.
+    </div>
+
+    <h3 class="csv-section-title">Mapping des colonnes</h3>
+    <div class="csv-mapping" id="csv-mapping-grid"></div>
+    <div class="csv-mapping-hint"><span class="csv-required">*</span> champ obligatoire — sans ça la ligne est ignorée</div>
 
     <div class="csv-stats" id="csv-stats"></div>
-    <div class="csv-cols-detected" id="csv-cols-detected"></div>
+
+    <div class="csv-extra-info-box">
+      <div id="csv-extra-info"></div>
+    </div>
+
     <div class="csv-skipped-box" id="csv-skipped-box" style="display:none">
       <h4>⚠️ Lignes ignorées</h4>
       <ul id="csv-skipped-list"></ul>
     </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <h3 style="margin:0;font-size:.9rem">Aperçu (50 premières lignes valides)</h3>
-      <span style="color:var(--text3);font-size:.7rem" id="csv-preview-count">—</span>
-    </div>
+    <h3 class="csv-section-title">Aperçu (5 premières lignes valides)</h3>
     <div class="csv-table-wrap" id="csv-preview-table"></div>
 
     <div class="form-actions">
-      <button class="btn-ghost" onclick="closeCsvPreview()">Annuler</button>
-      <button class="btn-orange" id="csv-preview-confirm" onclick="confirmCsvImport()">Importer</button>
+      <button class="btn-ghost" onclick="closeCsvImport()">Annuler</button>
+      <button class="btn-orange" id="csv-import-confirm" onclick="confirmCsvImport()">Importer</button>
     </div>
   </div>
 </div>
@@ -4214,6 +4237,134 @@ function autoDetectPairColumn(rows, header){
   return bestScore >= Math.ceil(sample.length * 0.3) ? bestCol : -1;
 }
 
+// ═══════════════════════════════════════════════════════════════
+//  NOUVEAU FLUX D'IMPORT CSV avec écran de mapping
+// ═══════════════════════════════════════════════════════════════
+
+// ─── Les 13 champs cœur de la table trades ───
+// key      = clé JS interne (correspond à localToDb/dbToLocal)
+// dbCol    = colonne PostgreSQL réelle
+// label    = libellé affiché à l'utilisateur
+// required = si manquant ou vide → ligne ignorée
+// patterns = mots-clés (normalisés) pour auto-détection du header CSV
+const CORE_FIELDS = [
+  { key: 'pair',     dbCol: 'pair',         label: 'Actif',             required: true,  patterns: ['actif','actifs','pair','paire','symbol','symbole','symbols','asset','instrument','ticker','currency','currencypair','crosse','crosspair','marche','market','devise','devises','nom','name'] },
+  { key: 'date',     dbCol: 'date',         label: 'Date',              required: true,  patterns: ['date','dateprisedeposition','datedeposition','datedecreation','datecreation','datecreated','datedouverture','tradedate','datedetrade','datedutrade','dateentree','dateentry'] },
+  { key: 'prise',    dbCol: 'prise',        label: 'Prise de position', required: false, patterns: ['prise','prisedeposition','priseposition','position','positiontaken','taken','traded','positionprise'] },
+  { key: 'tf',       dbCol: 'tf',           label: 'Time-Frame',        required: false, patterns: ['tf','timeframe','ut','tframe'] },
+  { key: 'ordre',    dbCol: 'ordre',        label: "Type d'ordre",      required: false, patterns: ['ordre','order','typeordre','typedordre'] },
+  { key: 'risk',     dbCol: 'risk',         label: 'Risk',              required: false, patterns: ['risk','risque','risqu'] },
+  { key: 'result',   dbCol: 'result',       label: 'Résultat',          required: false, patterns: ['result','resultat','outcome'] },
+  { key: 'rri',      dbCol: 'rri',          label: 'R/R initial',       required: false, patterns: ['rri','rrinitial','rrinit','riskreward','rrr'] },
+  { key: 'rrf',      dbCol: 'rrf',          label: 'R/R final',         required: false, patterns: ['rrf','rrfinal','rfinal','rresult'] },
+  { key: 'jour',     dbCol: 'jour',         label: 'Jour',              required: false, patterns: ['jour','day','dayofweek','jourdelasemaine','weekday','dow'] },
+  { key: 'hold',     dbCol: 'hold',         label: 'Holding period',    required: false, patterns: ['hold','holding','holdingperiod','holdperiod','holdtime','holdingtime','duration','tradeduration','timeintrade','timeinposition','positionduration','tradetime','timeheld','heldfor','duree','dureede','dureedetention','dureetrade','dureeposition','periode','periodedetention','tempsdetention','tempsdetrade','tempsentrade','tempsenposition','detention'] },
+  { key: 'type',     dbCol: 'type_trade',   label: 'Type de trade',     required: false, patterns: ['typedetrade','typetrade','tradetype','techfond','methode'] },
+  { key: 'bonTrade', dbCol: 'bon_trade',    label: 'Bon trade',         required: false, patterns: ['bontrade','goodtrade','bon','ok'] },
+];
+
+// ─── Auto-détection du mapping : pour chaque champ, choisit la meilleure colonne CSV ───
+function autoDetectMapping(header, dataRows) {
+  const mapping = {};
+  CORE_FIELDS.forEach(field => {
+    // Cherche TOUTES les colonnes dont le header normalisé matche un pattern
+    const candidates = [];
+    header.forEach((rawHeader, i) => {
+      const norm = normCol(rawHeader);
+      if (field.patterns.includes(norm)) candidates.push(i);
+    });
+
+    if (candidates.length === 0) { mapping[field.key] = -1; return; }
+    if (candidates.length === 1) { mapping[field.key] = candidates[0]; return; }
+
+    // Plusieurs candidats : on choisit celle avec le plus de valeurs non-vides
+    let best = candidates[0], bestFilled = -1;
+    const sample = (dataRows || []).slice(0, 50);
+    candidates.forEach(c => {
+      let filled = 0;
+      sample.forEach(r => { if (r[c] && r[c].toString().trim()) filled++; });
+      if (filled > bestFilled) { bestFilled = filled; best = c; }
+    });
+    mapping[field.key] = best;
+  });
+  return mapping;
+}
+
+// ─── Construit un trade à partir d'un mapping explicite ───
+// Retourne { trade } ou { skip: true, reason: '...' }
+function buildTradeFromMapping(row, mapping, header, baseId, i, lineNumber) {
+  const getCol = key => {
+    const idx = mapping[key];
+    if (idx == null || idx < 0) return '';
+    return (row[idx] || '').toString().trim();
+  };
+  const num = key => {
+    const v = getCol(key);
+    if (v === '') return null;
+    const cleaned = v.replace(/[^0-9.,\-]/g, '').replace(',', '.');
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? null : n;
+  };
+
+  // ── 1) Actif obligatoire ──
+  const rawPair = getCol('pair');
+  const pair = cleanPair(rawPair);
+  if (!pair || SKIP_PAIR_VALUES.has(pair)) {
+    return { skip: true, line: lineNumber, reason: `actif vide ou parasite ("${rawPair}")` };
+  }
+
+  // ── 2) Date obligatoire (DD/MM/YYYY strict) ──
+  const rawDate = getCol('date');
+  const date = parseFrenchDate(rawDate);
+  if (!date) {
+    return { skip: true, line: lineNumber, reason: `date invalide ("${rawDate}") — format attendu JJ/MM/AAAA` };
+  }
+
+  // ── 3) Colonnes non mappées → extra_data ──
+  const usedIdxs = new Set(Object.values(mapping).filter(v => v != null && v >= 0));
+  const extra_data = {};
+  header.forEach((rawHeader, idx) => {
+    if (usedIdxs.has(idx)) return;
+    const val = (row[idx] || '').toString().trim();
+    if (!val) return;
+    const headerClean = (rawHeader || `Col${idx+1}`).toString().trim();
+    extra_data[headerClean] = val;
+  });
+
+  // ── 4) Construction du trade ──
+  const [yy, mm, dd] = date.split('-').map(Number);
+  const dateObj = new Date(Date.UTC(yy, mm - 1, dd));
+  const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+  const trade = {
+    id:          baseId * 1000 + i,
+    pair,
+    date,
+    prise:       parseBool(getCol('prise')) !== false,
+    tf:          getCol('tf') || '1h',
+    ordre:       getCol('ordre') || 'MARKET BUY',
+    risk:        normalizeRisk(getCol('risk')) || '1.00%',
+    rri:         num('rri'),
+    result:      getCol('result') || 'En cours',
+    rrf:         num('rrf'),
+    jour:        getCol('jour') || JOURS[dateObj.getUTCDay()],
+    hold:        normalizeHold(getCol('hold')),
+    type:        getCol('type') || '100% Technique',
+    bonTrade:    parseBool(getCol('bonTrade')),
+    // Champs hors des 13 cœur → valeurs par défaut
+    tend:        'In Trend',
+    retails:     '',
+    errs:        [],
+    manageTrade: null,
+    confluences: '',
+    psy:         '',
+    checklist:   [false,false,false,false,false],
+    screenshots: {},
+    extra_data,
+  };
+  return { trade };
+}
+
 // ─── Transforme une ligne CSV en trade VALIDE ou en raison de skip ───
 function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber, header) {
   const get = field => colIdx[field] != null ? (row[colIdx[field]] || '').toString().trim() : '';
@@ -4289,8 +4440,8 @@ function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber, header) {
   return { trade };
 }
 
-// ─── État global pour le preview en cours ───
-let _csvPreviewState = null;
+// ─── État global pour l'import en cours ───
+let _csvImportState = null;
 
 function importCSV(input) {
   const f = input.files && input.files[0]; if (!f) return;
@@ -4303,57 +4454,16 @@ function importCSV(input) {
       if (rows.length < 2) throw new Error('CSV vide ou sans en-tête.');
 
       const header = rows[0].map(h => (h || '').toString().trim());
-      const dataRows = rows.slice(1);
-      // colIdx tient compte des candidats multiples et choisit celui le plus rempli
-      const colIdx = buildColumnIndex(header, dataRows);
+      const dataRows = rows.slice(1).filter(r => r.length && r.some(v => v && v.toString().trim()));
 
-      // Si la colonne pair n'a pas été identifiée via header, scan auto
-      if (colIdx.pair == null) {
-        const auto = autoDetectPairColumn(rows, header);
-        if (auto >= 0) {
-          colIdx.pair = auto;
-          console.log('[Import CSV] colonne "pair" auto-détectée à l\'index', auto, '— header :', header[auto]);
-        }
-      }
+      // Auto-détection initiale des 13 champs cœur
+      const mapping = autoDetectMapping(header, dataRows);
 
-      const detected = Object.keys(colIdx);
-      if (detected.length === 0) {
-        throw new Error('Aucune colonne reconnue.\nPremière ligne lue : ' + header.join(' | '));
-      }
+      console.log('[Import CSV] header lu :', header);
+      console.log('[Import CSV] mapping auto-détecté :', mapping);
 
-      // ─── Validation ligne par ligne ───
-      const base = Date.now();
-      const validTrades = [];
-      const skipped = [];
-      let counter = 0;
-
-      for (let r = 1; r < rows.length; r++) {
-        const row = rows[r];
-        const lineNumber = r + 1; // ligne humaine (1-indexée, header = 1)
-        // Skip lignes complètement vides
-        if (!row.length || !row.some(v => v && v.toString().trim())) continue;
-
-        const res = csvRowToTradeOrSkip(row, colIdx, base, counter, lineNumber, header);
-        if (res.skip) {
-          skipped.push({ line: res.line, reason: res.reason });
-        } else {
-          validTrades.push(res.trade);
-          counter++;
-        }
-      }
-
-      // Stocke l'état et affiche le preview
-      _csvPreviewState = { validTrades, skipped, detected, header, colIdx };
-      openCsvPreview();
-
-      console.log('[Import CSV] résumé parsing :', {
-        total: rows.length - 1,
-        valides: validTrades.length,
-        ignorees: skipped.length,
-        colonnes: detected,
-        skippedDetails: skipped,
-        firstThreeTrades: validTrades.slice(0, 3),
-      });
+      _csvImportState = { header, dataRows, mapping };
+      openCsvImportModal();
 
     } catch(err){
       console.error('[Import CSV] erreur', err);
@@ -4364,92 +4474,129 @@ function importCSV(input) {
   reader.readAsText(f);
 }
 
-// ─── Affiche le modal d'aperçu ───
-function openCsvPreview() {
-  const st = _csvPreviewState;
+// ─── Ouvre le modal de mapping + preview ───
+function openCsvImportModal() {
+  const st = _csvImportState;
   if (!st) return;
+
+  // Construit les dropdowns de mapping
+  const headerOpts = st.header.map((h, i) => `<option value="${i}">${escapeHtml(h)}</option>`).join('');
+  document.getElementById('csv-mapping-grid').innerHTML = CORE_FIELDS.map(f => {
+    const selectedIdx = st.mapping[f.key];
+    const star = f.required ? '<span class="csv-required">*</span>' : '';
+    return `
+      <div class="csv-map-row">
+        <label class="csv-map-label">${f.label} ${star}</label>
+        <select class="csv-map-select" onchange="onMappingChange('${f.key}', this.value)">
+          <option value="-1" ${selectedIdx == null || selectedIdx < 0 ? 'selected' : ''}>— ignorer —</option>
+          ${st.header.map((h, i) => `<option value="${i}" ${selectedIdx === i ? 'selected' : ''}>${escapeHtml(h)}</option>`).join('')}
+        </select>
+      </div>`;
+  }).join('');
+
+  refreshImportPreview();
+  document.getElementById('csvImportModal').classList.add('open');
+}
+
+function onMappingChange(fieldKey, val) {
+  if (!_csvImportState) return;
+  _csvImportState.mapping[fieldKey] = parseInt(val);
+  refreshImportPreview();
+}
+
+// ─── Recalcule preview + stats à chaque changement de mapping ───
+function refreshImportPreview() {
+  const st = _csvImportState;
+  if (!st) return;
+
+  const base = Date.now();
+  const valid = [], skipped = [];
+  st.dataRows.forEach((row, i) => {
+    const lineNum = i + 2; // header = ligne 1
+    const res = buildTradeFromMapping(row, st.mapping, st.header, base, i, lineNum);
+    if (res.skip) skipped.push({ line: res.line, reason: res.reason });
+    else          valid.push(res.trade);
+  });
+
+  st.valid = valid;
+  st.skipped = skipped;
 
   // Stats
   document.getElementById('csv-stats').innerHTML = `
-    <div class="csv-stat ok"><div class="csv-stat-label">Trades valides</div><div class="csv-stat-val">${st.validTrades.length}</div></div>
-    <div class="csv-stat skip"><div class="csv-stat-label">Lignes ignorées</div><div class="csv-stat-val">${st.skipped.length}</div></div>
-    <div class="csv-stat"><div class="csv-stat-label">Actifs uniques</div><div class="csv-stat-val">${[...new Set(st.validTrades.map(t=>t.pair))].length}</div></div>
+    <div class="csv-stat ok"><div class="csv-stat-label">Lignes valides</div><div class="csv-stat-val">${valid.length}</div></div>
+    <div class="csv-stat skip"><div class="csv-stat-label">Lignes ignorées</div><div class="csv-stat-val">${skipped.length}</div></div>
+    <div class="csv-stat"><div class="csv-stat-label">Actifs uniques</div><div class="csv-stat-val">${[...new Set(valid.map(t=>t.pair))].length}</div></div>
   `;
 
-  // Colonnes détectées + colonnes conservées dans les confluences
-  const usedIdxs = new Set(Object.values(st.colIdx));
-  const extraCols = st.header.filter((_,i) => !usedIdxs.has(i));
-  document.getElementById('csv-cols-detected').innerHTML =
-    `<b>Colonnes mappées</b> (${st.detected.length}) : ${st.detected.join(', ')}<br>` +
-    (extraCols.length
-      ? `<b>Colonnes conservées dans "confluences"</b> (${extraCols.length}, zéro perte) : ${extraCols.join(', ')}`
-      : `<b>Toutes les colonnes ont été mappées</b>`);
+  // Aperçu des colonnes non-mappées (qui iront dans extra_data)
+  const usedIdxs = new Set(Object.values(st.mapping).filter(v => v >= 0));
+  const extraCols = st.header.filter((_, i) => !usedIdxs.has(i));
+  document.getElementById('csv-extra-info').innerHTML = extraCols.length
+    ? `<b>${extraCols.length} colonne(s) non mappée(s)</b> seront stockées dans <code>extra_data</code> (aucune perte) :<br>` +
+      `<span style="color:var(--text3)">${extraCols.map(escapeHtml).join(', ')}</span>`
+    : `<b>Toutes les colonnes sont mappées</b> — <code>extra_data</code> sera vide.`;
 
   // Lignes ignorées
   const skipBox = document.getElementById('csv-skipped-box');
-  const skipList = document.getElementById('csv-skipped-list');
-  if (st.skipped.length === 0) {
+  if (!skipped.length) {
     skipBox.style.display = 'none';
   } else {
     skipBox.style.display = 'block';
-    const shown = st.skipped.slice(0, 20);
-    skipList.innerHTML = shown.map(s => `<li>Ligne ${s.line} : ${escapeHtml(s.reason)}</li>`).join('')
-      + (st.skipped.length > 20 ? `<li>… +${st.skipped.length - 20} autres</li>` : '');
+    const shown = skipped.slice(0, 15);
+    document.getElementById('csv-skipped-list').innerHTML =
+      shown.map(s => `<li>Ligne ${s.line} : ${escapeHtml(s.reason)}</li>`).join('') +
+      (skipped.length > 15 ? `<li>… +${skipped.length - 15} autres</li>` : '');
   }
 
-  // Tableau preview (50 premiers)
-  const preview = st.validTrades.slice(0, 50);
+  // Aperçu (5 lignes)
+  const preview = valid.slice(0, 5);
   const tbody = preview.map(t => `
     <tr>
-      <td>${escapeHtml(t.pair)}</td>
+      <td><b>${escapeHtml(t.pair)}</b></td>
       <td>${t.date}</td>
-      <td>${escapeHtml(t.tf || '')}</td>
-      <td>${escapeHtml(t.result || '')}</td>
+      <td>${escapeHtml(t.tf || '—')}</td>
+      <td>${escapeHtml(t.ordre || '—')}</td>
+      <td>${escapeHtml(t.risk || '—')}</td>
+      <td>${escapeHtml(t.result || '—')}</td>
       <td class="num">${t.rri != null ? t.rri.toFixed(2) : '—'}</td>
       <td class="num ${t.rrf > 0 ? 'pos' : t.rrf < 0 ? 'neg' : ''}">${t.rrf != null ? (t.rrf>0?'+':'') + t.rrf.toFixed(2) : '—'}</td>
-      <td>${escapeHtml(t.risk || '')}</td>
-      <td>${escapeHtml(t.hold || '')}</td>
+      <td>${escapeHtml(t.hold || '—')}</td>
+      <td style="font-size:.7rem;color:var(--text3)">${Object.keys(t.extra_data||{}).length} champ(s)</td>
     </tr>
   `).join('');
-
   document.getElementById('csv-preview-table').innerHTML = `
     <table>
       <thead><tr>
-        <th>Actif</th><th>Date</th><th>TF</th><th>Résultat</th>
-        <th style="text-align:right">R/R initial</th>
-        <th style="text-align:right">R/R final</th>
-        <th>Risk</th><th>Holding</th>
+        <th>Actif</th><th>Date</th><th>TF</th><th>Ordre</th><th>Risk</th>
+        <th>Résultat</th>
+        <th class="ar">R/R i</th><th class="ar">R/R f</th>
+        <th>Hold</th>
+        <th>extra_data</th>
       </tr></thead>
-      <tbody>${tbody}</tbody>
-    </table>
-  `;
+      <tbody>${tbody || '<tr><td colspan="10" style="text-align:center;padding:24px;color:var(--text3)">Aucune ligne valide avec le mapping actuel</td></tr>'}</tbody>
+    </table>`;
 
-  document.getElementById('csv-preview-count').textContent =
-    `${Math.min(preview.length, st.validTrades.length)} / ${st.validTrades.length} affichés`;
-
-  document.getElementById('csv-preview-confirm').textContent =
-    st.validTrades.length > 0 ? `Importer ${st.validTrades.length} trades` : 'Aucun trade à importer';
-  document.getElementById('csv-preview-confirm').disabled = st.validTrades.length === 0;
-
-  document.getElementById('csvPreviewModal').classList.add('open');
+  // Bouton confirm
+  const btn = document.getElementById('csv-import-confirm');
+  btn.textContent = valid.length ? `Importer ${valid.length} trades` : 'Aucun trade à importer';
+  btn.disabled = valid.length === 0;
 }
 
-function closeCsvPreview() {
-  document.getElementById('csvPreviewModal').classList.remove('open');
-  _csvPreviewState = null;
+function closeCsvImport() {
+  document.getElementById('csvImportModal').classList.remove('open');
+  _csvImportState = null;
 }
 
 // ─── Insertion réelle après validation utilisateur ───
 async function confirmCsvImport() {
-  const st = _csvPreviewState;
-  if (!st || !st.validTrades.length) return;
+  const st = _csvImportState;
+  if (!st || !st.valid || !st.valid.length) return;
 
-  // Disable bouton, ferme le modal preview
-  const btn = document.getElementById('csv-preview-confirm');
+  const btn = document.getElementById('csv-import-confirm');
   btn.disabled = true; btn.textContent = '⏳ Import en cours…';
-  closeCsvPreview();
+  closeCsvImport();
 
-  const newTrades = st.validTrades;
+  const newTrades = st.valid;
   showToast('⏳ Import CSV… 0/' + newTrades.length);
   let ok = 0, fail = 0;
 
@@ -4470,7 +4617,7 @@ async function confirmCsvImport() {
   rebuildPairDatalist();
   refreshCurrentPage();
 
-  if (fail === 0) showToast('✅ ' + ok + ' trades importés depuis le CSV');
+  if (fail === 0) showToast('✅ ' + ok + ' trades importés');
   else showToast(`⚠️ ${ok} importés, ${fail} échecs (voir console)`, true);
 }
 
