@@ -2026,29 +2026,50 @@ function tfChip(t){ return `<span class="chip chip-tf">${t||'—'}</span>`; }
 function rClass(v){ return v===null||v===undefined?'':v>0?'r-pos':v<0?'r-neg':'r-zero'; }
 function rStr(v){ if(v===null||v===undefined)return '—'; return (v>0?'+':'')+v+'R'; }
 
+// ── Classification win/loss UNIVERSELLE basée sur le R/R final chiffré ──
+// Indépendante des libellés texte ("TP Total", "SL Partiel", "Profit Partiel", ✅/❌…).
+// rrfNum renvoie le R/R final numérique, ou null si vide / null / "—" / non numérique.
+function rrfNum(t){
+  let v = t ? t.rrf : null;
+  if (v === undefined || v === '' || v === '—') v = null;
+  if (v === null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+function isWin(t){ const v = rrfNum(t); return v !== null && v > 0; }   // R/R final > 0
+function isLoss(t){ const v = rrfNum(t); return v !== null && v < 0; }  // R/R final < 0
+
 function calcStats(ts){
-  const withR = ts.filter(t=>t.rrf!==null&&t.rrf!==undefined);
-  const wins = ts.filter(t=>t.result==='TP Total'||t.result==='Profit Partiel');
-  const losses = ts.filter(t=>t.result==='SL Total');
-  const totalR = withR.reduce((s,t)=>s+t.rrf,0);
-  const winR  = wins.map(t=>t.rrf).filter(r=>r>0).reduce((s,r)=>s+r,0);
-  const lossR = losses.map(t=>Math.abs(t.rrf)).reduce((s,r)=>s+r,0);
-  const avgWin  = wins.filter(t=>t.rrf>0).length ? winR/wins.filter(t=>t.rrf>0).length : 0;
+  const wins   = ts.filter(isWin);                  // R/R final > 0
+  const losses = ts.filter(isLoss);                 // R/R final < 0
+  const graded = wins.length + losses.length;       // notés (exclut 0 / vide / null / "—")
+  const withR  = ts.filter(t=>rrfNum(t)!==null);    // tout R/R numérique (incl. 0) → Total R / R moyen
+  const totalR = withR.reduce((s,t)=>s+rrfNum(t),0);
+  const winR   = wins.reduce((s,t)=>s+rrfNum(t),0);
+  const lossR  = losses.reduce((s,t)=>s+Math.abs(rrfNum(t)),0);
+  const avgWin  = wins.length   ? winR/wins.length    : 0;
   const avgLoss = losses.length ? lossR/losses.length : 0;
   const pf = lossR>0 ? winR/lossR : winR;
   return {
     total:ts.length, wins:wins.length, losses:losses.length,
-    winRate: ts.length?(wins.length/ts.length*100):0,
+    winRate: graded ? (wins.length/graded*100) : 0,  // dénominateur = gagnants+perdants notés
     totalR:+totalR.toFixed(2), avgR:withR.length?(+(totalR/withR.length).toFixed(2)):0,
     avgWin:+avgWin.toFixed(2), avgLoss:+avgLoss.toFixed(2),
     pf:+pf.toFixed(2),
-    maxStreak: maxStreak(ts,'TP Total')+maxStreak(ts,'Profit Partiel'),
+    maxStreak: maxWinStreak(ts),
     maxDD: calcMaxDD(ts),
   };
 }
-function maxStreak(ts,result){
+// Plus longue série de gains (R/R>0). Une perte casse la série ; un trade neutre (0/"—") est ignoré.
+function maxWinStreak(ts){
   let max=0,cur=0;
-  ts.forEach(t=>{ if(t.result===result){cur++;if(cur>max)max=cur;}else cur=0; });
+  ts.forEach(t=>{ if(isWin(t)){cur++;if(cur>max)max=cur;} else if(isLoss(t)){cur=0;} });
+  return max;
+}
+// Plus longue série de pertes (R/R<0). Un gain casse la série ; un trade neutre (0/"—") est ignoré.
+function maxLossStreak(ts){
+  let max=0,cur=0;
+  ts.forEach(t=>{ if(isLoss(t)){cur++;if(cur>max)max=cur;} else if(isWin(t)){cur=0;} });
   return max;
 }
 function calcMaxDD(ts){
@@ -2112,22 +2133,23 @@ function renderOverview(){
   const btCount = ts.filter(t=>t.bonTrade).length;
   dc('gBT'); ch['gBT'] = new Chart(document.getElementById('gBT'),{ type:'doughnut', data:{datasets:[{data:[btCount,ts.length-btCount],backgroundColor:['#0a84ff','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
 
-  // Equity
+  // Equity — uniquement les trades pris avec un R/R final numérique valide (ignore les "—" → pas de trous)
   let eq = 0;
-  const eqData = ts.map(t=>{ eq+=(t.rrf||0); return +eq.toFixed(2); });
+  const eqTs = ts.filter(t=>rrfNum(t)!==null);
+  const eqData = eqTs.map(t=>{ eq+=rrfNum(t); return +eq.toFixed(2); });
   dc('eqChart');
   ch['eqChart'] = new Chart(document.getElementById('eqChart'),{
     type:'line',
-    data:{ labels:ts.map((_,i)=>i+1), datasets:[{ data:eqData, borderColor:'#ff9f0a', backgroundColor:'rgba(255,159,10,.1)', fill:true, tension:.4, pointRadius:0, borderWidth:2 }] },
+    data:{ labels:eqTs.map((_,i)=>i+1), datasets:[{ data:eqData, borderColor:'#ff9f0a', backgroundColor:'rgba(255,159,10,.1)', fill:true, tension:.4, pointRadius:0, borderWidth:2 }] },
     options: chartDefaults({responsive:true,animation:{duration:400}})
   });
 
-  // P&L bars 30
-  const l30 = ts.slice(-30);
+  // P&L bars 30 — uniquement R/R final numériques valides
+  const l30 = ts.filter(t=>rrfNum(t)!==null).slice(-30);
   dc('pnlBars');
   ch['pnlBars'] = new Chart(document.getElementById('pnlBars'),{
     type:'bar',
-    data:{ labels:l30.map(t=>t.pair), datasets:[{ data:l30.map(t=>t.rrf||0), backgroundColor:l30.map(t=>(t.rrf||0)>=0?'rgba(48,209,88,.8)':'rgba(255,69,58,.8)'), borderRadius:4 }] },
+    data:{ labels:l30.map(t=>t.pair), datasets:[{ data:l30.map(t=>rrfNum(t)), backgroundColor:l30.map(t=>rrfNum(t)>=0?'rgba(48,209,88,.8)':'rgba(255,69,58,.8)'), borderRadius:4 }] },
     options: chartDefaults({responsive:true,animation:{duration:400}})
   });
 
@@ -2144,7 +2166,7 @@ function renderOverview(){
 
   // Wins by weekday
   const wdNames = ['Lun','Mar','Mer','Jeu','Ven'];
-  const wdWins = wdNames.map((_,i)=>ts.filter(t=>new Date(t.date).getDay()===(i+1)&&(t.result==='TP Total'||t.result==='Profit Partiel')).length);
+  const wdWins = wdNames.map((_,i)=>ts.filter(t=>new Date(t.date).getDay()===(i+1)&&isWin(t)).length);
   const wdTotal= wdNames.map((_,i)=>ts.filter(t=>new Date(t.date).getDay()===(i+1)).length);
   dc('weekChart');
   ch['weekChart'] = new Chart(document.getElementById('weekChart'),{
@@ -2381,11 +2403,11 @@ function renderDimensionAnalysis(){
 }
 
 function statsOf(arr){
-  const closed = arr.filter(t=>t.rrf!==null && t.rrf!==undefined);
+  const closed = arr.filter(t=>rrfNum(t)!==null);
   const n = closed.length;
-  const wins = closed.filter(t=>(t.rrf||0)>0);
-  const losses = closed.filter(t=>(t.rrf||0)<0);
-  const wr = n ? (wins.length/n*100) : 0;
+  const wins = closed.filter(isWin);
+  const losses = closed.filter(isLoss);
+  const wr = (wins.length+losses.length) ? (wins.length/(wins.length+losses.length)*100) : 0;
   const totalR = closed.reduce((s,t)=>s+(t.rrf||0),0);
   const avgR = n ? totalR/n : 0;
   const grossWin = wins.reduce((s,t)=>s+t.rrf,0);
@@ -2487,8 +2509,8 @@ function renderSetups(){
   const bonPct = bonTotal? (bonCount/bonTotal*100):0;
   const errCount = ts.filter(t=>(t.errors||[]).filter(e=>e&&e!=='Aucune').length>0).length;
   const errPct = ts.length? (errCount/ts.length*100):0;
-  const bestStreak = maxStreak(ts,'TP Total');
-  const worstStreak = maxStreak(ts,'SL Total');
+  const bestStreak = maxWinStreak(ts);
+  const worstStreak = maxLossStreak(ts);
   const sGlobal = statsOf(ts);
 
   document.getElementById('discipline-grid').innerHTML = `
@@ -2527,8 +2549,8 @@ function renderSetups(){
   const tMap={};
   TEND_OPTIONS.forEach(t=>{
     const tt=ts.filter(x=>x.tend===t);
-    const w=tt.filter(x=>x.result==='TP Total'||x.result==='Profit Partiel').length;
-    tMap[t]=tt.length?+(w/tt.length*100).toFixed(1):0;
+    const w=tt.filter(isWin).length, l=tt.filter(isLoss).length;
+    tMap[t]=(w+l)?+(w/(w+l)*100).toFixed(1):0;
   });
   dc('tendChart');
   ch['tendChart']=new Chart(document.getElementById('tendChart'),{
@@ -2571,7 +2593,7 @@ function renderCalendar(){
 
   const today=new Date().toISOString().slice(0,10);
   const dailyMap={};
-  trades.forEach(t=>{ (dailyMap[t.date]||(dailyMap[t.date]=[])).push(t); });
+  trades.filter(isTradePris).forEach(t=>{ (dailyMap[t.date]||(dailyMap[t.date]=[])).push(t); });
 
   const first=new Date(calY,calM,1);
   let dow=first.getDay(); dow=dow===0?6:dow-1;
@@ -2597,7 +2619,7 @@ function renderCalendar(){
   document.getElementById('cal-grid').innerHTML=html;
 
   // Month stats
-  const mTs=trades.filter(t=>{ const d=new Date(t.date); return d.getFullYear()===calY&&d.getMonth()===calM; });
+  const mTs=trades.filter(isTradePris).filter(t=>{ const d=new Date(t.date); return d.getFullYear()===calY&&d.getMonth()===calM; });
   const ms=calcStats(mTs);
   document.getElementById('cal-kpi').innerHTML=`
     <div class="kpi"><div class="kpi-label">Trades ce mois</div><div class="kpi-value">${ms.total}</div></div>
@@ -3117,7 +3139,7 @@ const perfFilters = {};
 PERF_DIMS.forEach(d=>{ perfFilters[d.key]=new Set(); }); // empty = all
 
 function getPerfFilteredTrades(){
-  return tradesOfYear().filter(t=>{
+  return tradesOfYear().filter(isTradePris).filter(t=>{
     return PERF_DIMS.every(d=>{
       const active=perfFilters[d.key];
       if(!active||active.size===0) return true;
@@ -3155,15 +3177,15 @@ function renderPerfFilters(){
 function bdRow(dim, ts, val){
   const sub=ts.filter(t=>dim.get(t)===val);
   if(!sub.length) return null;
-  const wins=sub.filter(t=>t.result==='TP Total'||t.result==='Profit Partiel').length;
-  const losses=sub.filter(t=>t.result==='SL Total').length;
-  const wr=+(wins/sub.length*100).toFixed(1);
-  const withR=sub.filter(t=>t.rrf!==null&&t.rrf!==undefined);
-  const totalR=+withR.reduce((s,t)=>s+(t.rrf||0),0).toFixed(2);
+  const wins=sub.filter(isWin).length;
+  const losses=sub.filter(isLoss).length;
+  const wr=(wins+losses)?+(wins/(wins+losses)*100).toFixed(1):0;
+  const withR=sub.filter(t=>rrfNum(t)!==null);
+  const totalR=+withR.reduce((s,t)=>s+rrfNum(t),0).toFixed(2);
   const avgR=withR.length?+(totalR/withR.length).toFixed(2):0;
-  const bestR=withR.length?+(Math.max(...withR.map(t=>t.rrf))).toFixed(2):0;
-  const worstR=withR.length?+(Math.min(...withR.map(t=>t.rrf))).toFixed(2):0;
-  const pf=()=>{ const lR=sub.filter(t=>t.result==='SL Total').reduce((s,t)=>s+Math.abs(t.rrf||0),0); const wR=sub.filter(t=>t.result==='TP Total'||t.result==='Profit Partiel').reduce((s,t)=>s+(t.rrf||0),0); return lR>0?+(wR/lR).toFixed(2):'—'; };
+  const bestR=withR.length?+(Math.max(...withR.map(t=>rrfNum(t)))).toFixed(2):0;
+  const worstR=withR.length?+(Math.min(...withR.map(t=>rrfNum(t)))).toFixed(2):0;
+  const pf=()=>{ const lR=sub.filter(isLoss).reduce((s,t)=>s+Math.abs(rrfNum(t)),0); const wR=sub.filter(isWin).reduce((s,t)=>s+rrfNum(t),0); return lR>0?+(wR/lR).toFixed(2):'—'; };
   const wrColor=wr>=60?'var(--green)':wr>=45?'var(--orange)':'var(--red)';
   const fillColor=wr>=60?'#30d158':wr>=45?'#ff9f0a':'#ff453a';
   return `<tr>
@@ -3217,6 +3239,7 @@ function renderMonthly(){
   const prefix = `${monthY}-${String(monthM+1).padStart(2,'0')}-`;
   const ts = trades
     .filter(t => t.date && t.date.startsWith(prefix))
+    .filter(isTradePris)
     .sort((a,b)=>a.date.localeCompare(b.date));
 
   const emptyEl = document.getElementById('month-empty');
@@ -3233,14 +3256,15 @@ function renderMonthly(){
   }
   if(emptyEl) emptyEl.style.display='none';
 
-  // Stats
+  // Stats — win/loss basés sur le R/R final chiffré (universel)
   const closed = ts.filter(t => t.result !== 'En cours');
-  const wins = closed.filter(t => t.result==='TP Total' || t.result==='Profit Partiel');
-  const losses = closed.filter(t => t.result==='SL Total');
-  const totalR = +closed.reduce((s,t)=>s+(t.rrf||0),0).toFixed(2);
-  const wr = closed.length ? (wins.length/closed.length*100) : 0;
-  const profits = +closed.filter(t=>(t.rrf||0)>0).reduce((s,t)=>s+t.rrf,0).toFixed(2);
-  const lossR  = +closed.filter(t=>(t.rrf||0)<0).reduce((s,t)=>s+t.rrf,0).toFixed(2);
+  const numClosed = closed.filter(t => rrfNum(t)!==null);  // R/R valide pour equity/P&L (ignore "—")
+  const wins = closed.filter(isWin);
+  const losses = closed.filter(isLoss);
+  const totalR = +closed.reduce((s,t)=>s+(rrfNum(t)||0),0).toFixed(2);
+  const wr = (wins.length+losses.length) ? (wins.length/(wins.length+losses.length)*100) : 0;
+  const profits = +wins.reduce((s,t)=>s+rrfNum(t),0).toFixed(2);
+  const lossR  = +losses.reduce((s,t)=>s+rrfNum(t),0).toFixed(2);
   const pf = lossR!==0 ? +(profits/Math.abs(lossR)).toFixed(2) : (profits>0?Infinity:0);
   const exp = closed.length ? +(totalR/closed.length).toFixed(2) : 0;
 
@@ -3264,8 +3288,8 @@ function renderMonthly(){
   // Streaks
   let bestW=0,bestL=0,curW=0,curL=0;
   closed.forEach(t=>{
-    if(t.result==='TP Total'||t.result==='Profit Partiel'){ curW++; curL=0; bestW=Math.max(bestW,curW); }
-    else if(t.result==='SL Total'){ curL++; curW=0; bestL=Math.max(bestL,curL); }
+    if(isWin(t)){ curW++; curL=0; bestW=Math.max(bestW,curW); }
+    else if(isLoss(t)){ curL++; curW=0; bestL=Math.max(bestL,curL); }
     else { curW=0; curL=0; }
   });
   document.getElementById('mh-bestw').textContent = bestW;
@@ -3282,10 +3306,10 @@ function renderMonthly(){
 
   // Charts
   if(typeof Chart === 'undefined') return;
-  // Equity
+  // Equity — uniquement R/R final numériques valides (ignore les "—" → pas de trous)
   let cum = 0;
-  const eqData = closed.map(t => { cum += (t.rrf||0); return +cum.toFixed(2); });
-  const labels = closed.map((_,i)=>'#'+(i+1));
+  const eqData = numClosed.map(t => { cum += rrfNum(t); return +cum.toFixed(2); });
+  const labels = numClosed.map((_,i)=>'#'+(i+1));
   dc('m-eq-chart');
   const ctxEq = document.getElementById('m-eq-chart').getContext('2d');
   const grad = ctxEq.createLinearGradient(0,0,0,200);
@@ -3315,8 +3339,8 @@ function renderMonthly(){
   ch['m-pl-chart'] = new Chart(ctxPl, {
     type:'bar',
     data:{ labels, datasets:[{
-      data: closed.map(t=>+(t.rrf||0).toFixed(2)),
-      backgroundColor: closed.map(t=>(t.rrf||0)>=0?'rgba(48,209,88,.85)':'rgba(255,69,58,.85)'),
+      data: numClosed.map(t=>+rrfNum(t).toFixed(2)),
+      backgroundColor: numClosed.map(t=>rrfNum(t)>=0?'rgba(48,209,88,.85)':'rgba(255,69,58,.85)'),
       borderRadius: 6, borderSkipped: false,
     }]},
     options:{ responsive:true, maintainAspectRatio:false,
@@ -3372,8 +3396,8 @@ function renderPerf(){
         if(e==='Aucune' || !e) return; // skip legacy "Aucune" / empty
         if(!map[e]) map[e]={total:0,losses:0,r:0};
         map[e].total++;
-        if(t.result==='SL Total') map[e].losses++;
-        map[e].r+=t.rrf||0;
+        if(isLoss(t)) map[e].losses++;
+        map[e].r+=rrfNum(t)||0;
       });
     });
     const rows=Object.entries(map).filter(([,v])=>v.total>0)
