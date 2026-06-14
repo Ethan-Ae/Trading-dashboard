@@ -1916,7 +1916,7 @@ function saveYears(){ localStorage.setItem('journal_years', JSON.stringify(JOURN
 // À appeler après chaque chargement / import pour ne jamais avoir une année orpheline
 function ensureYearsCoverTrades(){
   const yearsInTrades = [...new Set(
-    trades.map(t => t.date && parseInt(t.date.slice(0,4))).filter(y => !isNaN(y))
+    trades.map(t => { const d = getTradeDate(t); return d && parseInt(d.slice(0,4)); }).filter(y => !isNaN(y))
   )];
   let added = false;
   yearsInTrades.forEach(y => {
@@ -1968,9 +1968,28 @@ function addYear(){
   renderYearSelect(); refreshCurrentPage();
 }
 
+// ─── Date EFFECTIVE d'un trade pour TOUS les calculs/affichages temporels ───
+// Priorité à la date de prise de position (extra_data["Date Prise de Position"],
+// format JJ/MM/AAAA) si valide, sinon repli propre sur t.date (date de création stockée).
+// Ne modifie jamais la donnée stockée ; en cas de date de prise vide/invalide → t.date.
+function getTradeDate(t){
+  if (t && t.extra_data && typeof t.extra_data === 'object'){
+    const iso = parseFrenchDate(t.extra_data['Date Prise de Position']);
+    if (iso) return iso;
+  }
+  return t ? t.date : undefined;
+}
+// Jour de la semaine (nom FR) dérivé de la date EFFECTIVE — pour les regroupements/affichages
+// temporels par jour. Repli sur le champ stocké t.jour si la date effective est inexploitable.
+function getTradeJour(t){
+  const d = getTradeDate(t);
+  if (d){ const dt = new Date(d+'T00:00:00'); if(!isNaN(dt.getTime())) return JOURS[dt.getDay()]; }
+  return t ? t.jour : undefined;
+}
+
 function tradesOfYear(){
   if (currentYear === 'all') return trades.slice();
-  return trades.filter(t => t.date && t.date.startsWith(String(currentYear)+'-'));
+  return trades.filter(t => { const d = getTradeDate(t); return d && d.startsWith(String(currentYear)+'-'); });
 }
 
 // ───────────────────────────────────────────
@@ -2133,9 +2152,12 @@ function renderOverview(){
   const btCount = ts.filter(t=>t.bonTrade).length;
   dc('gBT'); ch['gBT'] = new Chart(document.getElementById('gBT'),{ type:'doughnut', data:{datasets:[{data:[btCount,ts.length-btCount],backgroundColor:['#0a84ff','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
 
+  // Ordre chronologique basé sur la date EFFECTIVE (prise de position, repli sur création)
+  const tsChrono = ts.slice().sort((a,b)=> (getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
+
   // Equity — uniquement les trades pris avec un R/R final numérique valide (ignore les "—" → pas de trous)
   let eq = 0;
-  const eqTs = ts.filter(t=>rrfNum(t)!==null);
+  const eqTs = tsChrono.filter(t=>rrfNum(t)!==null);
   const eqData = eqTs.map(t=>{ eq+=rrfNum(t); return +eq.toFixed(2); });
   dc('eqChart');
   ch['eqChart'] = new Chart(document.getElementById('eqChart'),{
@@ -2144,8 +2166,8 @@ function renderOverview(){
     options: chartDefaults({responsive:true,animation:{duration:400}})
   });
 
-  // P&L bars 30 — uniquement R/R final numériques valides
-  const l30 = ts.filter(t=>rrfNum(t)!==null).slice(-30);
+  // P&L bars 30 — uniquement R/R final numériques valides (30 derniers par date effective)
+  const l30 = eqTs.slice(-30);
   dc('pnlBars');
   ch['pnlBars'] = new Chart(document.getElementById('pnlBars'),{
     type:'bar',
@@ -2166,8 +2188,8 @@ function renderOverview(){
 
   // Wins by weekday
   const wdNames = ['Lun','Mar','Mer','Jeu','Ven'];
-  const wdWins = wdNames.map((_,i)=>ts.filter(t=>new Date(t.date).getDay()===(i+1)&&isWin(t)).length);
-  const wdTotal= wdNames.map((_,i)=>ts.filter(t=>new Date(t.date).getDay()===(i+1)).length);
+  const wdWins = wdNames.map((_,i)=>ts.filter(t=>new Date(getTradeDate(t)).getDay()===(i+1)&&isWin(t)).length);
+  const wdTotal= wdNames.map((_,i)=>ts.filter(t=>new Date(getTradeDate(t)).getDay()===(i+1)).length);
   dc('weekChart');
   ch['weekChart'] = new Chart(document.getElementById('weekChart'),{
     type:'bar',
@@ -2205,7 +2227,7 @@ function renderOverview(){
 // ───────────────────────────────────────────
 function renderTradesTable(){
   const sortDir=(document.getElementById('t-sort')||{}).value||'desc';
-  let ts = tradesOfYear().sort((a,b)=> sortDir==='asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
+  let ts = tradesOfYear().sort((a,b)=> sortDir==='asc' ? (getTradeDate(a)||'').localeCompare(getTradeDate(b)||'') : (getTradeDate(b)||'').localeCompare(getTradeDate(a)||''));
   const pair=(document.getElementById('t-pair')||{}).value||'';
   const tf=(document.getElementById('t-tf')||{}).value||'';
   const res=(document.getElementById('t-result')||{}).value||'';
@@ -2215,7 +2237,7 @@ function renderTradesTable(){
   if(tf) ts=ts.filter(t=>t.tf===tf);
   if(res) ts=ts.filter(t=>t.result===res);
   if(type) ts=ts.filter(t=>t.ordre===type);
-  if(jour) ts=ts.filter(t=>t.jour===jour);
+  if(jour) ts=ts.filter(t=>getTradeJour(t)===jour);
   const ct=document.getElementById('t-count');
   if(ct) ct.textContent=`${ts.length} trade${ts.length!==1?'s':''}`;
   const tb=document.getElementById('t-tbody');
@@ -2223,7 +2245,7 @@ function renderTradesTable(){
   tb.innerHTML=ts.map(t=>`
     <tr onclick="openPanel(${t.id})">
       <td class="pair-cell">${t.pair}</td>
-      <td style="color:var(--text2)">${t.date}</td>
+      <td style="color:var(--text2)">${getTradeDate(t)}</td>
       <td><button class="toggle ${t.prise?'on':''}" onclick="event.stopPropagation();togglePrise(${t.id},this)" style="pointer-events:auto"></button></td>
       <td>${tfChip(t.tf)}</td>
       <td>${ordreChip(t.ordre)}</td>
@@ -2231,7 +2253,7 @@ function renderTradesTable(){
       <td>${resultChip(t.result)}</td>
       <td style="color:var(--text2)">${t.rri}</td>
       <td class="${rClass(t.rrf)}">${rStr(t.rrf)}</td>
-      <td><span class="chip chip-jour">${t.jour}</span></td>
+      <td><span class="chip chip-jour">${getTradeJour(t)}</span></td>
       <td style="color:var(--text3);font-size:.75rem">${t.hold}</td>
       <td style="color:var(--text2);font-size:.73rem;max-width:180px;overflow:hidden;text-overflow:ellipsis">${t.type}</td>
       <td style="font-size:1rem;text-align:center">${t.bonTrade?'✅':'❌'}</td>
@@ -2291,7 +2313,7 @@ const CORE_DIM_FIELDS = [
   { id:'core:type',  label:'Type de trade',     source:'core', getValues:t => dimSplit(t.type) },
   { id:'core:tend',  label:'Tendance',          source:'core', getValues:t => dimSplit(t.tend) },
   { id:'core:tf',    label:'Time-Frame',        source:'core', getValues:t => dimSplit(t.tf) },
-  { id:'core:jour',  label:'Jour',              source:'core', getValues:t => dimSplit(t.jour) },
+  { id:'core:jour',  label:'Jour',              source:'core', getValues:t => dimSplit(getTradeJour(t)) },
   { id:'core:prise', label:'Prise de position', source:'core', getValues:t => t.prise===true?['Pris']:t.prise===false?['Non pris']:[DIM_EMPTY] },
   { id:'core:ordre', label:"Type d'ordre",      source:'core', getValues:t => dimSplit(t.ordre) },
   { id:'core:hold',  label:'Holding period',    source:'core', getValues:t => dimSplit(t.hold) },
@@ -2473,7 +2495,7 @@ function renderSetups(){
     bestBy(t=>t.tf, 'Meilleur Time-Frame', '⏱')
     + bestBy(t=>t.tend, 'Meilleure Tendance', '📈')
     + bestBy(t=>t.pair, 'Meilleure Paire', '💱')
-    + bestBy(t=>t.jour, 'Meilleur Jour', '📅')
+    + bestBy(t=>getTradeJour(t), 'Meilleur Jour', '📅')
     + bestBy(t=>t.ordre, 'Meilleur Type d\'Ordre', '🎯')
     + bestBy(t=>t.hold, 'Meilleure Durée', '⏳');
 
@@ -2568,8 +2590,9 @@ function renderSetups(){
   });
 
   // Drawdown (négatif pour lecture intuitive : 0 = au plus haut, -X = X R sous le pic)
+  // Ordre chronologique par date effective (prise de position, repli sur création)
   let peak=0,eq=0;
-  const ddData=ts.map(t=>{ eq+=(t.rrf||0); if(eq>peak)peak=eq; return +(-(peak-eq)).toFixed(2); });
+  const ddData=tsChrono.map(t=>{ eq+=(t.rrf||0); if(eq>peak)peak=eq; return +(-(peak-eq)).toFixed(2); });
   dc('ddChart');
   ch['ddChart']=new Chart(document.getElementById('ddChart'),{
     type:'line',data:{labels:ts.map((_,i)=>i+1),datasets:[{data:ddData,borderColor:'#ff453a',backgroundColor:'rgba(255,69,58,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5}]},
@@ -2593,7 +2616,7 @@ function renderCalendar(){
 
   const today=new Date().toISOString().slice(0,10);
   const dailyMap={};
-  trades.filter(isTradePris).forEach(t=>{ (dailyMap[t.date]||(dailyMap[t.date]=[])).push(t); });
+  trades.filter(isTradePris).forEach(t=>{ const d=getTradeDate(t); (dailyMap[d]||(dailyMap[d]=[])).push(t); });
 
   const first=new Date(calY,calM,1);
   let dow=first.getDay(); dow=dow===0?6:dow-1;
@@ -2619,7 +2642,7 @@ function renderCalendar(){
   document.getElementById('cal-grid').innerHTML=html;
 
   // Month stats
-  const mTs=trades.filter(isTradePris).filter(t=>{ const d=new Date(t.date); return d.getFullYear()===calY&&d.getMonth()===calM; });
+  const mTs=trades.filter(isTradePris).filter(t=>{ const d=new Date(getTradeDate(t)); return d.getFullYear()===calY&&d.getMonth()===calM; });
   const ms=calcStats(mTs);
   document.getElementById('cal-kpi').innerHTML=`
     <div class="kpi"><div class="kpi-label">Trades ce mois</div><div class="kpi-value">${ms.total}</div></div>
@@ -2631,7 +2654,7 @@ function renderCalendar(){
 
 function calMove(dir){ calM+=dir; if(calM<0){calM=11;calY--;}else if(calM>11){calM=0;calY++;} renderCalendar(); }
 function calDayClick(ds){
-  const t=trades.filter(x=>x.date===ds);
+  const t=trades.filter(x=>getTradeDate(x)===ds);
   if(t.length===1) openPanel(t[0].id);
 }
 
@@ -3129,7 +3152,7 @@ const PERF_DIMS = [
   { key:'tend',  label:'Tendance',       vals: TEND_OPTIONS, get: t=>t.tend },
   { key:'retails',label:'Position vs Retails', vals:['Avec les Retails','Contre les Retails'], get:t=>t.retails },
   { key:'hold',  label:'Holding',        vals: HOLD_OPTIONS, get: t=>t.hold },
-  { key:'jour',  label:'Jour',           vals: ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'], get: t=>t.jour },
+  { key:'jour',  label:'Jour',           vals: ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'], get: t=>getTradeJour(t) },
   { key:'result',label:'Résultat',       vals: RESULT_OPTIONS, get: t=>t.result },
   { key:'risk',  label:'Risk',           vals: ['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%','2.50%'], get: t=>t.risk },
 ];
@@ -3238,9 +3261,9 @@ function renderMonthly(){
   // Filter trades to this month
   const prefix = `${monthY}-${String(monthM+1).padStart(2,'0')}-`;
   const ts = trades
-    .filter(t => t.date && t.date.startsWith(prefix))
+    .filter(t => { const d = getTradeDate(t); return d && d.startsWith(prefix); })
     .filter(isTradePris)
-    .sort((a,b)=>a.date.localeCompare(b.date));
+    .sort((a,b)=>(getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
 
   const emptyEl = document.getElementById('month-empty');
   if(ts.length===0){
@@ -3744,9 +3767,9 @@ async function loadTradesFromDb() {
     // En mode 'all', pas d'auto-bascule (on voit déjà tout)
     const tradesInActiveYear = currentYear === 'all'
       ? trades
-      : trades.filter(t => t.date && t.date.startsWith(String(currentYear)+'-'));
+      : trades.filter(t => { const d = getTradeDate(t); return d && d.startsWith(String(currentYear)+'-'); });
     if (currentYear !== 'all' && trades.length > 0 && tradesInActiveYear.length === 0) {
-      const yearsWithTrades = [...new Set(trades.map(t => t.date && t.date.slice(0,4)).filter(Boolean))]
+      const yearsWithTrades = [...new Set(trades.map(t => { const d = getTradeDate(t); return d && d.slice(0,4); }).filter(Boolean))]
         .map(Number).sort((a,b) => b-a);
       if (yearsWithTrades.length > 0) {
         const bestYear = yearsWithTrades[0];
@@ -4022,7 +4045,7 @@ function renderGoalCard(ts){
   const goal = getGoal();
   const now = new Date();
   const ym = now.toISOString().slice(0,7);
-  const monthTs = ts.filter(t=>t.date && t.date.startsWith(ym));
+  const monthTs = ts.filter(t=>{ const d=getTradeDate(t); return d && d.startsWith(ym); });
   const r = monthTs.reduce((s,t)=>s+(t.rrf||0),0);
   const pct = goal>0 ? Math.max(0, Math.min(100, (r/goal)*100)) : 0;
   const overPct = r>goal && goal>0 ? Math.min(100, ((r-goal)/goal)*100) : 0;
@@ -4828,7 +4851,7 @@ function importJSON(input){
       ensureYearsCoverTrades();
 
       // Auto-bascule sur l'année qui contient les nouveaux trades (sauf si on est en mode "all")
-      const importedYears = [...new Set(newTrades.map(t => t.date && t.date.slice(0,4)).filter(Boolean))].map(Number);
+      const importedYears = [...new Set(newTrades.map(t => { const d = getTradeDate(t); return d && d.slice(0,4); }).filter(Boolean))].map(Number);
       if (currentYear !== 'all' && importedYears.length && !importedYears.includes(currentYear)) {
         const targetYear = Math.max(...importedYears);
         if (!JOURNAL_YEARS.includes(targetYear)) {
