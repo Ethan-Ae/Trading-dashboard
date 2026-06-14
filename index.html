@@ -4145,7 +4145,56 @@ function parseCSV(text) {
     }
   }
   if (cell.length || row.length) { row.push(cell); rows.push(row); }
-  return rows.filter(r => r.some(v => v && v.trim().length));
+  let result = rows.filter(r => r.some(v => v && v.trim().length));
+  // Réparation ciblée : uniquement si le délimiteur est la virgule
+  if (sep === ',' && result.length > 1) {
+    result = repairCommaDecimals(result, result[0].length);
+  }
+  return result;
+}
+
+// ── Reconstruction des décimales scindées par un délimiteur virgule ──
+// "Partie entière" (gauche) : signe optionnel + chiffres uniquement
+const _INT_RE  = /^[+-]?\d+$/;
+// "Partie fractionnaire" (droite) : chiffres + éventuelle unité collée (%, €, $)
+const _FRAC_RE = /^\d+\s*[%€$]?$/;
+
+function repairCommaDecimals(rows, expectedCols) {
+  if (!expectedCols || expectedCols < 2) return rows;
+
+  // ── Garde-fou de prudence ──
+  // On ne répare QUE si une proportion significative des lignes de données sont
+  // trop longues. Un fichier sain (nombres entre guillemets, ou délimiteur ;)
+  // n'a aucune ligne trop longue → la réparation ne se déclenche jamais.
+  const dataRows = rows.slice(1);
+  if (!dataRows.length) return rows;
+  const tooLong = dataRows.filter(r => r.length > expectedCols).length;
+  const ratio = tooLong / dataRows.length;
+  if (ratio < 0.30) return rows; // < 30 % de lignes anormales → on ne touche à rien
+
+  return rows.map((row, idx) => {
+    if (idx === 0) return row;                  // en-tête : jamais touché (= ancre)
+    if (row.length <= expectedCols) return row; // ligne déjà correcte : intacte
+    const out = [];
+    let i = 0;
+    let needed = row.length - expectedCols;     // nb de fusions à réaliser
+    while (i < row.length) {
+      const a = (row[i] ?? '').trim();
+      const b = i + 1 < row.length ? (row[i + 1] ?? '').trim() : null;
+      // Fusionne UNIQUEMENT entier + fraction, tant qu'il reste des fusions à faire
+      if (needed > 0 && b !== null && _INT_RE.test(a) && _FRAC_RE.test(b)) {
+        out.push(a + '.' + b);                  // "0" + "165" → "0.165"
+        i += 2;
+        needed--;
+      } else {
+        out.push(row[i]);
+        i += 1;
+      }
+    }
+    // SÉCURITÉ : si on n'atteint pas exactement le bon nombre de colonnes,
+    // la reconstruction n'est pas fiable → on rend la ligne d'origine, intacte.
+    return out.length === expectedCols ? out : row;
+  });
 }
 
 // Normalise un nom de colonne pour matching tolérant
