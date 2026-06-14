@@ -4389,16 +4389,28 @@ function parseFrenchDate(raw) {
   return `${yi}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 }
 
+// ─── Parsing numérique français robuste ───
+// "0,165" → 0.165 | "-2,299" → -2.299 | "19,72 €" → 19.72 | "1" → 1 | vide → null
+function parseFrenchNumber(raw) {
+  if (raw == null) return null;
+  let s = String(raw).trim();
+  if (s === '') return null;
+  // Retire espaces (y compris insécables), remplace la virgule décimale par un point,
+  // puis purge tout caractère non numérique (%, €, $, etc.) en gardant chiffres . + -
+  s = s.replace(/\u00a0/g, '')
+       .replace(/\s+/g, '')
+       .replace(/,/g, '.')
+       .replace(/[^0-9.+\-]/g, '');
+  if (s === '' || s === '-' || s === '+' || s === '.') return null;
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : null;
+}
+
 // ─── Risk : normalise les formats mixtes ("2.5", "2%", "0,50%", "1.00%") → "X.XX%" ───
 function normalizeRisk(raw) {
-  if (raw == null || raw === '') return null;
-  let s = String(raw).trim().replace(',', '.');
-  // Extraire le nombre + le % éventuel
-  const m = s.match(/^([0-9]+(?:\.[0-9]+)?)\s*(%?)\s*$/);
-  if (!m) return null;
-  const num = parseFloat(m[1]);
-  if (isNaN(num) || num < 0 || num > 100) return null;
-  return num.toFixed(2) + '%';
+  const n = parseFrenchNumber(raw);
+  if (n == null || n < 0 || n > 100) return null;
+  return n.toFixed(2) + '%';
 }
 
 // Valeurs d'actifs à ignorer (lignes parasites des exports Notion)
@@ -4484,13 +4496,7 @@ function buildTradeFromMapping(row, mapping, header, baseId, i, lineNumber) {
     if (idx == null || idx < 0) return '';
     return (row[idx] || '').toString().trim();
   };
-  const num = key => {
-    const v = getCol(key);
-    if (v === '') return null;
-    const cleaned = v.replace(/[^0-9.,\-]/g, '').replace(',', '.');
-    const n = parseFloat(cleaned);
-    return isNaN(n) ? null : n;
-  };
+  const num = key => parseFrenchNumber(getCol(key));
 
   // ── 1) Actif obligatoire ──
   const rawPair = getCol('pair');
@@ -4554,14 +4560,7 @@ function buildTradeFromMapping(row, mapping, header, baseId, i, lineNumber) {
 // ─── Transforme une ligne CSV en trade VALIDE ou en raison de skip ───
 function csvRowToTradeOrSkip(row, colIdx, baseId, i, lineNumber, header) {
   const get = field => colIdx[field] != null ? (row[colIdx[field]] || '').toString().trim() : '';
-  const num = field => {
-    const v = get(field);
-    if (v === '') return null;
-    // Remplace la virgule décimale par un point AVANT parseFloat
-    const cleaned = v.replace(/[^0-9.,\-]/g, '').replace(',', '.');
-    const n = parseFloat(cleaned);
-    return isNaN(n) ? null : n;
-  };
+  const num = field => parseFrenchNumber(get(field));
 
   // Indexes des colonnes utilisées par un champ mappé
   const usedIndexes = new Set(Object.values(colIdx));
