@@ -1087,6 +1087,13 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <option value="">Jour</option>
         <option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option>
       </select>
+      <select class="filter-select" id="t-month" onchange="renderTradesTable()">
+        <option value="">Tous les mois</option>
+        <option value="0">Janvier</option><option value="1">Février</option><option value="2">Mars</option>
+        <option value="3">Avril</option><option value="4">Mai</option><option value="5">Juin</option>
+        <option value="6">Juillet</option><option value="7">Août</option><option value="8">Septembre</option>
+        <option value="9">Octobre</option><option value="10">Novembre</option><option value="11">Décembre</option>
+      </select>
       <select class="filter-select" id="t-sort" onchange="renderTradesTable()">
         <option value="desc">Date ↓ (récent)</option>
         <option value="asc">Date ↑ (ancien)</option>
@@ -1519,7 +1526,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <label>Actif</label>
         <input type="text" id="m-pair" placeholder="ex: eurusd ou EURUSD…" oninput="this.value=this.value.toUpperCase()">
       </div>
-      <div class="form-group"><label>Date</label><input type="date" id="m-date"></div>
+      <div class="form-group"><label>Date de création</label><input type="date" id="m-date" onchange="syncModalPriseDate()"></div>
+      <div class="form-group"><label>Date prise de position <span style="color:var(--text3);font-weight:400;font-size:.7rem">(base des stats)</span></label><input type="date" id="m-prise-date" oninput="this.dataset.touched='1'"></div>
       <div class="form-group" style="grid-column:span 2"><label>Time-Frame <span style="color:var(--text3);font-weight:400;font-size:.7rem">(plusieurs possibles)</span></label>
         <div id="m-tf-group" class="emoji-btn-group" style="flex-wrap:wrap;gap:6px"></div>
       </div>
@@ -2330,11 +2338,13 @@ function renderTradesTable(){
   const res=(document.getElementById('t-result')||{}).value||'';
   const type=(document.getElementById('t-type')||{}).value||'';
   const jour=(document.getElementById('t-jour')||{}).value||'';
+  const month=(document.getElementById('t-month')||{}).value||'';
   if(pair) ts=ts.filter(t=>(t.pair||'').includes(pair));
-  if(tf) ts=ts.filter(t=>t.tf===tf);
+  if(tf) ts=ts.filter(t=>dimSplit(t.tf).includes(tf));
   if(res) ts=ts.filter(t=>t.result===res);
   if(type) ts=ts.filter(t=>t.ordre===type);
   if(jour) ts=ts.filter(t=>getTradeJour(t)===jour);
+  if(month!=='') ts=ts.filter(t=>{ const d=new Date(getTradeDate(t)); return !isNaN(d.getTime()) && d.getMonth()===+month; });
   const ct=document.getElementById('t-count');
   if(ct) ct.textContent=`${ts.length} trade${ts.length!==1?'s':''}`;
   const tb=document.getElementById('t-tbody');
@@ -2765,7 +2775,7 @@ function openPanel(id){
   if(!activeTrade) return;
   const t=activeTrade;
   document.getElementById('p-pair').textContent=t.pair;
-  document.getElementById('p-date').textContent=`${t.date} · ${t.jour}`;
+  document.getElementById('p-date').textContent=`${getTradeDate(t)||t.date} · ${getTradeJour(t)||t.jour||''}`;
   document.getElementById('p-result-chip').innerHTML=resultChip(t.result);
   document.getElementById('panel-body').innerHTML=buildPanelHTML(t);
   document.getElementById('panelOverlay').classList.add('open');
@@ -2844,7 +2854,8 @@ function buildPanelHTML(t){
 
   return `
     ${field(icoCalendar,'Actif',`<input class="field-input" value="${t.pair||''}" oninput="this.value=this.value.toUpperCase()" onchange="updateField(${t.id},'pair',this.value)">`)}
-    ${field(icoCalendar,'Date',`<input class="field-input" type="date" value="${t.date||''}" onchange="updatePanelDate(${t.id},this.value)">`)}
+    ${field(icoCalendar,'Date de création',`<input class="field-input" type="date" value="${t.date||''}" onchange="updatePanelDate(${t.id},this.value)">`)}
+    ${field(icoCalendar,'Date prise de position',`<input class="field-input" type="date" value="${getTradeDate(t)||''}" onchange="updatePriseDate(${t.id},this.value)"><div style="color:var(--text3);font-size:.68rem;margin-top:3px">Base de toutes les statistiques. Par défaut = date de création.</div>`)}
     ${field(icoCalendar,'Prise de Position',`<button class="toggle ${t.prise?'on':''}" onclick="togglePrise(${t.id},this)"></button>`)}
     ${field(icoTF,'Time-Frame',tfChips(t))}
     ${field(icoOrdre,'Type d\'Ordre',sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
@@ -2852,7 +2863,7 @@ function buildPanelHTML(t){
     ${field(icoRisk,'R/R Initial',`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="ex: 3.2" onchange="updateField(${t.id},'rri',+this.value)">`)}
     ${field(icoRisk,'Résultat',sel(RESULT_OPTIONS,t.result,'result'))}
     ${field(icoRisk,'R/R Final',`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="ex: -1 ou 3.2" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
-    ${field(icoJour,'Jour',`<span style="color:var(--text2);font-size:.82rem">${t.jour||'—'}</span>`)}
+    ${field(icoJour,'Jour',`<span style="color:var(--text2);font-size:.82rem">${getTradeJour(t)||'—'}</span>`)}
     ${field(icoType,'Type de Trade',sel(TYPE_OPTIONS,t.type,'type'))}
     ${field(icoTend,'Tendance',sel(TEND_OPTIONS,t.tend,'tend'))}
     ${field('👥','Position vs Retails',sel(RETAILS_OPTIONS,t.retails||'—','retails'))}
@@ -2898,6 +2909,16 @@ function updatePanelDate(id,val){
   // refresh jour display
   const panel=document.getElementById('panel-body');
   if(panel){ const spans=[...panel.querySelectorAll('.field-row')]; spans.forEach(row=>{ if(row.querySelector('.field-label')&&row.querySelector('.field-label').textContent==='Jour') row.querySelector('.field-value span').textContent=t.jour||'—'; }); }
+}
+// Met à jour la date de prise de position (extra_data["Date Prise de Position"], format FR).
+// Vide ou égale à la date de création → on retire l'override (la date suit alors la création).
+function updatePriseDate(id,val){
+  const t=trades.find(x=>x.id===id); if(!t) return;
+  if(!t.extra_data||typeof t.extra_data!=='object') t.extra_data={};
+  if(!val || val===t.date){ delete t.extra_data['Date Prise de Position']; }
+  else { const [y,m,d]=val.split('-'); t.extra_data['Date Prise de Position']=`${d}/${m}/${y}`; }
+  dbUpsert(t);
+  openPanel(id);
 }
 function updateField(id,field,val){
   const t=trades.find(x=>x.id===id); if(!t) return;
@@ -3161,6 +3182,8 @@ let modalExecScreenshot = null;
 
 function openAddModal(){
   document.getElementById('m-date').value=new Date().toISOString().slice(0,10);
+  const mPrise=document.getElementById('m-prise-date');
+  mPrise.value=new Date().toISOString().slice(0,10); delete mPrise.dataset.touched;
   document.getElementById('m-pair').value='';
   document.getElementById('m-rri').value='';
   document.getElementById('m-rrf').value='';
@@ -3197,6 +3220,12 @@ function pickModalEmoji(btn, groupId){
 }
 function toggleModalErr(btn){
   btn.classList.toggle('selected');
+}
+// Tant que l'utilisateur n'a pas modifié manuellement la date de prise de position,
+// elle suit la date de création.
+function syncModalPriseDate(){
+  const pd=document.getElementById('m-prise-date');
+  if(pd && !pd.dataset.touched) pd.value=document.getElementById('m-date').value;
 }
 
 function handleModalDrop(e){
@@ -3258,11 +3287,19 @@ function saveTrade(){
   const confluences=document.getElementById('m-confluences').value||'';
   const psy=document.getElementById('m-psy').value||'';
   const retails=document.getElementById('m-retails').value||'';
+  // Date de prise de position : par défaut = date de création ; si l'utilisateur l'a
+  // modifiée, on la stocke (format FR JJ/MM/AAAA) → base de TOUS les calculs via getTradeDate.
+  const priseDate=document.getElementById('m-prise-date').value||date;
+  const extra_data={};
+  if(priseDate && priseDate!==date){
+    const [py,pm,pd]=priseDate.split('-');
+    extra_data['Date Prise de Position']=`${pd}/${pm}/${py}`;
+  }
   const newTrade = {
     id:Date.now(), pair, date, prise:true, tf, ordre, risk, rri, result, rrf,
     jour, hold, type, tend, retails, errs, bonTrade: bonTrade===null ? false : bonTrade,
     manageTrade: manageTrade || (bonTrade ? '👍' : bonTrade===false ? '👎' : null),
-    confluences, psy, checklist: CHECKLIST.map(()=>false),
+    confluences, psy, checklist: CHECKLIST.map(()=>false), extra_data,
     screenshots:{exec:modalExecScreenshot,mgmt:[],close:null}
   };
   trades.unshift(newTrade);
