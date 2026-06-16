@@ -293,6 +293,12 @@ body.has-trial-banner .main { padding-top: 92px; }
 .insight-val { font-size: 1.05rem; font-weight: 700; margin-bottom: 2px; }
 .insight-sub { color: var(--text3); font-size: .72rem; }
 .insight-val.pos { color: #30d158; } .insight-val.neg { color: #ff453a; } .insight-val.ora { color: var(--orange); }
+.insight-card.clickable { cursor: pointer; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.insight-card.clickable:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.insight-go { color: var(--orange); font-size: .68rem; font-weight: 600; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+.focus-chip { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,159,10,.14); border: 1px solid var(--orange); color: var(--orange); border-radius: 8px; padding: 5px 10px; font-size: .76rem; font-weight: 600; }
+.focus-chip button { background: none; border: none; color: var(--orange); cursor: pointer; font-size: .9rem; line-height: 1; padding: 0; }
+.focus-chip button:hover { opacity: .7; }
 
 .setup-rank-card { background: var(--bg2); border: 1px solid var(--sep); border-radius: 18px; padding: 16px; }
 .setup-rank-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
@@ -1099,6 +1105,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <option value="asc">Date ↑ (ancien)</option>
       </select>
       <span class="count-badge" id="t-count">0 trades</span>
+      <span id="t-focus-chip"></span>
     </div>
     <div style="overflow-x:auto;">
       <table>
@@ -2330,6 +2337,35 @@ function renderOverview(){
 // ───────────────────────────────────────────
 //  TRADES TABLE
 // ───────────────────────────────────────────
+// Filtre "point fort" : posé depuis la page Synthèse (cartes "Tes points forts").
+// Permet de cliquer sur une force et de voir TOUS les trades correspondants.
+let tradeFocusFilter = null; // { key, value }
+const TRADE_FOCUS = {
+  tf:    { label:'Time-Frame',   match:(t,v)=> dimSplit(t.tf).includes(v) || (t.tf||'')===v },
+  tend:  { label:'Tendance',     match:(t,v)=> (t.tend||'')===v },
+  pair:  { label:'Paire',        match:(t,v)=> (t.pair||'')===v },
+  jour:  { label:'Jour',         match:(t,v)=> getTradeJour(t)===v },
+  ordre: { label:"Type d'Ordre", match:(t,v)=> (t.ordre||'')===v },
+  hold:  { label:'Durée',        match:(t,v)=> (t.hold||'')===v },
+};
+function focusTradesBy(key, value){
+  if(!TRADE_FOCUS[key]) return;
+  tradeFocusFilter = { key, value };
+  const navBtn = document.querySelector('.nav-pill[onclick*="trades"]');
+  showPage('trades', navBtn);
+}
+function clearTradeFocus(){
+  tradeFocusFilter = null;
+  renderTradesTable();
+}
+function renderFocusChip(){
+  const el = document.getElementById('t-focus-chip');
+  if(!el) return;
+  if(!tradeFocusFilter){ el.innerHTML=''; return; }
+  const def = TRADE_FOCUS[tradeFocusFilter.key];
+  el.innerHTML = `<span class="focus-chip">⭐ ${def?def.label:''} : ${escapeHtml(tradeFocusFilter.value)}
+    <button onclick="clearTradeFocus()" title="Retirer le filtre">✕</button></span>`;
+}
 function renderTradesTable(){
   const sortDir=(document.getElementById('t-sort')||{}).value||'desc';
   let ts = tradesOfYear().sort((a,b)=> sortDir==='asc' ? (getTradeDate(a)||'').localeCompare(getTradeDate(b)||'') : (getTradeDate(b)||'').localeCompare(getTradeDate(a)||''));
@@ -2345,6 +2381,11 @@ function renderTradesTable(){
   if(type) ts=ts.filter(t=>t.ordre===type);
   if(jour) ts=ts.filter(t=>getTradeJour(t)===jour);
   if(month!=='') ts=ts.filter(t=>{ const d=new Date(getTradeDate(t)); return !isNaN(d.getTime()) && d.getMonth()===+month; });
+  if(tradeFocusFilter && TRADE_FOCUS[tradeFocusFilter.key]){
+    const f=TRADE_FOCUS[tradeFocusFilter.key];
+    ts=ts.filter(t=>f.match(t, tradeFocusFilter.value));
+  }
+  renderFocusChip();
   const ct=document.getElementById('t-count');
   if(ct) ct.textContent=`${ts.length} trade${ts.length!==1?'s':''}`;
   const tb=document.getElementById('t-tbody');
@@ -2587,24 +2628,26 @@ function renderSetups(){
   }
 
   // ─── INSIGHTS (best TF, best Tendance, best Pair, best Day, best Holding, best Order) ───
-  const bestBy = (getKey, label, icon, options)=>{
+  const bestBy = (getKey, label, icon, options, focusKey)=>{
     const groups = {};
     ts.forEach(t=>{ const k=getKey(t); if(!k || t.rrf===null) return; (groups[k]||(groups[k]=[])).push(t); });
     const arr = Object.entries(groups).map(([k,a])=>({k, ...statsOf(a)})).filter(x=>x.n>=Math.max(2, Math.floor(minTrades/2)));
     if(arr.length===0) return `<div class="insight-card"><div class="insight-icon">${icon}</div><div class="insight-label">${label}</div><div class="insight-val" style="color:var(--text3)">—</div><div class="insight-sub">Pas assez de données</div></div>`;
     arr.sort((a,b)=>b.exp-a.exp);
     const top = arr[0];
-    return `<div class="insight-card"><div class="insight-icon">${icon}</div><div class="insight-label">${label}</div>
-      <div class="insight-val ora">${top.k}</div>
-      <div class="insight-sub">${top.wr.toFixed(0)}% WR · ${top.totalR>0?'+':''}${top.totalR.toFixed(2)}R sur ${top.n} trades</div></div>`;
+    const clickable = focusKey ? ` clickable" data-fv="${escapeHtml(top.k)}" onclick="focusTradesBy('${focusKey}', this.dataset.fv)` : '';
+    const goLine = focusKey ? `<div class="insight-go">Voir ces trades →</div>` : '';
+    return `<div class="insight-card${clickable}"><div class="insight-icon">${icon}</div><div class="insight-label">${label}</div>
+      <div class="insight-val ora">${escapeHtml(top.k)}</div>
+      <div class="insight-sub">${top.wr.toFixed(0)}% WR · ${top.totalR>0?'+':''}${top.totalR.toFixed(2)}R sur ${top.n} trades</div>${goLine}</div>`;
   };
   document.getElementById('insights-grid').innerHTML =
-    bestBy(t=>t.tf, 'Meilleur Time-Frame', '⏱')
-    + bestBy(t=>t.tend, 'Meilleure Tendance', '📈')
-    + bestBy(t=>t.pair, 'Meilleure Paire', '💱')
-    + bestBy(t=>getTradeJour(t), 'Meilleur Jour', '📅')
-    + bestBy(t=>t.ordre, 'Meilleur Type d\'Ordre', '🎯')
-    + bestBy(t=>t.hold, 'Meilleure Durée', '⏳');
+    bestBy(t=>t.tf, 'Meilleur Time-Frame', '⏱', null, 'tf')
+    + bestBy(t=>t.tend, 'Meilleure Tendance', '📈', null, 'tend')
+    + bestBy(t=>t.pair, 'Meilleure Paire', '💱', null, 'pair')
+    + bestBy(t=>getTradeJour(t), 'Meilleur Jour', '📅', null, 'jour')
+    + bestBy(t=>t.ordre, 'Meilleur Type d\'Ordre', '🎯', null, 'ordre')
+    + bestBy(t=>t.hold, 'Meilleure Durée', '⏳', null, 'hold');
 
   // ─── RANKING TABLE ───
   const sortFns = {
