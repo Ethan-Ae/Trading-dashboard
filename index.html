@@ -2741,11 +2741,12 @@ function renderSetups(){
 
   // Drawdown (négatif pour lecture intuitive : 0 = au plus haut, -X = X R sous le pic)
   // Ordre chronologique par date effective (prise de position, repli sur création)
+  const tsChrono = ts.slice().sort((a,b)=> (getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
   let peak=0,eq=0;
   const ddData=tsChrono.map(t=>{ eq+=(t.rrf||0); if(eq>peak)peak=eq; return +(-(peak-eq)).toFixed(2); });
   dc('ddChart');
   ch['ddChart']=new Chart(document.getElementById('ddChart'),{
-    type:'line',data:{labels:ts.map((_,i)=>i+1),datasets:[{data:ddData,borderColor:'#ff453a',backgroundColor:'rgba(255,69,58,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5}]},
+    type:'line',data:{labels:tsChrono.map((_,i)=>i+1),datasets:[{data:ddData,borderColor:'#ff453a',backgroundColor:'rgba(255,69,58,.1)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5}]},
     options:chartDefaults({responsive:true,animation:{duration:400}})
   });
 
