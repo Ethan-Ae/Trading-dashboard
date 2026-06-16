@@ -1358,6 +1358,18 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       <button class="settings-add" onclick="addTendance()">＋ Ajouter une tendance</button>
     </div>
 
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title">🎯 Confluences</div>
+          <div class="settings-card-sub">Tes confluences récurrentes — insérables en 1 clic dans chaque trade</div>
+        </div>
+        <button class="settings-reset" onclick="resetConfluences()" title="Restaurer les valeurs par défaut">↺ Reset</button>
+      </div>
+      <div class="settings-list" id="settings-confluences"></div>
+      <button class="settings-add" onclick="addConfluence()">＋ Ajouter une confluence</button>
+    </div>
+
     <!-- ─── Contact / About ─── -->
     <div class="settings-card" style="grid-column:span 2">
       <div class="settings-card-head">
@@ -1508,12 +1520,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <input type="text" id="m-pair" placeholder="ex: eurusd ou EURUSD…" oninput="this.value=this.value.toUpperCase()">
       </div>
       <div class="form-group"><label>Date</label><input type="date" id="m-date"></div>
-      <div class="form-group"><label>Time-Frame</label>
-        <select id="m-tf">
-          <option>Weekly</option><option>Daily</option><option>12h</option><option>8h</option>
-          <option>4h</option><option>2h</option><option selected>1h</option>
-          <option>30mins</option><option>15mins</option><option>10mins</option><option>5mins</option><option>1min</option>
-        </select>
+      <div class="form-group" style="grid-column:span 2"><label>Time-Frame <span style="color:var(--text3);font-weight:400;font-size:.7rem">(plusieurs possibles)</span></label>
+        <div id="m-tf-group" class="emoji-btn-group" style="flex-wrap:wrap;gap:6px"></div>
       </div>
       <div class="form-group"><label>Type d'Ordre</label>
         <select id="m-ordre">
@@ -1524,8 +1532,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       </div>
       <div class="form-group"><label>Risk (%)</label>
         <select id="m-risk">
-          <option>0.25%</option><option>0.33%</option><option>0.38%</option>
-          <option>0.50%</option><option>0.70%</option><option>0.75%</option>
+          <option>0.25%</option><option>0.33%</option>
+          <option>0.50%</option><option>0.66%</option>
           <option>1.00%</option><option>1.50%</option><option>2.00%</option><option>2.50%</option>
         </select>
       </div>
@@ -1590,6 +1598,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       </div>
       <div class="form-group" style="grid-column:span 2">
         <label>Raisons & Confluences</label>
+        <div id="m-confluences-chips"></div>
         <textarea id="m-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…"></textarea>
       </div>
       <div class="form-group" style="grid-column:span 2">
@@ -1701,6 +1710,22 @@ const CHECKLIST_DEFAULT = [
   'Tu n\'es pas sur-exposé sur ces devises',
 ];
 let CHECKLIST = CHECKLIST_DEFAULT.slice();
+
+// ─── Confluences globales (persistées en localStorage, indépendantes de la DB) ───
+const CONFLUENCES_DEFAULT = [
+  'Support / Résistance',
+  'Order Block',
+  'Fair Value Gap (FVG)',
+  'Liquidity Grab',
+  'Break of Structure (BOS)',
+  'Change of Character (CHoCH)',
+  'Trend Line',
+  'Fibonacci (OTE)',
+  'Divergence',
+  'Zone Premium / Discount',
+];
+let CONFLUENCES = (()=>{ try{ const v=JSON.parse(localStorage.getItem('confluences_items')||'null'); return (Array.isArray(v)&&v.length)?v:CONFLUENCES_DEFAULT.slice(); }catch(e){ return CONFLUENCES_DEFAULT.slice(); } })();
+function saveConfluences(){ localStorage.setItem('confluences_items', JSON.stringify(CONFLUENCES)); }
 
 // ─── Sauvegarde locale (fallback) + Supabase (source de vérité) ───
 function saveChecklist(){
@@ -1847,6 +1872,61 @@ function resetTendances(){
   if(!confirm('Réinitialiser les tendances aux valeurs par défaut ?')) return;
   TEND_OPTIONS = TEND_OPTIONS_DEFAULT.slice(); saveTendances();
   if(currentPage==='settings') renderSettings();
+}
+
+// ─── CONFLUENCES (liste globale réutilisable) ───
+function addConfluence(){
+  const label = prompt('Nouvelle confluence :');
+  if(!label||!label.trim()) return;
+  if(CONFLUENCES.includes(label.trim())) { alert('Cette confluence existe déjà'); return; }
+  CONFLUENCES.push(label.trim()); saveConfluences();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+}
+function editConfluence(i){
+  const label = prompt('Modifier la confluence :', CONFLUENCES[i]);
+  if(label===null) return;
+  if(!label.trim()){ delConfluence(i); return; }
+  CONFLUENCES[i] = label.trim(); saveConfluences();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+}
+function delConfluence(i){
+  if(!confirm('Supprimer cette confluence de ta liste ?\n\nLes trades où tu l\'as déjà insérée gardent leur texte.')) return;
+  CONFLUENCES.splice(i,1); saveConfluences();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+}
+function resetConfluences(){
+  if(!confirm('Réinitialiser les confluences aux valeurs par défaut ?')) return;
+  CONFLUENCES = CONFLUENCES_DEFAULT.slice(); saveConfluences();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+}
+
+// ─── Insertion rapide d'une confluence dans le champ texte ───
+function confluenceChipsHTML(target){
+  if(!CONFLUENCES.length) return '';
+  const chips = CONFLUENCES.map((c,i)=>{
+    const handler = target==='modal' ? `insertConfluenceModal(${i})` : `insertConfluencePanel(${target},${i})`;
+    return `<button type="button" class="emoji-btn" style="font-size:.72rem;padding:4px 9px" onclick="${handler}">＋ ${escapeHtml(c)}</button>`;
+  }).join('');
+  return `<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px;margin-bottom:8px">${chips}</div>`;
+}
+function insertConfluenceModal(i){
+  const text = CONFLUENCES[i]; if(text==null) return;
+  const ta = document.getElementById('m-confluences'); if(!ta) return;
+  const cur = ta.value.trim();
+  ta.value = cur ? cur+'\n• '+text : '• '+text;
+}
+function insertConfluencePanel(id,i){
+  const text = CONFLUENCES[i]; if(text==null) return;
+  const t = trades.find(x=>x.id===id); if(!t) return;
+  const cur = (t.confluences||'').trim();
+  t.confluences = cur ? cur+'\n• '+text : '• '+text;
+  dbUpsert(t);
+  const ta = document.getElementById('panel-confluences');
+  if(ta) ta.value = t.confluences;
 }
 
 // ─── DELETE ALL TRADES (quick wipe pour tester les imports) ───
@@ -2163,7 +2243,24 @@ function renderOverview(){
   ch['eqChart'] = new Chart(document.getElementById('eqChart'),{
     type:'line',
     data:{ labels:eqTs.map((_,i)=>i+1), datasets:[{ data:eqData, borderColor:'#ff9f0a', backgroundColor:'rgba(255,159,10,.1)', fill:true, tension:.4, pointRadius:0, borderWidth:2 }] },
-    options: chartDefaults({responsive:true,animation:{duration:400}})
+    options: chartDefaults({
+      responsive:true,
+      animation:{duration:400},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1c1c1e', titleColor:'#fff', bodyColor:'#aeaeb2', borderColor:'#2c2c2e', borderWidth:1,
+          callbacks:{
+            title:(items)=>`Trade n°${items[0].label}`,
+            label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R cumulés`
+          }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}}, title:{display:true,text:'N° de trade',color:'#636366',font:{size:10}} },
+        y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>(v>0?'+':'')+v+'R'}, title:{display:true,text:'R cumulés',color:'#636366',font:{size:10}} }
+      }
+    })
   });
 
   // P&L bars 30 — uniquement R/R final numériques valides (30 derniers par date effective)
@@ -2735,18 +2832,23 @@ function buildPanelHTML(t){
     </div>`;
   };
 
-  const sel=(opts,val,key)=>`
+  const sel=(opts,val,key)=>{
+    // Tolérance : si la valeur stockée n'est plus dans la liste (ex. ancien risk 0.70%),
+    // on l'ajoute en tête pour ne pas l'écraser silencieusement.
+    const list = (val && !opts.includes(val)) ? [val, ...opts] : opts;
+    return `
     <select class="field-select" onchange="updateField(${t.id},'${key}',this.value)">
-      ${opts.map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
+      ${list.map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
     </select>`;
+  };
 
   return `
     ${field(icoCalendar,'Actif',`<input class="field-input" value="${t.pair||''}" oninput="this.value=this.value.toUpperCase()" onchange="updateField(${t.id},'pair',this.value)">`)}
     ${field(icoCalendar,'Date',`<input class="field-input" type="date" value="${t.date||''}" onchange="updatePanelDate(${t.id},this.value)">`)}
     ${field(icoCalendar,'Prise de Position',`<button class="toggle ${t.prise?'on':''}" onclick="togglePrise(${t.id},this)"></button>`)}
-    ${field(icoTF,'Time-Frame',sel(TF_OPTIONS,t.tf,'tf'))}
+    ${field(icoTF,'Time-Frame',tfChips(t))}
     ${field(icoOrdre,'Type d\'Ordre',sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
-    ${field(icoRisk,'Risk',sel(['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%','2.50%'],t.risk,'risk'))}
+    ${field(icoRisk,'Risk',sel(['0.25%','0.33%','0.50%','0.66%','1.00%','1.50%','2.00%','2.50%'],t.risk,'risk'))}
     ${field(icoRisk,'R/R Initial',`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="ex: 3.2" onchange="updateField(${t.id},'rri',+this.value)">`)}
     ${field(icoRisk,'Résultat',sel(RESULT_OPTIONS,t.result,'result'))}
     ${field(icoRisk,'R/R Final',`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="ex: -1 ou 3.2" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
@@ -2773,7 +2875,9 @@ function buildPanelHTML(t){
         <button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',false,this)">❌</button>
       </div>`)}</div>
     <div class="panel-section-title">Raisons & Confluences</div>
-    <textarea class="field-textarea" placeholder="Décris tes confluences, la raison du trade…" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
+    ${confluenceChipsHTML(t.id)}
+    <textarea id="panel-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
+    ${photoSectionHTML(t,'confluences','🖼️ Images des raisons','(captures fondamentales / analyses)')}
     <div class="panel-section-title">État Psychologique</div>
     <textarea class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
     <div class="panel-section-title">Checklist</div>
@@ -2809,6 +2913,21 @@ function updateField(id,field,val){
       : field_('✅','Bon Trade?',`<div class="emoji-btn-group"><button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',true,this)">✅</button><button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',false,this)">❌</button></div>`);
     document.getElementById('p-result-chip').innerHTML=resultChip(val);
   }
+}
+// ── Time-Frame multi-sélection (chips) ──
+function tfChips(t){
+  const cur = dimSplit(t.tf).filter(v=>v!==DIM_EMPTY);
+  const opts = [...TF_OPTIONS];
+  cur.forEach(v=>{ if(!opts.includes(v)) opts.push(v); }); // tolère d'anciennes valeurs hors liste
+  return `<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px">${
+    opts.map(o=>`<button type="button" class="emoji-btn ${cur.includes(o)?'selected':''}" data-val="${o}" style="font-size:.75rem;padding:4px 10px" onclick="toggleTradeTF(${t.id},this)">${o}</button>`).join('')
+  }</div>`;
+}
+function toggleTradeTF(id,btn){
+  const t=trades.find(x=>x.id===id); if(!t) return;
+  btn.classList.toggle('selected');
+  t.tf=[...btn.parentElement.querySelectorAll('.emoji-btn.selected')].map(b=>b.dataset.val).join(', ');
+  dbUpsert(t);
 }
 function setEmoji(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
 function setBool(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
@@ -3056,6 +3175,12 @@ function openAddModal(){
     const def = document.querySelector('#'+g+' .emoji-btn[data-val=""]');
     if(def) def.classList.add('selected');
   });
+  // Populate Time-Frame chips (multi-sélection)
+  const tfGroup = document.getElementById('m-tf-group');
+  if(tfGroup) tfGroup.innerHTML = TF_OPTIONS.map(tf=>`<button type="button" class="emoji-btn" data-val="${tf}" style="font-size:.75rem;padding:4px 10px" onclick="toggleModalErr(this)">${tf}</button>`).join('');
+  // Populate confluence quick-insert chips
+  const cfChips = document.getElementById('m-confluences-chips');
+  if(cfChips) cfChips.innerHTML = confluenceChipsHTML('modal');
   // Populate errors chips
   const errsGroup = document.getElementById('m-errs-group');
   errsGroup.innerHTML = ERRORS.map(e=>`<button type="button" class="emoji-btn" data-val="${e}" style="font-size:.75rem;padding:4px 10px" onclick="toggleModalErr(this)">${e}</button>`).join('');
@@ -3113,7 +3238,7 @@ function saveTrade(){
   const pair=(document.getElementById('m-pair').value||'').toUpperCase().trim();
   if(!pair){ document.getElementById('m-pair').focus(); return; }
   const date=document.getElementById('m-date').value;
-  const tf=document.getElementById('m-tf').value;
+  const tf=[...document.querySelectorAll('#m-tf-group .emoji-btn.selected')].map(b=>b.dataset.val).join(', ');
   const ordre=document.getElementById('m-ordre').value;
   const risk=document.getElementById('m-risk').value;
   const rri=+document.getElementById('m-rri').value||0;
@@ -3152,7 +3277,7 @@ document.getElementById('addModal').addEventListener('click',e=>{ if(e.target===
 //  PERFORMANCE PAGE
 // ───────────────────────────────────────────
 const PERF_DIMS = [
-  { key:'tf',    label:'Time-Frame',     vals: ['Weekly','Daily','12h','8h','4h','2h','1h','30mins','15mins','10mins','5mins','1min'], get: t=>t.tf },
+  { key:'tf',    label:'Time-Frame',     vals: null, get: t=>t.tf, getMulti: t=>dimSplit(t.tf).filter(v=>v!==DIM_EMPTY) },
   { key:'pair',  label:'Devise',         vals: null, get: t=>t.pair }, // null = compute from data
   { key:'ordre', label:'Type d\'Ordre',  vals: ['MARKET BUY','MARKET SELL','BUY LIMIT','SELL LIMIT','BUY STOP','SELL STOP'], get: t=>t.ordre },
   { key:'tend',  label:'Tendance',       vals: TEND_OPTIONS, get: t=>t.tend },
@@ -3160,19 +3285,26 @@ const PERF_DIMS = [
   { key:'hold',  label:'Holding',        vals: HOLD_OPTIONS, get: t=>t.hold },
   { key:'jour',  label:'Jour',           vals: ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'], get: t=>getTradeJour(t) },
   { key:'result',label:'Résultat',       vals: RESULT_OPTIONS, get: t=>t.result },
-  { key:'risk',  label:'Risk',           vals: ['0.25%','0.33%','0.38%','0.50%','0.70%','0.75%','1.00%','1.50%','2.00%','2.50%'], get: t=>t.risk },
+  { key:'risk',  label:'Risk',           vals: ['0.25%','0.33%','0.50%','0.66%','1.00%','1.50%','2.00%','2.50%'], get: t=>t.risk },
 ];
 
 // active filter state: { dimKey: Set(vals) }
 const perfFilters = {};
 PERF_DIMS.forEach(d=>{ perfFilters[d.key]=new Set(); }); // empty = all
 
+// Valeurs d'une dimension pour un trade — multi-valeurs (ex. plusieurs Time-Frames) ou simple
+function perfDimVals(d, t){
+  if(d.getMulti) return d.getMulti(t);
+  const v = d.get(t);
+  return (v != null && v !== '') ? [v] : [];
+}
+
 function getPerfFilteredTrades(){
   return tradesOfYear().filter(isTradePris).filter(t=>{
     return PERF_DIMS.every(d=>{
       const active=perfFilters[d.key];
       if(!active||active.size===0) return true;
-      return active.has(d.get(t));
+      return perfDimVals(d,t).some(v=>active.has(v));
     });
   });
 }
@@ -3194,7 +3326,7 @@ function renderPerfFilters(){
   if(!row) return;
   row.innerHTML=PERF_DIMS.map(d=>{
     // build unique vals from data if null
-    let vals = d.vals || [...new Set(ts.map(d.get).filter(Boolean))].sort();
+    let vals = d.vals || [...new Set(ts.flatMap(t=>perfDimVals(d,t)).filter(Boolean))].sort();
     if(!vals.length) return '';
     const chips=vals.map(v=>`
       <span class="pchip ${perfFilters[d.key].has(v)?'on':''}" onclick="togglePerfFilter('${d.key}','${v}')">${v}</span>
@@ -3204,7 +3336,7 @@ function renderPerfFilters(){
 }
 
 function bdRow(dim, ts, val){
-  const sub=ts.filter(t=>dim.get(t)===val);
+  const sub=ts.filter(t=>perfDimVals(dim,t).includes(val));
   if(!sub.length) return null;
   const wins=sub.filter(isWin).length;
   const losses=sub.filter(isLoss).length;
@@ -3471,13 +3603,13 @@ function renderPerf(){
   bdEl.innerHTML=errBreak+SHOW_DIMS.map(({key,label})=>{
     const dim=PERF_DIMS.find(d=>d.key===key);
     if(!dim) return '';
-    const vals=dim.vals ? dim.vals : [...new Set(ts.map(dim.get))].sort();
+    const vals=dim.vals ? dim.vals : [...new Set(ts.flatMap(t=>perfDimVals(dim,t)))].sort();
     const rows=vals.map(v=>bdRow(dim,ts,v)).filter(Boolean);
     if(!rows.length) return '';
     // Sort by Total R desc
-    const sortedVals=[...vals].filter(v=>ts.some(t=>dim.get(t)===v)).sort((a,b)=>{
-      const rA=ts.filter(t=>dim.get(t)===a).reduce((s,t)=>s+(t.rrf||0),0);
-      const rB=ts.filter(t=>dim.get(t)===b).reduce((s,t)=>s+(t.rrf||0),0);
+    const sortedVals=[...vals].filter(v=>ts.some(t=>perfDimVals(dim,t).includes(v))).sort((a,b)=>{
+      const rA=ts.filter(t=>perfDimVals(dim,t).includes(a)).reduce((s,t)=>s+(t.rrf||0),0);
+      const rB=ts.filter(t=>perfDimVals(dim,t).includes(b)).reduce((s,t)=>s+(t.rrf||0),0);
       return rB-rA;
     });
     const sortedRows=sortedVals.map(v=>bdRow(dim,ts,v)).filter(Boolean);
@@ -3485,7 +3617,7 @@ function renderPerf(){
       <div class="breakdown-card">
         <div class="breakdown-header">
           <span class="breakdown-title">${label}</span>
-          <span class="breakdown-count">${sortedVals.filter(v=>ts.some(t=>dim.get(t)===v)).length} catégories · ${ts.length} trades</span>
+          <span class="breakdown-count">${sortedVals.length} catégories · ${ts.length} trades</span>
         </div>
         <div style="overflow-x:auto">
           <table class="bd-table">
@@ -3526,6 +3658,7 @@ function renderSettings(){
   const clEl = document.getElementById('settings-checklist');
   const erEl = document.getElementById('settings-errors');
   const tdEl = document.getElementById('settings-tendances');
+  const cfEl = document.getElementById('settings-confluences');
   if(!clEl || !erEl || !tdEl) return;
 
   const buildList = (arr, editFn, delFn, emptyMsg) => {
@@ -3543,6 +3676,7 @@ function renderSettings(){
   clEl.innerHTML = buildList(CHECKLIST,   'editChecklistItem', 'delChecklistItem', 'Aucun élément. Clique sur « + Ajouter un élément » pour commencer.');
   erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         'Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.');
   tdEl.innerHTML = buildList(TEND_OPTIONS,'editTendance',      'delTendance',      'Aucune tendance. Clique sur « + Ajouter une tendance » pour commencer.');
+  if(cfEl) cfEl.innerHTML = buildList(CONFLUENCES,'editConfluence','delConfluence','Aucune confluence. Clique sur « + Ajouter une confluence » pour commencer.');
 
   // Compteur de trades pour la zone dangereuse
   const cnt = document.getElementById('danger-count');
