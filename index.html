@@ -2975,7 +2975,13 @@ function delScreenshot(id,key){
   if(t){ t.screenshots[key]=null; dbUpsert(t); openPanel(id); }
 }
 
-function closePanel(){ document.getElementById('panelOverlay').classList.remove('open'); activeTrade=null; }
+function closePanel(){
+  document.getElementById('panelOverlay').classList.remove('open');
+  const wasOpen = activeTrade !== null;
+  activeTrade=null;
+  // Réactualise la page courante en sortant du trade pour refléter les modifications
+  if(wasOpen && typeof refreshCurrentPage === 'function') refreshCurrentPage();
+}
 function closePanelOnBg(e){ if(e.target===document.getElementById('panelOverlay')) closePanel(); }
 
 // ── PASTE IMAGE (Ctrl+V) ──────────────────────
