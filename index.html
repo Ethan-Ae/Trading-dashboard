@@ -2186,10 +2186,20 @@ function maxLossStreak(ts){
   ts.forEach(t=>{ if(isLoss(t)){cur++;if(cur>max)max=cur;} else if(isWin(t)){cur=0;} });
   return max;
 }
+// Drawdown maximal en R : plus forte baisse de l'équity cumulée depuis un sommet.
+// Calcul chronologique (par date effective de prise de position), sur trades notés.
 function calcMaxDD(ts){
-  let peak=0,dd=0,max=0;
-  ts.forEach(t=>{ const r=t.rrf||0; peak+=r; if(peak<0)peak=0; dd=peak-((peak)+(r<0?r:0)); if(Math.abs(r)<max)max=Math.abs(r); });
-  return 0;
+  const chrono = ts.slice().sort((a,b)=> (getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
+  let eq=0, peak=0, maxDD=0;
+  chrono.forEach(t=>{
+    const r = rrfNum(t);
+    if(r===null) return;
+    eq += r;
+    if(eq>peak) peak=eq;
+    const dd = peak - eq;        // baisse courante depuis le sommet (>=0)
+    if(dd>maxDD) maxDD=dd;
+  });
+  return +maxDD.toFixed(2);
 }
 
 // ───────────────────────────────────────────
@@ -2219,6 +2229,7 @@ function renderOverview(){
     <div class="kpi"><div class="kpi-label">Profit Factor</div><div class="kpi-value ora">${s.pf}</div></div>
     <div class="kpi"><div class="kpi-label">Avg Win</div><div class="kpi-value pos">+${s.avgWin}R</div></div>
     <div class="kpi"><div class="kpi-label">Avg Loss</div><div class="kpi-value neg">-${s.avgLoss}R</div></div>
+    <div class="kpi"><div class="kpi-label">Drawdown Max</div><div class="kpi-value ${s.maxDD>0?'neg':''}">${s.maxDD>0?'-':''}${s.maxDD}R</div><div class="kpi-sub">plus forte baisse depuis un sommet</div></div>
   `;
 
   // Gauges
