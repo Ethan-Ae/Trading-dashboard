@@ -3187,35 +3187,69 @@ function setPasteTarget(key){
   }, false);
 });
 
-document.addEventListener('paste', function(e){
-  const items = (e.clipboardData||e.originalEvent&&e.originalEvent.clipboardData||{}).items;
-  if(!items) return;
+function blobToDataURL(blob){
+  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob); });
+}
+// Extrait une URL d'image depuis le presse-papier HTML/texte (ex: copie depuis Notion,
+// qui ne met pas l'image brute mais un <img src="…"> dans le clipboard).
+function extractPastedImageUrl(cd){
+  if(!cd || !cd.getData) return null;
+  const html = cd.getData('text/html');
+  if(html){
+    const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if(m && m[1]) return m[1].replace(/&amp;/g,'&');
+  }
+  const txt = (cd.getData('text/plain')||'').trim();
+  if(/^https?:\/\/\S+$/i.test(txt)) return txt;
+  return null;
+}
+
+document.addEventListener('paste', async function(e){
+  const cd = e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData);
+  if(!cd) return;
+  // On n'agit que si une cible existe (panneau d'un trade ouvert OU modal d'ajout ouvert)
+  const modal = document.getElementById('addModal');
+  const modalOpen = !!(modal && modal.classList.contains('open'));
+  if(!activeTrade && !modalOpen) return;
+
+  // 1) Image brute dans le presse-papier (TradingView, captures d'écran, "Copier l'image"…)
   let file = null;
-  for(const item of items){ if(item.type.startsWith('image/')){ file = item.getAsFile(); break; } }
-  if(!file) return;
+  const items = cd.items || [];
+  for(const item of items){ if(item.type && item.type.startsWith('image/')){ file = item.getAsFile(); break; } }
+
+  // 2) Pas d'image brute → on tente d'extraire une URL d'image (copie depuis Notion, web…)
+  let url = file ? null : extractPastedImageUrl(cd);
+  if(!file && !url) return; // rien d'exploitable
   e.preventDefault();
 
-  // If panel is open, try to find a target slot
+  // Résolution en data URL (durable) quand c'est possible ; sinon on garde le lien.
+  let dataUrl = null;
+  if(file){
+    dataUrl = await blobToDataURL(file);
+  } else if(url){
+    try{
+      const resp = await fetch(url, { mode:'cors' });
+      const blob = await resp.blob();
+      dataUrl = (blob && blob.type && blob.type.startsWith('image/')) ? await blobToDataURL(blob) : url;
+    }catch(err){
+      // CORS / réseau bloqué (fréquent avec Notion) → on enregistre le lien tel quel.
+      dataUrl = url;
+      showToast('⚠️ Image liée depuis Notion : le lien peut expirer. Pour une copie permanente, ouvre l\'image dans Notion puis "Copier l\'image".', true);
+    }
+  }
+  if(!dataUrl) return;
+
   if(activeTrade){
-    // Pick target: clicked slot first, then first empty single-slot, fallback to mgmt
-    let key = pasteTargetKey || 'exec';
-    const reader = new FileReader();
-    reader.onload = ev => {
-      addPhoto(activeTrade.id, key, ev.target.result);
-      const names={exec:'Exécution',mgmt:'Management',close:'Clôture',after:'Après position'};
-      showToast('📸 Image ajoutée dans "' + (names[key]||key) + '"');
-    };
-    reader.readAsDataURL(file);
+    const key = pasteTargetKey || 'exec';
+    addPhoto(activeTrade.id, key, dataUrl);
+    const names={exec:'Exécution',mgmt:'Management',close:'Clôture',after:'Après position',confluences:'Images des raisons'};
+    showToast('📸 Image ajoutée dans "' + (names[key]||key) + '"');
     pasteTargetKey = null;
     return;
   }
-
-  // If add modal is open, paste into exec slot
-  const modal = document.getElementById('addModal');
-  if(modal && modal.classList.contains('open')){
-    const reader = new FileReader();
-    reader.onload = ev => { applyModalScreenshot(ev.target.result); showToast('📸 Image collée'); };
-    reader.readAsDataURL(file);
+  if(modalOpen){
+    applyModalScreenshot(dataUrl);
+    showToast('📸 Image collée');
   }
 });
 
