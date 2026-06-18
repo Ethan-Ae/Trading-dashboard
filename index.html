@@ -3126,23 +3126,20 @@ function delPhoto(id, key, idx){
   dbUpsert(t);
   openPanel(id);
 }
-function handlePhotoDrop(e, id, key){
-  const file=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{ addPhoto(id, key, ev.target.result); showToast('📸 Photo ajoutée'); };
-  reader.readAsDataURL(file);
+async function handlePhotoDrop(e, id, key){
+  const dataUrl = await resolveDropToDataUrl(e);
+  if(!dataUrl) return;
+  addPhoto(id, key, dataUrl);
+  showToast('📸 Photo ajoutée');
 }
 // Backwards-compat for any remaining callers
 function addMgmtPhoto(id, dataUrl){ addPhoto(id, 'mgmt', dataUrl); }
 
-function handleDropOnSlot(e,id,key){
-  const file=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
-  if(!file) return;
+async function handleDropOnSlot(e,id,key){
+  const dataUrl = await resolveDropToDataUrl(e);
+  if(!dataUrl) return;
   const t=trades.find(x=>x.id===id); if(!t) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{ t.screenshots[key]=ev.target.result; dbUpsert(t); openPanel(id); showToast('📸 Image ajoutée'); };
-  reader.readAsDataURL(file);
+  t.screenshots[key]=dataUrl; dbUpsert(t); openPanel(id); showToast('📸 Image ajoutée');
 }
 function saveImgToSlot(id,key,dataUrl){
   const t=trades.find(x=>x.id===id); if(!t) return;
@@ -3190,8 +3187,8 @@ function setPasteTarget(key){
 // Block browser default: opening dragged image as new page
 ['dragover','drop'].forEach(evt=>{
   window.addEventListener(evt, function(e){
-    // Only block if dropping outside an ss-slot
-    if(!e.target.closest('.ss-slot')){
+    // Only block if dropping outside a drop zone (slot simple OU zone multi-photos)
+    if(!e.target.closest('.ss-slot, .ss-mgmt-add')){
       e.preventDefault();
       e.dataTransfer && (e.dataTransfer.dropEffect = 'none');
     }
@@ -3213,6 +3210,28 @@ function extractPastedImageUrl(cd){
   const txt = (cd.getData('text/plain')||'').trim();
   if(/^https?:\/\/\S+$/i.test(txt)) return txt;
   return null;
+}
+// Résout un drop en data URL : gère le fichier image (glissé depuis le bureau)
+// ET l'image glissée depuis une page web (Notion, TradingView, navigateur) qui
+// n'arrive que sous forme d'URL dans dataTransfer (text/html ou text/uri-list).
+async function resolveDropToDataUrl(e){
+  const dt = e.dataTransfer;
+  if(!dt) return null;
+  // 1) Fichier image (glissé depuis l'explorateur / le bureau)
+  const file = [...(dt.files||[])].find(f=>f.type && f.type.startsWith('image/'));
+  if(file) return await blobToDataURL(file);
+  // 2) Image glissée depuis le web → on extrait l'URL (avant tout await)
+  const url = extractPastedImageUrl(dt);
+  if(!url) return null;
+  try{
+    const resp = await fetch(url, { mode:'cors' });
+    const blob = await resp.blob();
+    return (blob && blob.type && blob.type.startsWith('image/')) ? await blobToDataURL(blob) : url;
+  }catch(err){
+    // CORS / réseau bloqué (fréquent avec Notion) → on garde le lien tel quel.
+    showToast('⚠️ Image liée depuis le web : le lien peut expirer. Pour une copie permanente, télécharge l\'image puis glisse le fichier.', true);
+    return url;
+  }
 }
 
 document.addEventListener('paste', async function(e){
@@ -3317,12 +3336,11 @@ function syncModalPriseDate(){
   if(pd && !pd.dataset.touched) pd.value=document.getElementById('m-date').value;
 }
 
-function handleModalDrop(e){
-  const file=[...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
-  if(!file) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{ applyModalScreenshot(ev.target.result); showToast('📸 Image ajoutée'); };
-  reader.readAsDataURL(file);
+async function handleModalDrop(e){
+  const dataUrl = await resolveDropToDataUrl(e);
+  if(!dataUrl) return;
+  applyModalScreenshot(dataUrl);
+  showToast('📸 Image ajoutée');
 }
 function applyModalScreenshot(dataUrl){
   modalExecScreenshot = dataUrl;
