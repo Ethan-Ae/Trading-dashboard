@@ -1081,7 +1081,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       </select>
       <select class="filter-select" id="t-result" onchange="renderTradesTable()">
         <option value="">Résultat</option>
-        <option>TP Total</option><option>Profit Partiel</option><option>SL Total</option><option>SL Partiel</option><option>BE</option><option>En cours</option>
+        <option>TP Total</option><option>Profit Partiel</option><option>SL Total</option><option>SL Partiel</option><option>BE</option><option>En cours</option><option>En attente</option>
       </select>
       <select class="filter-select" id="t-type" onchange="renderTradesTable()">
         <option value="">Type d'Ordre</option>
@@ -1571,7 +1571,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       </div>
       <div class="form-group"><label>Résultat</label>
         <select id="m-result">
-          <option>En cours</option><option>TP Total</option><option>Profit Partiel</option>
+          <option>En attente</option><option>En cours</option><option>TP Total</option><option>Profit Partiel</option>
           <option>SL Total</option><option>SL Partiel</option><option>BE</option>
         </select>
       </div>
@@ -1677,8 +1677,8 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 //  DATA MODEL
 // ───────────────────────────────────────────
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-const RESULT_EMOJI = { 'TP Total':'✅', 'Profit Partiel':'👍', 'SL Total':'❌', 'SL Partiel':'🟠', 'BE':'⚖️', 'En cours':'🔵' };
-const RESULT_OPTIONS = ['En cours','TP Total','Profit Partiel','SL Total','SL Partiel','BE'];
+const RESULT_EMOJI = { 'TP Total':'✅', 'Profit Partiel':'👍', 'SL Total':'❌', 'SL Partiel':'🟠', 'BE':'⚖️', 'En cours':'🔵', 'En attente':'⏳' };
+const RESULT_OPTIONS = ['En attente','En cours','TP Total','Profit Partiel','SL Total','SL Partiel','BE'];
 const RETAILS_OPTIONS = ['—','Avec les Retails','Contre les Retails'];
 const TYPE_OPTIONS = [
   '50% Technique 50% Fondamental',
@@ -3572,7 +3572,7 @@ function renderMonthly(){
   if(emptyEl) emptyEl.style.display='none';
 
   // Stats — win/loss basés sur le R/R final chiffré (universel)
-  const closed = ts.filter(t => t.result !== 'En cours');
+  const closed = ts.filter(t => t.result !== 'En cours' && t.result !== 'En attente');
   const numClosed = closed.filter(t => rrfNum(t)!==null);  // R/R valide pour equity/P&L (ignore "—")
   const wins = closed.filter(isWin);
   const losses = closed.filter(isLoss);
