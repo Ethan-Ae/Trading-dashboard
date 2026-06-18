@@ -3393,6 +3393,16 @@ function saveTrade(){
   };
   trades.unshift(newTrade);
   dbUpsert(newTrade);
+  // Pointe les vues temporelles (Mensuel + Calendrier) sur le mois du nouveau trade
+  // (date de prise de position, repli sur création) pour qu'il s'y affiche tout de suite.
+  const effISO = getTradeDate(newTrade);
+  if(effISO){
+    const ed = new Date(effISO + 'T00:00:00');
+    if(!isNaN(ed.getTime())){
+      monthY = ed.getFullYear(); monthM = ed.getMonth();
+      calY   = ed.getFullYear(); calM   = ed.getMonth();
+    }
+  }
   closeAddModal();
   refreshCurrentPage();
 }
