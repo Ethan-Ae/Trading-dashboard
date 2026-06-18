@@ -77,6 +77,20 @@ input, select, textarea, button { font-family: inherit; }
 .nav-pill:hover { background: var(--bg3); color: var(--text); }
 .nav-pill.active { background: var(--bg3); color: var(--text); }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.save-status {
+  display: none; align-items: center; gap: 5px;
+  font-size: .72rem; font-weight: 500; padding: 4px 10px; border-radius: 7px;
+  white-space: nowrap; transition: opacity .3s;
+}
+.save-status.show { display: inline-flex; }
+.save-status .ss-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.save-status.saving { background: rgba(255,159,10,.12); color: #ff9f0a; }
+.save-status.saving .ss-dot { background: #ff9f0a; animation: ssPulse 1s ease-in-out infinite; }
+.save-status.saved  { background: rgba(48,209,88,.12); color: #30d158; }
+.save-status.saved  .ss-dot { background: #30d158; }
+.save-status.error  { background: rgba(255,69,58,.14); color: #ff453a; }
+.save-status.error  .ss-dot { background: #ff453a; }
+@keyframes ssPulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 .btn-add {
   background: var(--orange); color: #000;
   border: none; border-radius: 10px;
@@ -226,6 +240,30 @@ body.has-trial-banner .main { padding-top: 92px; }
 .btn-danger:hover { background: rgba(255,69,58,.22); border-color: #ff453a; color: #fff; }
 .btn-danger:disabled { opacity: .5; cursor: wait; }
 @media (max-width: 600px) { .danger-action { flex-direction: column; align-items: stretch; } .btn-danger { width: 100%; } }
+
+/* ── RESPONSIVE / MOBILE ── */
+@media (max-width: 820px) {
+  .page { padding: 18px 14px; }
+  .topbar { padding: 0 10px; gap: 0; }
+  .nav-pill { padding: 7px 10px; font-size: .82rem; }
+  .insights-top { grid-template-columns: 1fr; }
+  .ins-grid { grid-template-columns: 1fr; }
+  .month-grid { grid-template-columns: 1fr; }
+  .month-donuts { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .page { padding: 14px 10px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .gauge-row { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .panel { width: 100vw; }
+  .panel-overlay.open { justify-content: stretch; }
+  .field-row { flex-wrap: wrap; }
+  .field-label { width: 100%; }
+  .modal { padding: 20px 16px; border-radius: 16px; }
+  .ss-grid { grid-template-columns: repeat(2, 1fr); }
+  .topbar-logo-img { max-width: 110px; }
+  .nav-pill { padding: 7px 9px; }
+}
 
 /* ── CSV PREVIEW MODAL ── */
 .csv-preview { max-width: 900px; width: 92%; max-height: 85vh; overflow: auto; }
@@ -879,6 +917,40 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 .wr-bar-bg { flex: 1; height: 4px; background: var(--bg4); border-radius: 2px; min-width: 60px; }
 .wr-bar-fill { height: 4px; border-radius: 2px; }
 
+/* ── INSIGHTS ── */
+.insights-top { display: grid; grid-template-columns: 320px 1fr; gap: 16px; margin-bottom: 16px; }
+.discipline-card, .reco-card, .ins-card {
+  background: var(--bg2); border: 1px solid var(--sep); border-radius: 22px; padding: 22px;
+}
+.discipline-card { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.discipline-gauge-wrap { position: relative; width: 180px; height: 180px; }
+.discipline-gauge-wrap canvas { width: 180px !important; height: 180px !important; }
+.discipline-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.discipline-val { font-size: 2.2rem; font-weight: 700; }
+.discipline-sub { font-size: .72rem; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
+.discipline-bars { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.disc-bar-row { display: flex; flex-direction: column; gap: 5px; }
+.disc-bar-head { display: flex; justify-content: space-between; font-size: .74rem; color: var(--text2); }
+.disc-bar-track { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+.disc-bar-fill { height: 6px; border-radius: 3px; transition: width .5s ease; }
+.reco-title, .ins-card-title { font-size: .9rem; font-weight: 600; margin-bottom: 4px; }
+.ins-card-sub { font-size: .74rem; color: var(--text3); margin-bottom: 14px; }
+.reco-title { margin-bottom: 14px; }
+.reco-list { display: flex; flex-direction: column; gap: 10px; }
+.reco-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--bg3); border-left: 3px solid var(--text3); }
+.reco-item.reco-bad { border-left-color: #ff453a; }
+.reco-item.reco-good { border-left-color: #30d158; }
+.reco-item.reco-info { border-left-color: #ff9f0a; }
+.reco-icon { font-size: 1.1rem; flex-shrink: 0; line-height: 1.4; }
+.reco-text { font-size: .82rem; color: var(--text); line-height: 1.5; }
+.reco-text b { color: var(--orange); font-weight: 600; }
+.ins-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ins-chart-wrap { height: 200px; position: relative; }
+.ins-empty { color: var(--text3); font-size: .8rem; padding: 24px 8px; text-align: center; line-height: 1.5; }
+.th-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+.th-sort:hover { color: var(--text); }
+.th-arrow { color: var(--orange); font-size: .7rem; }
+
 /* ── UTIL ── */
 .flex { display: flex; }
 .flex-center { display: flex; align-items: center; }
@@ -1001,11 +1073,16 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 10h14M7 14h2M11 14h2"/></svg>
     Mensuel
   </button>
+  <button class="nav-pill" onclick="showPage('insights',this)">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2a6 6 0 00-3 11.2V15a1 1 0 001 1h4a1 1 0 001-1v-1.8A6 6 0 0010 2z"/><path d="M8 18h4"/></svg>
+    Insights
+  </button>
   <button class="nav-pill" onclick="showPage('settings',this)" title="Réglages">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M2 10h2M16 10h2M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"/></svg>
     Réglages
   </button>
   <div class="topbar-right">
+    <div id="save-status" class="save-status" title="État de la sauvegarde"></div>
     <select class="year-select" id="year-select" onchange="onYearChange(this.value)" title="Année du journal"></select>
     <button class="year-add" onclick="addYear()" title="Ajouter une année">＋</button>
     <button class="icon-btn" onclick="exportJSON()" title="Exporter (télécharger sauvegarde JSON)">↑</button>
@@ -1082,6 +1159,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   </div>
   <div class="table-card">
     <div class="table-toolbar">
+      <input class="filter-select" id="t-search" type="search" placeholder="🔎 Rechercher…" oninput="renderTradesTable()" title="Cherche dans paire, résultat, ordre, tendance, confluences, notes…" style="min-width:170px;border:1px solid var(--sep);background:var(--bg3);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.78rem">
       <input class="filter-select" id="t-pair" list="pair-list" placeholder="Toutes les devises" oninput="this.value=this.value.toUpperCase();renderTradesTable()" style="min-width:150px;border:1px solid var(--sep);background:var(--bg3);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.78rem">
       <datalist id="pair-list"></datalist>
       <select class="filter-select" id="t-tf" onchange="renderTradesTable()">
@@ -1111,7 +1189,7 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <option value="6">Juillet</option><option value="7">Août</option><option value="8">Septembre</option>
         <option value="9">Octobre</option><option value="10">Novembre</option><option value="11">Décembre</option>
       </select>
-      <select class="filter-select" id="t-sort" onchange="renderTradesTable()">
+      <select class="filter-select" id="t-sort" onchange="tableSort={col:'date',dir:this.value};renderTradesTable()">
         <option value="desc">Date ↓ (récent)</option>
         <option value="asc">Date ↑ (ancien)</option>
       </select>
@@ -1122,9 +1200,17 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
       <table>
         <thead>
           <tr>
-            <th>Actif</th><th>Date</th><th>Prise</th><th>TF</th><th>Ordre</th>
-            <th>Risk</th><th>Résultat</th><th>R/R init</th><th>R/R final</th>
-            <th>Jour</th><th>Holding</th><th>Type Trade</th><th>Bon Trade</th><th></th>
+            <th class="th-sort" onclick="setTableSort('pair')">Actif<span class="th-arrow" data-col="pair"></span></th>
+            <th class="th-sort" onclick="setTableSort('date')">Date<span class="th-arrow" data-col="date"></span></th>
+            <th>Prise</th>
+            <th class="th-sort" onclick="setTableSort('tf')">TF<span class="th-arrow" data-col="tf"></span></th>
+            <th class="th-sort" onclick="setTableSort('ordre')">Ordre<span class="th-arrow" data-col="ordre"></span></th>
+            <th class="th-sort" onclick="setTableSort('risk')">Risk<span class="th-arrow" data-col="risk"></span></th>
+            <th class="th-sort" onclick="setTableSort('result')">Résultat<span class="th-arrow" data-col="result"></span></th>
+            <th>R/R init</th>
+            <th class="th-sort" onclick="setTableSort('rrf')">R/R final<span class="th-arrow" data-col="rrf"></span></th>
+            <th class="th-sort" onclick="setTableSort('jour')">Jour<span class="th-arrow" data-col="jour"></span></th>
+            <th>Holding</th><th>Type Trade</th><th>Bon Trade</th><th></th>
           </tr>
         </thead>
         <tbody id="t-tbody"></tbody>
@@ -1309,6 +1395,44 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   <div class="month-empty" id="month-empty" style="display:none">
     <div style="font-size:2.5rem;opacity:.3">📊</div>
     <div style="margin-top:8px;color:var(--text3);font-size:.85rem">Aucun trade pour ce mois</div>
+  </div>
+</div>
+
+<!-- ══════════ INSIGHTS ══════════ -->
+<div id="page-insights" class="page">
+  <div class="page-intro">
+    <div class="page-intro-title">🧠 Insights & Discipline</div>
+    <div class="page-intro-sub">Ton coach automatique. Cette page transforme tes données en <b>recommandations concrètes</b> : ce qui te fait gagner, ce qui te coûte, et à quel point tu respectes ton process. Elle croise tes <b>erreurs</b>, tes <b>émotions</b>, ta <b>checklist</b> et ta <b>durée de détention</b> avec tes résultats réels.</div>
+  </div>
+
+  <!-- Score de discipline -->
+  <div class="insights-top">
+    <div class="discipline-card">
+      <div class="discipline-gauge-wrap">
+        <canvas id="discipline-gauge"></canvas>
+        <div class="discipline-center"><div class="discipline-val" id="discipline-score">—</div><div class="discipline-sub">discipline</div></div>
+      </div>
+      <div class="discipline-bars" id="discipline-bars"></div>
+    </div>
+    <div class="reco-card">
+      <div class="reco-title">💡 Recommandations</div>
+      <div class="reco-list" id="reco-list"></div>
+    </div>
+  </div>
+
+  <!-- Analyses durée & émotions -->
+  <div class="ins-grid">
+    <div class="ins-card">
+      <div class="ins-card-title">⏱️ Performance par durée de détention</div>
+      <div class="ins-card-sub">R moyen et nombre de trades selon combien de temps tu gardes ta position</div>
+      <div class="ins-chart-wrap"><canvas id="hold-chart"></canvas></div>
+      <div id="hold-table"></div>
+    </div>
+    <div class="ins-card">
+      <div class="ins-card-title">🧠 Performance par émotion</div>
+      <div class="ins-card-sub">Quelles émotions accompagnent tes meilleurs (et pires) trades</div>
+      <div id="emotion-table"></div>
+    </div>
   </div>
 </div>
 
@@ -1637,6 +1761,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <textarea id="m-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…"></textarea>
       </div>
       <div class="form-group" style="grid-column:span 2">
+        <label>Émotions <span style="color:var(--text3);font-size:.65rem">(plusieurs possibles)</span></label>
+        <div class="emoji-btn-group" id="m-emotions-group" style="flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div class="form-group" style="grid-column:span 2">
         <label>État Psychologique</label>
         <textarea id="m-psy" class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…"></textarea>
       </div>
@@ -1745,6 +1873,47 @@ const CHECKLIST_DEFAULT = [
   'Tu n\'es pas sur-exposé sur ces devises',
 ];
 let CHECKLIST = CHECKLIST_DEFAULT.slice();
+
+// ─── Émotions (état psychologique structuré, stocké dans extra_data.emotions) ───
+// good:true = état favorable à la discipline ; good:false = état à risque.
+const EMOTIONS = [
+  { label:'Discipliné', emoji:'🧘', good:true },
+  { label:'Patient',    emoji:'⏳', good:true },
+  { label:'Confiant',   emoji:'💪', good:true },
+  { label:'Calme',      emoji:'😌', good:true },
+  { label:'Concentré',  emoji:'🎯', good:true },
+  { label:'FOMO',       emoji:'😰', good:false },
+  { label:'Stressé',    emoji:'😣', good:false },
+  { label:'Impatient',  emoji:'⚡', good:false },
+  { label:'Avide',      emoji:'🤑', good:false },
+  { label:'Peur',       emoji:'😨', good:false },
+  { label:'Vengeance',  emoji:'😤', good:false },
+  { label:'Hésitant',   emoji:'😕', good:false },
+  { label:'Euphorique', emoji:'🤩', good:false },
+  { label:'Ennui',      emoji:'🥱', good:false },
+];
+const EMOTION_BY_LABEL = Object.fromEntries(EMOTIONS.map(e=>[e.label,e]));
+function getEmotions(t){
+  const ed = t && t.extra_data;
+  const arr = ed && Array.isArray(ed.emotions) ? ed.emotions : [];
+  return arr.filter(x=>typeof x==='string');
+}
+function toggleTradeEmotion(id, label, btn){
+  const t = trades.find(x=>x.id===id); if(!t) return;
+  if(!t.extra_data || typeof t.extra_data!=='object') t.extra_data={};
+  let arr = Array.isArray(t.extra_data.emotions) ? t.extra_data.emotions.slice() : [];
+  if(arr.includes(label)) arr = arr.filter(x=>x!==label);
+  else arr.push(label);
+  t.extra_data.emotions = arr;
+  if(btn) btn.classList.toggle('selected', arr.includes(label));
+  dbUpsert(t);
+}
+function emotionChipsHTML(t){
+  const cur = getEmotions(t);
+  return `<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px">${
+    EMOTIONS.map(e=>`<button type="button" class="emoji-btn ${cur.includes(e.label)?'selected':''}" style="font-size:.74rem;padding:4px 10px" onclick="toggleTradeEmotion(${t.id},'${e.label}',this)">${e.emoji} ${e.label}</button>`).join('')
+  }</div>`;
+}
 
 // ─── Confluences globales (persistées en localStorage, indépendantes de la DB) ───
 const CONFLUENCES_DEFAULT = [
@@ -2223,6 +2392,125 @@ function calcMaxDD(ts){
 }
 
 // ───────────────────────────────────────────
+//  DISCIPLINE & INSIGHTS
+// ───────────────────────────────────────────
+// Score de discipline : moyenne pondérée de 3 composantes (sur les trades pris) :
+//  • Checklist : taux moyen de cases cochées
+//  • Sans erreur : % de trades sans aucune erreur loggée
+//  • Émotions : % de trades (taggés) sans émotion à risque
+// Une composante sans donnée est ignorée (pas de pénalité injuste).
+function calcDiscipline(ts){
+  const base = { score:null, checklist:null, errorFree:null, emotion:null, n:ts.length };
+  if(!ts.length) return base;
+  let clSum=0, clN=0;
+  ts.forEach(t=>{
+    const cl = Array.isArray(t.checklist) ? t.checklist : [];
+    if(cl.length){ clSum += cl.filter(Boolean).length/cl.length; clN++; }
+  });
+  const checklist = clN ? (clSum/clN*100) : null;
+  const errorFree = ts.filter(t=>!(t.errs||[]).some(e=>e && e!=='Aucune')).length / ts.length * 100;
+  const tagged = ts.filter(t=>getEmotions(t).length);
+  const emoGood = tagged.filter(t=>!getEmotions(t).some(l=>EMOTION_BY_LABEL[l] && !EMOTION_BY_LABEL[l].good)).length;
+  const emotion = tagged.length ? (emoGood/tagged.length*100) : null;
+  const parts=[];
+  if(checklist!==null) parts.push(checklist);
+  parts.push(errorFree);
+  if(emotion!==null) parts.push(emotion);
+  const score = parts.length ? parts.reduce((a,b)=>a+b,0)/parts.length : null;
+  return {
+    score: score===null?null:Math.round(score),
+    checklist: checklist===null?null:Math.round(checklist),
+    errorFree: Math.round(errorFree),
+    emotion: emotion===null?null:Math.round(emotion),
+    n: ts.length
+  };
+}
+// Regroupe des trades par valeur(s) d'une clé et calcule R total, n, wins, losses.
+function groupPerf(ts, keyFn){
+  const map={};
+  ts.forEach(t=>{
+    let keys = keyFn(t);
+    if(!Array.isArray(keys)) keys=[keys];
+    keys.forEach(k=>{
+      if(k===undefined||k===null||k===''||k==='—') return;
+      const g = map[k] || (map[k]={r:0,n:0,w:0,l:0});
+      g.n++;
+      const r = rrfNum(t);
+      if(isWin(t)) g.w++; else if(isLoss(t)) g.l++;
+      g.r += r||0;
+    });
+  });
+  return map;
+}
+// Génère des recommandations textuelles à partir des trades pris.
+// Renvoie [{sev:'good'|'bad'|'info', icon, text}], triées (mauvaises d'abord).
+function generateInsights(ts){
+  const out=[];
+  const minN=3;
+  const fmtR=v=>`${v>0?'+':''}${(+v).toFixed(1)}R`;
+  // extrait le meilleur / pire d'un map (par R total), avec n>=minN
+  const extremes=(map)=>{
+    const entries=Object.entries(map).filter(([,v])=>v.n>=minN);
+    if(!entries.length) return null;
+    const sorted=entries.slice().sort((a,b)=>b[1].r-a[1].r);
+    return { best:sorted[0], worst:sorted[sorted.length-1] };
+  };
+  // Jour de la semaine
+  const wd=extremes(groupPerf(ts,t=>[getTradeJour(t)]));
+  if(wd){
+    if(wd.worst[1].r<0) out.push({sev:'bad',icon:'📅',text:`Ton pire jour est <b>${wd.worst[0]}</b> (${fmtR(wd.worst[1].r)} sur ${wd.worst[1].n} trades). Envisage de réduire ou d'éviter ce jour.`});
+    if(wd.best[1].r>0 && wd.best[0]!==wd.worst[0]) out.push({sev:'good',icon:'📅',text:`Ton meilleur jour est <b>${wd.best[0]}</b> (${fmtR(wd.best[1].r)} sur ${wd.best[1].n} trades).`});
+  }
+  // Paire / actif
+  const pr=extremes(groupPerf(ts,t=>[t.pair]));
+  if(pr){
+    if(pr.worst[1].r<0) out.push({sev:'bad',icon:'💱',text:`<b>${pr.worst[0]}</b> te coûte (${fmtR(pr.worst[1].r)} sur ${pr.worst[1].n} trades). Analyse pourquoi, ou écarte cette paire.`});
+    if(pr.best[1].r>0 && pr.best[0]!==pr.worst[0]) out.push({sev:'good',icon:'💱',text:`<b>${pr.best[0]}</b> est ta paire la plus rentable (${fmtR(pr.best[1].r)} sur ${pr.best[1].n} trades).`});
+  }
+  // Tendance / contexte
+  const td=extremes(groupPerf(ts,t=>[t.tend]));
+  if(td && td.worst[1].r<0) out.push({sev:'bad',icon:'📈',text:`En <b>${td.worst[0]}</b> tu es négatif (${fmtR(td.worst[1].r)} sur ${td.worst[1].n} trades).`});
+  if(td && td.best[1].r>0) out.push({sev:'good',icon:'📈',text:`Ton contexte le plus rentable : <b>${td.best[0]}</b> (${fmtR(td.best[1].r)}).`});
+  // Time-Frame
+  const tf=extremes(groupPerf(ts,t=>dimSplit(t.tf).filter(v=>v!==DIM_EMPTY)));
+  if(tf && tf.worst[1].r<0 && tf.worst[1].n>=minN) out.push({sev:'bad',icon:'⏱️',text:`Le Time-Frame <b>${tf.worst[0]}</b> est perdant (${fmtR(tf.worst[1].r)} sur ${tf.worst[1].n} trades).`});
+  // Patterns d'erreurs
+  const errMap={};
+  ts.forEach(t=>(t.errs||[]).forEach(e=>{ if(!e||e==='Aucune')return; const g=errMap[e]||(errMap[e]={r:0,n:0,l:0}); g.n++; if(isLoss(t))g.l++; g.r+=rrfNum(t)||0; }));
+  const errEntries=Object.entries(errMap).filter(([,v])=>v.n>=minN).sort((a,b)=>a[1].r-b[1].r);
+  if(errEntries.length){
+    const [name,v]=errEntries[0];
+    out.push({sev:'bad',icon:'🎯',text:`Erreur la plus coûteuse : <b>${name}</b> (${v.n} fois, ${fmtR(v.r)}, ${Math.round(v.l/v.n*100)}% de pertes).`});
+  }
+  // Émotions à risque
+  const emoMap=groupPerf(ts,t=>getEmotions(t));
+  const emoEntries=Object.entries(emoMap).filter(([,v])=>v.n>=minN).sort((a,b)=>a[1].r-b[1].r);
+  if(emoEntries.length){
+    const [name,v]=emoEntries[0];
+    if(v.r<0){ const e=EMOTION_BY_LABEL[name]; out.push({sev:'bad',icon:e?e.emoji:'🧠',text:`Quand tu ressens <b>${name}</b>, tu perds (${fmtR(v.r)} sur ${v.n} trades). Surveille cet état.`}); }
+    const bestEmo=emoEntries[emoEntries.length-1];
+    if(bestEmo && bestEmo[1].r>0){ const e=EMOTION_BY_LABEL[bestEmo[0]]; out.push({sev:'good',icon:e?e.emoji:'🧠',text:`Tu performes le mieux en étant <b>${bestEmo[0]}</b> (${fmtR(bestEmo[1].r)} sur ${bestEmo[1].n} trades).`}); }
+  }
+  // Checklist : comparer trades à checklist complète vs incomplète
+  const full=ts.filter(t=>Array.isArray(t.checklist)&&t.checklist.length&&t.checklist.every(Boolean));
+  const partial=ts.filter(t=>Array.isArray(t.checklist)&&t.checklist.length&&!t.checklist.every(Boolean));
+  if(full.length>=minN && partial.length>=minN){
+    const rFull=full.reduce((s,t)=>s+(rrfNum(t)||0),0)/full.length;
+    const rPart=partial.reduce((s,t)=>s+(rrfNum(t)||0),0)/partial.length;
+    if(rFull>rPart) out.push({sev:'good',icon:'✅',text:`Checklist complète = meilleure perf : ${fmtR(rFull)}/trade vs ${fmtR(rPart)}/trade sans. Garde la discipline.`});
+  }
+  // Position vs Retails
+  const rt=groupPerf(ts,t=>[t.retails]);
+  if(rt['Contre les Retails'] && rt['Contre les Retails'].n>=minN && rt['Contre les Retails'].r<0)
+    out.push({sev:'bad',icon:'👥',text:`Trader <b>contre les retails</b> ne paie pas ici (${fmtR(rt['Contre les Retails'].r)} sur ${rt['Contre les Retails'].n} trades).`});
+  // Tri : mauvaises d'abord, puis bonnes, puis info
+  const rank={bad:0,good:1,info:2};
+  out.sort((a,b)=>rank[a.sev]-rank[b.sev]);
+  if(!out.length) out.push({sev:'info',icon:'📊',text:`Pas encore assez de données pour des recommandations fiables. Continue de logguer tes trades (idéalement 10+ par catégorie).`});
+  return out;
+}
+
+// ───────────────────────────────────────────
 //  OVERVIEW
 // ───────────────────────────────────────────
 function renderOverview(){
@@ -2397,25 +2685,68 @@ function renderFocusChip(){
   el.innerHTML = `<span class="focus-chip">⭐ ${def?def.label:''} : ${escapeHtml(tradeFocusFilter.value)}
     <button onclick="clearTradeFocus()" title="Retirer le filtre">✕</button></span>`;
 }
+// État de tri de la table (par défaut : date décroissante)
+let tableSort = { col:'date', dir:'desc' };
+function setTableSort(col){
+  if(tableSort.col===col){ tableSort.dir = tableSort.dir==='asc' ? 'desc' : 'asc'; }
+  else { tableSort.col = col; tableSort.dir = (col==='date'||col==='rrf'||col==='risk') ? 'desc' : 'asc'; }
+  const sortSel=document.getElementById('t-sort');
+  if(sortSel && col==='date') sortSel.value = tableSort.dir;
+  renderTradesTable();
+}
+// Valeur d'une colonne pour le tri (numérique ou texte selon la colonne)
+function tradeSortVal(t, col){
+  switch(col){
+    case 'date':   return getTradeDate(t)||'';
+    case 'pair':   return (t.pair||'').toUpperCase();
+    case 'tf':     return (t.tf||'');
+    case 'ordre':  return (t.ordre||'');
+    case 'result': return (t.result||'');
+    case 'jour':   return JOURS.indexOf(getTradeJour(t));
+    case 'risk':   return parseFloat(String(t.risk||'').replace('%','').replace(',','.'))||0;
+    case 'rrf':    { const v=rrfNum(t); return v===null ? -Infinity : v; }
+    default:       return '';
+  }
+}
+// Texte agrégé d'un trade pour la recherche plein texte
+function tradeSearchText(t){
+  return [t.pair,t.result,t.ordre,t.tend,t.tf,t.hold,t.type,getTradeJour(t),t.risk,t.confluences,t.psy,
+    (t.errs||[]).join(' '), getEmotions(t).join(' ')]
+    .filter(Boolean).join(' ').toLowerCase();
+}
 function renderTradesTable(){
-  const sortDir=(document.getElementById('t-sort')||{}).value||'desc';
-  let ts = tradesOfYear().sort((a,b)=> sortDir==='asc' ? (getTradeDate(a)||'').localeCompare(getTradeDate(b)||'') : (getTradeDate(b)||'').localeCompare(getTradeDate(a)||''));
+  let ts = tradesOfYear();
   const pair=(document.getElementById('t-pair')||{}).value||'';
   const tf=(document.getElementById('t-tf')||{}).value||'';
   const res=(document.getElementById('t-result')||{}).value||'';
   const type=(document.getElementById('t-type')||{}).value||'';
   const jour=(document.getElementById('t-jour')||{}).value||'';
   const month=(document.getElementById('t-month')||{}).value||'';
+  const query=((document.getElementById('t-search')||{}).value||'').trim().toLowerCase();
   if(pair) ts=ts.filter(t=>(t.pair||'').includes(pair));
   if(tf) ts=ts.filter(t=>dimSplit(t.tf).includes(tf));
   if(res) ts=ts.filter(t=>t.result===res);
   if(type) ts=ts.filter(t=>t.ordre===type);
   if(jour) ts=ts.filter(t=>getTradeJour(t)===jour);
   if(month!=='') ts=ts.filter(t=>{ const d=new Date(getTradeDate(t)); return !isNaN(d.getTime()) && d.getMonth()===+month; });
+  if(query) ts=ts.filter(t=>tradeSearchText(t).includes(query));
   if(tradeFocusFilter && TRADE_FOCUS[tradeFocusFilter.key]){
     const f=TRADE_FOCUS[tradeFocusFilter.key];
     ts=ts.filter(t=>f.match(t, tradeFocusFilter.value));
   }
+  // Tri générique (colonne cliquée ou date par défaut)
+  const { col, dir } = tableSort;
+  ts = ts.slice().sort((a,b)=>{
+    const va=tradeSortVal(a,col), vb=tradeSortVal(b,col);
+    let cmp;
+    if(typeof va==='number' && typeof vb==='number') cmp = va-vb;
+    else cmp = String(va).localeCompare(String(vb));
+    return dir==='asc' ? cmp : -cmp;
+  });
+  // Indicateurs de tri dans les en-têtes
+  document.querySelectorAll('.th-arrow').forEach(el=>{
+    el.textContent = el.dataset.col===col ? (dir==='asc'?' ▲':' ▼') : '';
+  });
   renderFocusChip();
   const ct=document.getElementById('t-count');
   if(ct) ct.textContent=`${ts.length} trade${ts.length!==1?'s':''}`;
@@ -2986,7 +3317,8 @@ function buildPanelHTML(t){
     <textarea id="panel-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
     ${photoSectionHTML(t,'confluences','🖼️ Images des raisons','(captures fondamentales / analyses)')}
     <div class="panel-section-title">État Psychologique</div>
-    <textarea class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
+    ${emotionChipsHTML(t)}
+    <textarea class="field-textarea" style="margin-top:8px" placeholder="Comment tu te sentais avant / pendant le trade…" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
     <div class="panel-section-title">Checklist</div>
     <div class="checklist-wrap">${checkItems}</div>
     ${customFieldsHTML(t)}
@@ -3374,6 +3706,9 @@ function openAddModal(){
   // Populate errors chips
   const errsGroup = document.getElementById('m-errs-group');
   errsGroup.innerHTML = ERRORS.map(e=>`<button type="button" class="emoji-btn" data-val="${e}" style="font-size:.75rem;padding:4px 10px" onclick="toggleModalErr(this)">${e}</button>`).join('');
+  // Populate emotions chips
+  const emoGroup = document.getElementById('m-emotions-group');
+  if(emoGroup) emoGroup.innerHTML = EMOTIONS.map(e=>`<button type="button" class="emoji-btn" data-val="${e.label}" style="font-size:.74rem;padding:4px 10px" onclick="toggleModalErr(this)">${e.emoji} ${e.label}</button>`).join('');
   modalExecScreenshot = null;
   const slot = document.getElementById('m-ss-slot');
   slot.querySelectorAll('img').forEach(i=>i.remove());
@@ -3456,11 +3791,13 @@ function saveTrade(){
   // Date de prise de position : par défaut = date de création ; si l'utilisateur l'a
   // modifiée, on la stocke (format FR JJ/MM/AAAA) → base de TOUS les calculs via getTradeDate.
   const priseDate=document.getElementById('m-prise-date').value||date;
+  const emotions=[...document.querySelectorAll('#m-emotions-group .emoji-btn.selected')].map(b=>b.dataset.val);
   const extra_data={};
   if(priseDate && priseDate!==date){
     const [py,pm,pd]=priseDate.split('-');
     extra_data['Date Prise de Position']=`${pd}/${pm}/${py}`;
   }
+  if(emotions.length) extra_data.emotions=emotions;
   const newTrade = {
     id:Date.now(), pair, date, prise:true, tf, ordre, risk, rri, result, rrf,
     jour, hold, type, tend, retails, errs, bonTrade: bonTrade===null ? false : bonTrade,
@@ -3846,6 +4183,86 @@ function renderPerf(){
 }
 
 // ───────────────────────────────────────────
+//  INSIGHTS PAGE
+// ───────────────────────────────────────────
+function renderInsights(){
+  const ts = tradesOfYear().filter(isTradePris);
+
+  // ── Score de discipline ──
+  const disc = calcDiscipline(ts);
+  const scoreEl = document.getElementById('discipline-score');
+  if(scoreEl) scoreEl.textContent = disc.score===null ? '—' : disc.score+'%';
+  const scoreColor = disc.score===null ? '#636366' : disc.score>=70 ? '#30d158' : disc.score>=45 ? '#ff9f0a' : '#ff453a';
+  dc('discipline-gauge');
+  const dval = disc.score===null ? 0 : disc.score;
+  ch['discipline-gauge'] = new Chart(document.getElementById('discipline-gauge'),{
+    type:'doughnut',
+    data:{ datasets:[{ data:[dval,100-dval], backgroundColor:[scoreColor,'#2c2c2e'], borderWidth:0, cutout:'78%' }] },
+    options:{ responsive:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, animation:{duration:500} }
+  });
+  const barsEl = document.getElementById('discipline-bars');
+  if(barsEl){
+    const comp=[
+      {label:'Checklist remplie', val:disc.checklist},
+      {label:'Trades sans erreur', val:disc.errorFree},
+      {label:'Émotions maîtrisées', val:disc.emotion},
+    ];
+    barsEl.innerHTML = comp.map(c=>{
+      const v = c.val;
+      const col = v===null ? '#636366' : v>=70?'#30d158':v>=45?'#ff9f0a':'#ff453a';
+      const txt = v===null ? 'n/a' : v+'%';
+      const w = v===null ? 0 : v;
+      return `<div class="disc-bar-row">
+        <div class="disc-bar-head"><span>${c.label}</span><span style="color:${col};font-weight:600">${txt}</span></div>
+        <div class="disc-bar-track"><div class="disc-bar-fill" style="width:${w}%;background:${col}"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Recommandations ──
+  const recoEl = document.getElementById('reco-list');
+  if(recoEl){
+    const list = generateInsights(ts);
+    recoEl.innerHTML = list.map(r=>`
+      <div class="reco-item reco-${r.sev}">
+        <div class="reco-icon">${r.icon}</div>
+        <div class="reco-text">${r.text}</div>
+      </div>`).join('');
+  }
+
+  // ── Performance par durée de détention ──
+  const holdMap = groupPerf(ts, t=>[t.hold]);
+  const holdOrder = HOLD_OPTIONS.filter(h=>holdMap[h]);
+  dc('hold-chart');
+  if(holdOrder.length){
+    const avgs = holdOrder.map(h=>+(holdMap[h].r/holdMap[h].n).toFixed(2));
+    ch['hold-chart'] = new Chart(document.getElementById('hold-chart'),{
+      type:'bar',
+      data:{ labels:holdOrder, datasets:[{ data:avgs, backgroundColor:avgs.map(v=>v>=0?'rgba(48,209,88,.8)':'rgba(255,69,58,.8)'), borderRadius:4 }] },
+      options: chartDefaults({ responsive:true, animation:{duration:400}, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R moyen`}}} })
+    });
+  }
+  const holdTableEl = document.getElementById('hold-table');
+  if(holdTableEl){
+    if(!holdOrder.length){ holdTableEl.innerHTML = `<div class="ins-empty">Renseigne la durée de détention (Holding Period) de tes trades pour activer cette analyse.</div>`; }
+    else holdTableEl.innerHTML = `<table class="bd-table" style="margin-top:12px"><thead><tr><th>Durée</th><th>Trades</th><th>W/L</th><th>Avg R</th><th>Total R</th></tr></thead><tbody>${
+      holdOrder.map(h=>{ const v=holdMap[h]; const avg=+(v.r/v.n).toFixed(2); return `<tr><td style="font-weight:600">${h}</td><td>${v.n}</td><td>${v.w}/${v.l}</td><td class="${rClass(avg)}">${avg>0?'+':''}${avg}R</td><td class="${rClass(v.r)}">${v.r>0?'+':''}${+v.r.toFixed(2)}R</td></tr>`; }).join('')
+    }</tbody></table>`;
+  }
+
+  // ── Performance par émotion ──
+  const emoMap = groupPerf(ts, t=>getEmotions(t));
+  const emoKeys = Object.keys(emoMap).sort((a,b)=>emoMap[b].r-emoMap[a].r);
+  const emoEl = document.getElementById('emotion-table');
+  if(emoEl){
+    if(!emoKeys.length){ emoEl.innerHTML = `<div class="ins-empty">Tague l'émotion de tes trades (dans le panneau ou à la création) pour découvrir comment ton mental impacte tes résultats.</div>`; }
+    else emoEl.innerHTML = `<table class="bd-table" style="margin-top:12px"><thead><tr><th>Émotion</th><th>Trades</th><th>W/L</th><th>Avg R</th><th>Total R</th></tr></thead><tbody>${
+      emoKeys.map(k=>{ const v=emoMap[k]; const e=EMOTION_BY_LABEL[k]; const avg=+(v.r/v.n).toFixed(2); return `<tr><td style="font-weight:600">${e?e.emoji+' ':''}${k}</td><td>${v.n}</td><td>${v.w}/${v.l}</td><td class="${rClass(avg)}">${avg>0?'+':''}${avg}R</td><td class="${rClass(v.r)}">${v.r>0?'+':''}${+v.r.toFixed(2)}R</td></tr>`; }).join('')
+    }</tbody></table>`;
+  }
+}
+
+// ───────────────────────────────────────────
 //  PAGE ROUTING
 // ───────────────────────────────────────────
 let currentPage='overview';
@@ -3864,6 +4281,7 @@ function refreshCurrentPage(){
   else if(currentPage==='calendar') renderCalendar();
   else if(currentPage==='perf') renderPerf();
   else if(currentPage==='monthly') renderMonthly();
+  else if(currentPage==='insights') renderInsights();
   else if(currentPage==='settings') renderSettings();
 }
 
@@ -4166,20 +4584,41 @@ function showToast(msg, isErr=false){
   toastTimer = setTimeout(()=>{ el.classList.remove('show'); }, 2200);
 }
 
+// ─── Indicateur de sauvegarde (barre du haut) ───
+let _saveStatusTimer = null;
+function setSaveStatus(state){
+  const el = document.getElementById('save-status');
+  if(!el) return;
+  clearTimeout(_saveStatusTimer);
+  const conf = {
+    saving: { cls:'saving', txt:'Sauvegarde…' },
+    saved:  { cls:'saved',  txt:'Sauvegardé' },
+    error:  { cls:'error',  txt:'Échec de sauvegarde' },
+  }[state];
+  if(!conf){ el.className='save-status'; el.innerHTML=''; return; }
+  el.className = 'save-status show ' + conf.cls;
+  el.innerHTML = `<span class="ss-dot"></span>${conf.txt}`;
+  // Les états "saved" et "error" disparaissent après un délai ; "saving" reste affiché.
+  if(state==='saved') _saveStatusTimer = setTimeout(()=>{ el.classList.remove('show'); }, 2000);
+  if(state==='error') _saveStatusTimer = setTimeout(()=>{ el.classList.remove('show'); }, 4000);
+}
+
 async function dbUpsert(trade) {
   if (!currentUser){ console.warn('[Supabase] UPSERT abandonné — pas d\'utilisateur'); showToast('⚠️ Non connecté', true); return; }
   const row = localToDb(trade);
   // ⚠️ On n'envoie PAS user_id : Supabase le remplit via DEFAULT auth.uid()
   if('user_id' in row){ delete row.user_id; }
   console.log('[Supabase] UPSERT trade id=', row.id, row);
+  setSaveStatus('saving');
   const { data, error, status } = await sb.from('trades').upsert(row, { onConflict: 'id' }).select();
   if (error) {
     console.error('[Supabase] UPSERT échec', { status, error, fullError: JSON.stringify(error), row });
     showToast('Erreur : ' + (error.message || JSON.stringify(error)), true);
+    setSaveStatus('error');
     return;
   }
   console.log('[Supabase] UPSERT OK', data);
-  showToast('✓ Sauvegardé');
+  setSaveStatus('saved');
 }
 
 async function dbDelete(id) {
@@ -5284,26 +5723,52 @@ function importJSON(input){
 // ─────────────────────────────────────────────
 //  KEYBOARD SHORTCUTS
 // ─────────────────────────────────────────────
+// Navigue vers le trade précédent / suivant dans le panneau ouvert
+// (ordre = trades de l'année, par date effective décroissante).
+function panelNav(dir){
+  if(!activeTrade) return;
+  const list = tradesOfYear().slice().sort((a,b)=>(getTradeDate(b)||'').localeCompare(getTradeDate(a)||''));
+  const idx = list.findIndex(t=>t.id===activeTrade.id);
+  if(idx<0) return;
+  const ni = idx + dir;
+  if(ni<0 || ni>=list.length) return;
+  openPanel(list[ni].id);
+}
 document.addEventListener('keydown', e => {
   const tag = (e.target.tagName||'').toLowerCase();
   const typing = tag==='input' || tag==='textarea' || tag==='select' || e.target.isContentEditable;
-  // Esc closes modals / panel
+  const panelOpen = (()=>{ const el=document.getElementById('panelOverlay'); return el && el.classList.contains('open'); })();
+  // Esc closes modals / panel / popups
   if(e.key==='Escape'){
+    closeLightbox(); closeDayModal();
     ['addModal','panelOverlay'].forEach(id=>{
       const el = document.getElementById(id); if(el && el.classList.contains('open')) el.classList.remove('open');
     });
     return;
   }
+  // ← / → naviguent entre trades quand le panneau est ouvert (hors saisie)
+  if(panelOpen && !typing){
+    if(e.key==='ArrowLeft'){ e.preventDefault(); panelNav(1); return; }   // plus ancien
+    if(e.key==='ArrowRight'){ e.preventDefault(); panelNav(-1); return; } // plus récent
+  }
   if(typing) return;
-  // N = new trade
+  // N = nouveau trade
   if(e.key==='n' || e.key==='N'){
     e.preventDefault();
     openAddModal();
+    return;
   }
-  // Arrows for monthly page
-  if(currentPage==='monthly' && typeof monthShift==='function'){
-    if(e.key==='ArrowLeft'){ e.preventDefault(); monthShift(-1); }
-    if(e.key==='ArrowRight'){ e.preventDefault(); monthShift(1); }
+  // / = focus la recherche (page Trades)
+  if(e.key==='/'){
+    const sb=document.getElementById('t-search');
+    if(sb){ e.preventDefault(); if(currentPage!=='trades'){ const nav=document.querySelector('.nav-pill[onclick*="trades"]'); showPage('trades',nav); } setTimeout(()=>sb.focus(),0); }
+    return;
+  }
+  // Flèches : Mensuel (mois) / Calendrier (mois)
+  if(e.key==='ArrowLeft' || e.key==='ArrowRight'){
+    const back = e.key==='ArrowLeft';
+    if(currentPage==='monthly' && typeof monthShift==='function'){ e.preventDefault(); monthShift(back?-1:1); }
+    else if(currentPage==='calendar' && typeof calMove==='function'){ e.preventDefault(); calMove(back?-1:1); }
   }
 });
 
