@@ -515,6 +515,9 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   font-size: 1rem; transition: background .15s;
 }
 .panel-close:hover { background: var(--bg4); color: var(--text); }
+.panel-nav { display: flex; gap: 6px; }
+.panel-nav .panel-close { margin-left: 0; font-size: 1.25rem; font-weight: 700; }
+body.no-scroll { overflow: hidden; }
 .panel-body { padding: 20px; display: flex; flex-direction: column; gap: 0; }
 
 /* ── FIELD ROWS ── */
@@ -1568,6 +1571,10 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
         <div style="font-size:.72rem;color:var(--text3);margin-top:2px" id="p-date">—</div>
       </div>
       <div id="p-result-chip" style="margin-left:8px"></div>
+      <div class="panel-nav" style="margin-left:auto">
+        <button class="panel-close" id="p-prev" onclick="panelNav(-1)" title="Trade précédent (→)">‹</button>
+        <button class="panel-close" id="p-next" onclick="panelNav(1)" title="Trade suivant (←)">›</button>
+      </div>
       <button class="panel-close" onclick="closePanel()">✕</button>
     </div>
     <div class="panel-body" id="panel-body"></div>
@@ -2333,6 +2340,7 @@ function rStr(v){ if(v===null||v===undefined)return '—'; return (v>0?'+':'')+v
 // Indépendante des libellés texte ("TP Total", "SL Partiel", "Profit Partiel", ✅/❌…).
 // rrfNum renvoie le R/R final numérique, ou null si vide / null / "—" / non numérique.
 function rrfNum(t){
+  if (t && (t.result === 'En cours' || t.result === 'En attente')) return null; // trade non clôturé → exclu des perfs
   let v = t ? t.rrf : null;
   if (v === undefined || v === '' || v === '—') v = null;
   if (v === null) return null;
@@ -3206,6 +3214,20 @@ function openPanel(id){
   document.getElementById('p-result-chip').innerHTML=resultChip(t.result);
   document.getElementById('panel-body').innerHTML=buildPanelHTML(t);
   document.getElementById('panelOverlay').classList.add('open');
+  updatePanelNavButtons();
+  const pb=document.getElementById('panel'); if(pb) pb.scrollTop=0;
+}
+function updatePanelNavButtons(){
+  const prev=document.getElementById('p-prev'), next=document.getElementById('p-next');
+  if(!prev||!next||!activeTrade) return;
+  const list = tradesOfYear().slice().sort((a,b)=>(getTradeDate(b)||'').localeCompare(getTradeDate(a)||''));
+  const idx = list.findIndex(t=>t.id===activeTrade.id);
+  prev.disabled = (idx<=0);
+  next.disabled = (idx<0 || idx>=list.length-1);
+  prev.style.opacity = prev.disabled?'.35':'1';
+  next.style.opacity = next.disabled?'.35':'1';
+  prev.style.cursor = prev.disabled?'default':'pointer';
+  next.style.cursor = next.disabled?'default':'pointer';
 }
 
 const field_=(icon,label,content)=>`
@@ -5724,6 +5746,18 @@ function importJSON(input){
 //  KEYBOARD SHORTCUTS
 // ─────────────────────────────────────────────
 // Navigue vers le trade précédent / suivant dans le panneau ouvert
+// Verrouille le scroll de l'arrière-plan quand un panneau/modale est ouvert.
+(function(){
+  const overlayIds = ['panelOverlay','addModal','dayModal','lightbox','csvImportModal'];
+  function sync(){
+    const anyOpen = overlayIds.some(id=>{ const el=document.getElementById(id); return el && el.classList.contains('open'); });
+    document.body.classList.toggle('no-scroll', anyOpen);
+  }
+  const obs = new MutationObserver(sync);
+  overlayIds.forEach(id=>{ const el=document.getElementById(id); if(el) obs.observe(el, {attributes:true, attributeFilter:['class']}); });
+  sync();
+})();
+
 // (ordre = trades de l'année, par date effective décroissante).
 function panelNav(dir){
   if(!activeTrade) return;
