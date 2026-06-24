@@ -959,6 +959,7 @@ body.no-scroll { overflow: hidden; }
 }
 .ss-mgmt-add:hover { border-color: var(--orange); background: rgba(255,159,10,.04); color: var(--orange); }
 .ss-mgmt-add.drag-over { border-color: var(--orange); background: rgba(255,159,10,.10); }
+.ss-mgmt-add.pt-active { border-style: solid; border-color: var(--orange); background: rgba(255,159,10,.12); color: var(--orange); box-shadow: 0 0 0 2px rgba(255,159,10,.30); }
 .ss-slot-label { font-size: .68rem; color: var(--text3); text-align: center; padding: 0 8px; line-height: 1.4; pointer-events: none; }
 .ss-slot-title { font-size: .72rem; color: var(--text2); font-weight: 600; pointer-events: none; }
 .ss-slot img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; border-radius: 10px; }
@@ -3581,6 +3582,12 @@ function closeDayModal(){ document.getElementById('dayModal').classList.remove('
 let activeTrade=null;
 
 function openPanel(id){
+  const pb=document.getElementById('panel');
+  // Même trade rouvert (ajout photo, note, checklist…) → on conserve la position de scroll.
+  // Trade différent → on remet en haut.
+  const sameTrade = activeTrade && activeTrade.id === id;
+  const prevScroll = (sameTrade && pb) ? pb.scrollTop : 0;
+  if(!sameTrade) pasteTargetKey = null; // nouvelle cible de collage par trade
   activeTrade=trades.find(t=>t.id===id);
   if(!activeTrade) return;
   const t=activeTrade;
@@ -3590,7 +3597,7 @@ function openPanel(id){
   document.getElementById('panel-body').innerHTML=buildPanelHTML(t);
   document.getElementById('panelOverlay').classList.add('open');
   updatePanelNavButtons();
-  const pb=document.getElementById('panel'); if(pb) pb.scrollTop=0;
+  if(pb) pb.scrollTop = sameTrade ? prevScroll : 0;
 }
 function updatePanelNavButtons(){
   const prev=document.getElementById('p-prev'), next=document.getElementById('p-next');
@@ -3855,7 +3862,7 @@ function photoSectionHTML(t, key, title, hint, withNote){
       <span>${title} <span style="color:var(--text3);font-weight:400;font-size:.72rem">${hint||''}</span></span>
       <span style="color:var(--text3);font-size:.7rem">${n} photo${n!==1?'s':''}</span>
     </div>
-    <div class="ss-mgmt-grid">${photoGallery(t, key, label)}</div>
+    <div class="ss-mgmt-grid" onclick="setPasteTarget('${key}')">${photoGallery(t, key, label)}</div>
     ${noteHtml}`;
 }
 function getPhotoArr(t, key){
@@ -3875,11 +3882,11 @@ function photoGallery(t, key, label){
       <button class="ss-mgmt-del" onclick="event.stopPropagation();delPhoto(${t.id},'${key}',${i})">✕</button>
     </div>`).join('');
   const add = `
-    <div class="ss-mgmt-add"
+    <div class="ss-mgmt-add${pasteTargetKey===key?' pt-active':''}" data-key="${key}"
       ondragover="event.preventDefault();this.classList.add('drag-over')"
       ondragleave="this.classList.remove('drag-over')"
       ondrop="event.preventDefault();this.classList.remove('drag-over');handlePhotoDrop(event,${t.id},'${key}')"
-      onclick="setPasteTarget('${key}')">
+      onclick="event.stopPropagation();setPasteTarget('${key}')">
       <div style="font-size:1.4rem">＋</div>
       <div style="font-size:.62rem;text-align:center;padding:0 6px;line-height:1.3">Glisser ou <span style="color:var(--orange)">Ctrl+V</span></div>
     </div>`;
@@ -3959,6 +3966,7 @@ function closePanel(){
   document.getElementById('panelOverlay').classList.remove('open');
   const wasOpen = activeTrade !== null;
   activeTrade=null;
+  pasteTargetKey = null;
   // Réactualise la page courante en sortant du trade pour refléter les modifications
   if(wasOpen && typeof refreshCurrentPage === 'function') refreshCurrentPage();
 }
@@ -3969,6 +3977,11 @@ let pasteTargetKey = null; // which slot is focused for paste
 
 function setPasteTarget(key){
   pasteTargetKey = key;
+  // Feedback visuel immédiat : surligne la zone ciblée
+  document.querySelectorAll('.ss-mgmt-add[data-key]').forEach(el=>{
+    el.classList.toggle('pt-active', el.getAttribute('data-key') === key);
+  });
+  showToast('Colle ici : Ctrl+V');
 }
 
 // Show a floating paste hint when panel is open
@@ -4062,7 +4075,6 @@ document.addEventListener('paste', async function(e){
     addPhoto(activeTrade.id, key, dataUrl);
     const names={exec:'Exécution',mgmt:'Management',close:'Clôture',after:'Après position',confluences:'Images des raisons'};
     showToast('📸 Image ajoutée dans "' + (names[key]||key) + '"');
-    pasteTargetKey = null;
     return;
   }
   if(modalOpen){
