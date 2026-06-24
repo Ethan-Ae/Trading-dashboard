@@ -757,6 +757,17 @@ body.no-scroll { overflow: hidden; }
 .custom-field-del:hover { background: rgba(255,69,58,.12); color: #ff453a; }
 .custom-field-add { background: transparent; border: 1.5px dashed var(--bg4); border-radius: 10px; color: var(--text3); cursor: pointer; padding: 8px; font-size: .75rem; transition: all .15s; margin-top: 4px; }
 .custom-field-add:hover { border-color: var(--orange); color: var(--orange); }
+/* Renforcements de position (add-ins) */
+.addins-wrap { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.addin-row { display: grid; grid-template-columns: 34px 1fr 1fr 1.4fr auto; gap: 8px; align-items: center; background: var(--bg1); border: 1px solid var(--sep); border-radius: 10px; padding: 8px 12px; transition: border-color .15s; }
+.addin-row:hover { border-color: rgba(255,159,10,.25); }
+.addin-idx { font-size: .72rem; color: var(--orange); font-weight: 600; text-align: center; }
+.addin-row .field-input { width: 100%; }
+.addin-row:hover .custom-field-del { opacity: 1; }
+@media (max-width: 560px){
+  .addin-row { grid-template-columns: 28px 1fr 1fr auto; }
+  .addin-row .addin-note { grid-column: 2 / 4; }
+}
 .check-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .check-box {
   width: 18px; height: 18px; border-radius: 5px;
@@ -3716,6 +3727,7 @@ function buildPanelHTML(t){
         <button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',true,this)">✅</button>
         <button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',false,this)">❌</button>
       </div>`)}</div>
+    ${addinsHTML(t)}
     <div class="panel-section-title">Raisons & Confluences</div>
     ${confluenceChipsHTML(t.id)}
     <textarea id="panel-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
@@ -3845,6 +3857,53 @@ function addCustomField(tradeId){
   const val = prompt('Valeur :', '');
   if(val === null) return;
   t.extra_data[name.trim()] = val;
+  dbUpsert(t);
+  openPanel(tradeId);
+}
+
+// ─── Renforcements de position (add-ins) ───
+// Stockés dans extra_data.addins (jsonb persisté) : [{prix, taille, note}, …]
+function getAddins(t){
+  return (t && t.extra_data && Array.isArray(t.extra_data.addins)) ? t.extra_data.addins : [];
+}
+function addinsHTML(t){
+  const list = getAddins(t);
+  const rows = list.map((a,i)=>`
+    <div class="addin-row">
+      <div class="addin-idx">#${i+1}</div>
+      <input class="field-input" value="${escapeHtml(a.prix??'')}" placeholder="Prix" onchange="updateAddin(${t.id},${i},'prix',this.value)">
+      <input class="field-input" value="${escapeHtml(a.taille??'')}" placeholder="Taille / lots" onchange="updateAddin(${t.id},${i},'taille',this.value)">
+      <input class="field-input addin-note" value="${escapeHtml(a.note??'')}" placeholder="Note (optionnel)" onchange="updateAddin(${t.id},${i},'note',this.value)">
+      <button class="custom-field-del" onclick="delAddin(${t.id},${i})" title="Supprimer ce renforcement">✕</button>
+    </div>`).join('');
+  return `
+    <div class="panel-section-title">Renforcements <span style="color:var(--text3);font-weight:400;font-size:.7rem">(${list.length})</span></div>
+    <div class="addins-wrap">
+      ${rows || '<div style="color:var(--text3);font-size:.78rem;font-style:italic;padding:4px 0">Aucun renforcement. Ajoute chaque renfort de ta position (prix, taille, note).</div>'}
+      <button class="custom-field-add" onclick="addAddin(${t.id})">＋ Ajouter un renforcement</button>
+    </div>`;
+}
+function addAddin(tradeId){
+  const t=trades.find(x=>x.id===tradeId); if(!t) return;
+  if(!t.extra_data) t.extra_data={};
+  if(!Array.isArray(t.extra_data.addins)) t.extra_data.addins=[];
+  t.extra_data.addins.push({prix:'',taille:'',note:''});
+  dbUpsert(t);
+  openPanel(tradeId);
+}
+let _addinSaveTimer=null;
+function updateAddin(tradeId,i,field,value){
+  const t=trades.find(x=>x.id===tradeId); if(!t) return;
+  if(!t.extra_data||!Array.isArray(t.extra_data.addins)||!t.extra_data.addins[i]) return;
+  t.extra_data.addins[i][field]=value;
+  clearTimeout(_addinSaveTimer);
+  _addinSaveTimer=setTimeout(()=>dbUpsert(t),500);
+}
+function delAddin(tradeId,i){
+  const t=trades.find(x=>x.id===tradeId); if(!t) return;
+  if(!t.extra_data||!Array.isArray(t.extra_data.addins)||!t.extra_data.addins[i]) return;
+  if(!confirm('Supprimer ce renforcement ?')) return;
+  t.extra_data.addins.splice(i,1);
   dbUpsert(t);
   openPanel(tradeId);
 }
