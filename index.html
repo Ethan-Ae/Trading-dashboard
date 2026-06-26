@@ -1270,6 +1270,10 @@ body.no-scroll { overflow: hidden; }
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 10h14M7 14h2M11 14h2"/></svg>
     Mensuel
   </button>
+  <button class="nav-pill" onclick="showPage('quarterly',this)">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 9h14M9 9v8"/></svg>
+    Trimestriel
+  </button>
   <button class="nav-pill" onclick="showPage('insights',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2a6 6 0 00-3 11.2V15a1 1 0 001 1h4a1 1 0 001-1v-1.8A6 6 0 0010 2z"/><path d="M8 18h4"/></svg>
     Insights
@@ -1592,6 +1596,89 @@ body.no-scroll { overflow: hidden; }
   <div class="month-empty" id="month-empty" style="display:none">
     <div style="font-size:2.5rem;opacity:.3">📊</div>
     <div style="margin-top:8px;color:var(--text3);font-size:.85rem">Aucun trade pour ce mois</div>
+  </div>
+</div>
+
+<!-- ══════════ TRIMESTRIEL ══════════ -->
+<div id="page-quarterly" class="page">
+  <div class="page-intro">
+    <div class="page-intro-title">🗓️ Zoom sur un trimestre</div>
+    <div class="page-intro-sub">Sélectionne un trimestre (<b>Q1</b> Jan–Mar, <b>Q2</b> Avr–Juin, <b>Q3</b> Juil–Sep, <b>Q4</b> Oct–Déc) pour analyser ta performance sur 3 mois : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour ton <b>bilan trimestriel</b> et suivre ta progression dans le temps. Utilise <b>← →</b> pour naviguer.</div>
+  </div>
+  <div class="month-toolbar">
+    <button class="month-nav" onclick="quarterShift(-1)" title="Trimestre précédent">‹</button>
+    <div class="month-title-wrap">
+      <div class="month-title-sub" id="quarter-sub">Performance trimestrielle</div>
+      <div class="month-title" id="quarter-title">—</div>
+    </div>
+    <button class="month-nav" onclick="quarterShift(1)" title="Trimestre suivant">›</button>
+    <div style="flex:1"></div>
+    <select class="year-select" id="quarter-year-select" onchange="onQuarterlyYearChange(this.value)" style="margin-right:6px"></select>
+    <select class="year-select" id="quarter-q-select" onchange="onQuarterlyQuarterChange(this.value)"></select>
+  </div>
+
+  <!-- Hero KPIs -->
+  <div class="month-hero">
+    <div class="month-hero-main">
+      <div class="month-hero-label">Total R du trimestre</div>
+      <div class="month-hero-value" id="qh-totalR">—</div>
+      <div class="month-hero-sub" id="qh-sub">—</div>
+    </div>
+    <div class="month-hero-side">
+      <div class="month-mini"><div class="month-mini-label">Trades</div><div class="month-mini-value" id="qh-total">0</div></div>
+      <div class="month-mini"><div class="month-mini-label">Win Rate</div><div class="month-mini-value ora" id="qh-wr">0%</div></div>
+      <div class="month-mini"><div class="month-mini-label">Profit Factor</div><div class="month-mini-value ora" id="qh-pf">0</div></div>
+      <div class="month-mini"><div class="month-mini-label">Expectancy</div><div class="month-mini-value" id="qh-exp">0R</div></div>
+    </div>
+  </div>
+
+  <!-- Equity + per-trade -->
+  <div class="month-grid">
+    <div class="month-card">
+      <div class="month-card-title">Équité cumulée</div>
+      <div class="month-card-sub" id="qh-eq-sub">R cumulés trade par trade</div>
+      <div class="month-chart-wrap"><canvas id="q-eq-chart"></canvas></div>
+    </div>
+    <div class="month-card">
+      <div class="month-card-title">P&L par trade</div>
+      <div class="month-card-sub">vert = win, rouge = loss</div>
+      <div class="month-chart-wrap"><canvas id="q-pl-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Donuts -->
+  <div class="month-donuts">
+    <div class="month-donut-card">
+      <div class="month-card-title">Hit Rate</div>
+      <div class="month-donut-wrap"><canvas id="q-hr-chart"></canvas><div class="month-donut-center" id="qh-hr">0%</div></div>
+      <div class="month-donut-legend">
+        <span><span class="dot" style="background:var(--green)"></span>Wins <b id="qh-wins">0</b></span>
+        <span><span class="dot" style="background:var(--red)"></span>Losses <b id="qh-losses">0</b></span>
+      </div>
+    </div>
+    <div class="month-donut-card">
+      <div class="month-card-title">Profit / Loss</div>
+      <div class="month-donut-wrap"><canvas id="q-pl-pie"></canvas><div class="month-donut-center" id="qh-net">0R</div></div>
+      <div class="month-donut-legend">
+        <span><span class="dot" style="background:var(--green)"></span>Profits <b id="qh-profits">0R</b></span>
+        <span><span class="dot" style="background:var(--red)"></span>Pertes <b id="qh-loss">0R</b></span>
+      </div>
+    </div>
+    <div class="month-donut-card month-streak">
+      <div class="month-card-title">Séries</div>
+      <div class="month-streak-grid">
+        <div class="month-streak-cell pos"><div class="month-streak-label">Meilleure série</div><div class="month-streak-value" id="qh-bestw">0</div><div class="month-streak-sub">wins consécutifs</div></div>
+        <div class="month-streak-cell neg"><div class="month-streak-label">Pire série</div><div class="month-streak-value" id="qh-bestl">0</div><div class="month-streak-sub">losses consécutifs</div></div>
+        <div class="month-streak-cell"><div class="month-streak-label">Meilleur trade</div><div class="month-streak-value pos" id="qh-best">+0R</div></div>
+        <div class="month-streak-cell"><div class="month-streak-label">Pire trade</div><div class="month-streak-value neg" id="qh-worst">0R</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="month-empty" id="quarter-empty" style="display:none">
+    <div style="font-size:2.5rem;opacity:.3">📊</div>
+    <div style="margin-top:8px;color:var(--text3);font-size:.85rem">Aucun trade pour ce trimestre</div>
   </div>
 </div>
 
@@ -4334,6 +4421,10 @@ const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet',
 let monthY = (new Date()).getFullYear();
 let monthM = (new Date()).getMonth();
 
+// Formatage des graduations d'axe en R : arrondi à 2 décimales pour éviter
+// le bruit en virgule flottante (ex. -0.00000001R → 0R) et normalise le -0.
+function fmtRTick(v){ const r = Math.round((+v) * 100) / 100; return (Object.is(r, -0) ? 0 : r) + 'R'; }
+
 function monthShift(delta){
   monthM += delta;
   if(monthM < 0){ monthM = 11; monthY--; }
@@ -4363,15 +4454,25 @@ function renderMonthly(){
     .filter(isTradePris)
     .sort((a,b)=>(getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
 
-  const emptyEl = document.getElementById('month-empty');
+  renderPeriodBody(ts, 'mh-', 'm-', 'month-empty');
+}
+
+// ─────────────────────────────────────────────
+//  Logique partagée mensuel / trimestriel
+//  P = préfixe des IDs hero ('mh-' ou 'qh-')
+//  C = préfixe des canvases ('m-' ou 'q-')
+// ─────────────────────────────────────────────
+function renderPeriodBody(ts, P, C, emptyId){
+  const $ = id => document.getElementById(id);
+  const emptyEl = $(emptyId);
   if(ts.length===0){
-    document.getElementById('mh-totalR').textContent = '0R';
-    document.getElementById('mh-totalR').className = 'month-hero-value';
-    document.getElementById('mh-sub').textContent = '—';
-    ['mh-total','mh-wr','mh-pf','mh-exp','mh-wins','mh-losses','mh-profits','mh-loss','mh-bestw','mh-bestl','mh-best','mh-worst','mh-hr','mh-net'].forEach(id=>{
-      const el=document.getElementById(id); if(el) el.textContent = id.includes('R')||['mh-best','mh-worst','mh-net','mh-profits','mh-loss'].includes(id)?'0R':id.includes('wr')||id==='mh-hr'?'0%':'0';
+    if($(P+'totalR')){ $(P+'totalR').textContent = '0R'; $(P+'totalR').className = 'month-hero-value'; }
+    if($(P+'sub')) $(P+'sub').textContent = '—';
+    ['total','wr','pf','exp','wins','losses','profits','loss','bestw','bestl','best','worst','hr','net'].forEach(sfx=>{
+      const el=$(P+sfx); if(!el) return;
+      el.textContent = ['best','worst','net','profits','loss'].includes(sfx) ? '0R' : (sfx==='wr'||sfx==='hr') ? '0%' : '0';
     });
-    ['m-eq-chart','m-pl-chart','m-hr-chart','m-pl-pie'].forEach(id=>{ if(ch[id]){ ch[id].destroy(); delete ch[id]; } });
+    [C+'eq-chart',C+'pl-chart',C+'hr-chart',C+'pl-pie'].forEach(id=>{ if(ch[id]){ ch[id].destroy(); delete ch[id]; } });
     if(emptyEl) emptyEl.style.display='block';
     return;
   }
@@ -4390,21 +4491,21 @@ function renderMonthly(){
   const exp = closed.length ? +(totalR/closed.length).toFixed(2) : 0;
 
   // Hero
-  const totalEl = document.getElementById('mh-totalR');
+  const totalEl = $(P+'totalR');
   totalEl.textContent = (totalR>=0?'+':'') + totalR + 'R';
   totalEl.className = 'month-hero-value ' + (totalR>=0?'pos':'neg');
-  document.getElementById('mh-sub').textContent = `${closed.length} trade${closed.length>1?'s':''} clôturé${closed.length>1?'s':''} · ${ts.length - closed.length} en cours`;
-  document.getElementById('mh-total').textContent = ts.length;
-  document.getElementById('mh-wr').textContent = wr.toFixed(0) + '%';
-  document.getElementById('mh-pf').textContent = isFinite(pf) ? pf : '∞';
-  const expEl = document.getElementById('mh-exp');
+  $(P+'sub').textContent = `${closed.length} trade${closed.length>1?'s':''} clôturé${closed.length>1?'s':''} · ${ts.length - closed.length} en cours`;
+  $(P+'total').textContent = ts.length;
+  $(P+'wr').textContent = wr.toFixed(0) + '%';
+  $(P+'pf').textContent = isFinite(pf) ? pf : '∞';
+  const expEl = $(P+'exp');
   expEl.textContent = (exp>=0?'+':'') + exp + 'R';
   expEl.style.color = exp>=0 ? 'var(--green)' : 'var(--red)';
 
-  document.getElementById('mh-wins').textContent = wins.length;
-  document.getElementById('mh-losses').textContent = losses.length;
-  document.getElementById('mh-profits').textContent = '+' + profits + 'R';
-  document.getElementById('mh-loss').textContent = lossR + 'R';
+  $(P+'wins').textContent = wins.length;
+  $(P+'losses').textContent = losses.length;
+  $(P+'profits').textContent = '+' + profits + 'R';
+  $(P+'loss').textContent = lossR + 'R';
 
   // Streaks
   let bestW=0,bestL=0,curW=0,curL=0;
@@ -4413,17 +4514,17 @@ function renderMonthly(){
     else if(isLoss(t)){ curL++; curW=0; bestL=Math.max(bestL,curL); }
     else { curW=0; curL=0; }
   });
-  document.getElementById('mh-bestw').textContent = bestW;
-  document.getElementById('mh-bestl').textContent = bestL;
+  $(P+'bestw').textContent = bestW;
+  $(P+'bestl').textContent = bestL;
   const rrfs = closed.map(t=>t.rrf||0);
   const best = rrfs.length ? Math.max(...rrfs) : 0;
   const worst = rrfs.length ? Math.min(...rrfs) : 0;
-  document.getElementById('mh-best').textContent = (best>=0?'+':'') + best.toFixed(2) + 'R';
-  document.getElementById('mh-worst').textContent = worst.toFixed(2) + 'R';
+  $(P+'best').textContent = (best>=0?'+':'') + best.toFixed(2) + 'R';
+  $(P+'worst').textContent = worst.toFixed(2) + 'R';
 
   // Hit rate donut
-  document.getElementById('mh-hr').textContent = wr.toFixed(0) + '%';
-  document.getElementById('mh-net').textContent = (totalR>=0?'+':'') + totalR + 'R';
+  $(P+'hr').textContent = wr.toFixed(0) + '%';
+  $(P+'net').textContent = (totalR>=0?'+':'') + totalR + 'R';
 
   // Charts
   if(typeof Chart === 'undefined') return;
@@ -4431,13 +4532,13 @@ function renderMonthly(){
   let cum = 0;
   const eqData = numClosed.map(t => { cum += rrfNum(t); return +cum.toFixed(2); });
   const labels = numClosed.map((_,i)=>'#'+(i+1));
-  dc('m-eq-chart');
-  const ctxEq = document.getElementById('m-eq-chart').getContext('2d');
+  dc(C+'eq-chart');
+  const ctxEq = $(C+'eq-chart').getContext('2d');
   const grad = ctxEq.createLinearGradient(0,0,0,200);
   const isPos = totalR>=0;
   grad.addColorStop(0, isPos?'rgba(48,209,88,.45)':'rgba(255,69,58,.45)');
   grad.addColorStop(1, isPos?'rgba(48,209,88,0)':'rgba(255,69,58,0)');
-  ch['m-eq-chart'] = new Chart(ctxEq, {
+  ch[C+'eq-chart'] = new Chart(ctxEq, {
     type:'line',
     data:{ labels, datasets:[{
       data: eqData,
@@ -4449,15 +4550,15 @@ function renderMonthly(){
     }]},
     options:{ responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R cumulés` } } },
-      scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:v=>v+'R'}} },
+      scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:fmtRTick}} },
       animation:{duration:600,easing:'easeOutCubic'}
     }
   });
 
   // P&L per trade
-  dc('m-pl-chart');
-  const ctxPl = document.getElementById('m-pl-chart').getContext('2d');
-  ch['m-pl-chart'] = new Chart(ctxPl, {
+  dc(C+'pl-chart');
+  const ctxPl = $(C+'pl-chart').getContext('2d');
+  ch[C+'pl-chart'] = new Chart(ctxPl, {
     type:'bar',
     data:{ labels, datasets:[{
       data: numClosed.map(t=>+rrfNum(t).toFixed(2)),
@@ -4466,25 +4567,59 @@ function renderMonthly(){
     }]},
     options:{ responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R` } } },
-      scales:{ x:{grid:{display:false},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:v=>v+'R'}} },
+      scales:{ x:{grid:{display:false},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:fmtRTick}} },
       animation:{duration:600,easing:'easeOutCubic'}
     }
   });
 
   // Hit Rate donut
-  dc('m-hr-chart');
-  ch['m-hr-chart'] = new Chart(document.getElementById('m-hr-chart'), {
+  dc(C+'hr-chart');
+  ch[C+'hr-chart'] = new Chart($(C+'hr-chart'), {
     type:'doughnut',
     data:{ datasets:[{ data:[wins.length, losses.length, Math.max(closed.length-wins.length-losses.length,0)], backgroundColor:['#30d158','#ff453a','#2c2c2e'], borderWidth:0 }] },
     options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{legend:{display:false},tooltip:{enabled:false}}, animation:{duration:600} }
   });
   // Profit/Loss donut
-  dc('m-pl-pie');
-  ch['m-pl-pie'] = new Chart(document.getElementById('m-pl-pie'), {
+  dc(C+'pl-pie');
+  ch[C+'pl-pie'] = new Chart($(C+'pl-pie'), {
     type:'doughnut',
     data:{ datasets:[{ data:[profits, Math.abs(lossR)], backgroundColor:['#30d158','#ff453a'], borderWidth:0 }] },
     options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{legend:{display:false},tooltip:{enabled:false}}, animation:{duration:600} }
   });
+}
+
+// ─────────────────────────────────────────────
+//  TRIMESTRIEL (Q1–Q4)
+// ─────────────────────────────────────────────
+const QUARTER_MONTHS = [[0,1,2],[3,4,5],[6,7,8],[9,10,11]];
+let quartY = (new Date()).getFullYear();
+let quartQ = Math.floor((new Date()).getMonth()/3); // 0..3
+
+function quarterShift(delta){
+  quartQ += delta;
+  if(quartQ < 0){ quartQ = 3; quartY--; }
+  if(quartQ > 3){ quartQ = 0; quartY++; }
+  renderQuarterly();
+}
+function onQuarterlyYearChange(v){ quartY = parseInt(v); renderQuarterly(); }
+function onQuarterlyQuarterChange(v){ quartQ = parseInt(v); renderQuarterly(); }
+
+function renderQuarterly(){
+  const yearSel = document.getElementById('quarter-year-select');
+  if(yearSel) yearSel.innerHTML = JOURNAL_YEARS.map(y=>`<option value="${y}" ${y===quartY?'selected':''}>${y}</option>`).join('');
+  const qSel = document.getElementById('quarter-q-select');
+  if(qSel) qSel.innerHTML = [0,1,2,3].map(i=>`<option value="${i}" ${i===quartQ?'selected':''}>Q${i+1}</option>`).join('');
+  const mo = QUARTER_MONTHS[quartQ];
+  document.getElementById('quarter-title').textContent = `Q${quartQ+1} ${quartY}`;
+  document.getElementById('quarter-sub').textContent = `${MONTH_NAMES[mo[0]]} – ${MONTH_NAMES[mo[2]]} ${quartY}`;
+
+  // Filtre : trades dont la date tombe dans le trimestre sélectionné
+  const ts = trades
+    .filter(t => { const d = getTradeDate(t); if(!d) return false; const p = d.split('-'); return (+p[0])===quartY && Math.floor((+p[1]-1)/3)===quartQ; })
+    .filter(isTradePris)
+    .sort((a,b)=>(getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
+
+  renderPeriodBody(ts, 'qh-', 'q-', 'quarter-empty');
 }
 
 function renderPerf(){
@@ -4691,6 +4826,7 @@ function refreshCurrentPage(){
   else if(currentPage==='calendar') renderCalendar();
   else if(currentPage==='perf') renderPerf();
   else if(currentPage==='monthly') renderMonthly();
+  else if(currentPage==='quarterly') renderQuarterly();
   else if(currentPage==='insights') renderInsights();
   else if(currentPage==='settings') renderSettings();
 }
@@ -6224,6 +6360,7 @@ document.addEventListener('keydown', e => {
   if(e.key==='ArrowLeft' || e.key==='ArrowRight'){
     const back = e.key==='ArrowLeft';
     if(currentPage==='monthly' && typeof monthShift==='function'){ e.preventDefault(); monthShift(back?-1:1); }
+    else if(currentPage==='quarterly' && typeof quarterShift==='function'){ e.preventDefault(); quarterShift(back?-1:1); }
     else if(currentPage==='calendar' && typeof calMove==='function'){ e.preventDefault(); calMove(back?-1:1); }
   }
 });
