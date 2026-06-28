@@ -1248,39 +1248,39 @@ body.no-scroll { overflow: hidden; }
   </a>
   <button class="nav-pill active" onclick="showPage('overview',this)">
     <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 3h6v6H3zM11 3h6v6h-6zM3 11h6v6H3zM11 11h6v6h-6z" opacity=".9"/></svg>
-    Vue d'ensemble
+    <span data-i18n="nav_overview">Vue d'ensemble</span>
   </button>
   <button class="nav-pill" onclick="showPage('trades',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 5h14M3 10h14M3 15h9"/></svg>
-    Trades
+    <span data-i18n="nav_trades">Trades</span>
   </button>
   <button class="nav-pill" onclick="showPage('setups',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M11 3l-8 9h7l-1 5 8-9h-7z"/></svg>
-    Setups
+    <span data-i18n="nav_setups">Setups</span>
   </button>
   <button class="nav-pill" onclick="showPage('calendar',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 8h14M7 2v4M13 2v4"/></svg>
-    Calendrier
+    <span data-i18n="nav_calendar">Calendrier</span>
   </button>
   <button class="nav-pill" onclick="showPage('perf',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 14l4-5 3 3 3-4 4 3"/><circle cx="17" cy="5" r="2"/></svg>
-    Performance
+    <span data-i18n="nav_performance">Performance</span>
   </button>
   <button class="nav-pill" onclick="showPage('monthly',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 10h14M7 14h2M11 14h2"/></svg>
-    Mensuel
+    <span data-i18n="nav_monthly">Mensuel</span>
   </button>
   <button class="nav-pill" onclick="showPage('quarterly',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="14" height="13" rx="2"/><path d="M3 9h14M9 9v8"/></svg>
-    Trimestriel
+    <span data-i18n="nav_quarterly">Trimestriel</span>
   </button>
   <button class="nav-pill" onclick="showPage('insights',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2a6 6 0 00-3 11.2V15a1 1 0 001 1h4a1 1 0 001-1v-1.8A6 6 0 0010 2z"/><path d="M8 18h4"/></svg>
-    Insights
+    <span data-i18n="nav_insights">Insights</span>
   </button>
-  <button class="nav-pill" onclick="showPage('settings',this)" title="Réglages">
+  <button class="nav-pill" onclick="showPage('settings',this)" data-i18n-title="nav_settings" title="Réglages">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M2 10h2M16 10h2M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"/></svg>
-    Réglages
+    <span data-i18n="nav_settings">Réglages</span>
   </button>
   <div class="topbar-right">
     <div id="save-status" class="save-status" title="État de la sauvegarde"></div>
@@ -1355,8 +1355,8 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════════ TRADES ══════════ -->
 <div id="page-trades" class="page">
   <div class="page-intro">
-    <div class="page-intro-title">📋 Tous tes trades, un seul endroit</div>
-    <div class="page-intro-sub">Filtre par <b>paire</b>, <b>time-frame</b>, <b>résultat</b>, <b>type d'ordre</b> ou <b>jour</b> pour retrouver instantanément n'importe quel trade. Clique sur une ligne pour voir le détail complet (screenshots, management, confluences, état psy…) et le modifier. Trie par date pour suivre ta progression chronologique.</div>
+    <div class="page-intro-title" data-i18n="intro_trades_title">📋 Tous tes trades, un seul endroit</div>
+    <div class="page-intro-sub" data-i18n-html="intro_trades_sub">Filtre par <b>paire</b>, <b>time-frame</b>, <b>résultat</b>, <b>type d'ordre</b> ou <b>jour</b> pour retrouver instantanément n'importe quel trade. Clique sur une ligne pour voir le détail complet (screenshots, management, confluences, état psy…) et le modifier. Trie par date pour suivre ta progression chronologique.</div>
   </div>
   <div class="table-card">
     <div class="table-toolbar">
@@ -1501,8 +1501,8 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════════ CALENDRIER ══════════ -->
 <div id="page-calendar" class="page">
   <div class="page-intro">
-    <div class="page-intro-title">📅 Vue calendrier de ton activité</div>
-    <div class="page-intro-sub">Chaque case du mois affiche le <b>P&L cumulé</b> et le <b>nombre de trades</b> de cette journée. Vert = journée gagnante, rouge = journée perdante. Repère d'un coup d'œil tes <b>jours de forme</b>, tes <b>périodes d'overtrading</b>, et les jours où tu aurais mieux fait de ne pas trader.</div>
+    <div class="page-intro-title" data-i18n="intro_calendar_title">📅 Vue calendrier de ton activité</div>
+    <div class="page-intro-sub" data-i18n-html="intro_calendar_sub">Chaque case du mois affiche le <b>P&L cumulé</b> et le <b>nombre de trades</b> de cette journée. Vert = journée gagnante, rouge = journée perdante. Repère d'un coup d'œil tes <b>jours de forme</b>, tes <b>périodes d'overtrading</b>, et les jours où tu aurais mieux fait de ne pas trader.</div>
   </div>
   <div class="cal-wrap">
     <div class="cal-nav">
@@ -1519,8 +1519,8 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════════ MENSUEL ══════════ -->
 <div id="page-monthly" class="page">
   <div class="page-intro">
-    <div class="page-intro-title">📆 Zoom sur un mois précis</div>
-    <div class="page-intro-sub">Sélectionne un mois pour analyser ta performance <b>isolée</b> : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour faire ton <b>bilan mensuel</b>, comparer ton évolution mois après mois, ou identifier un mois exceptionnel (bon ou mauvais) à étudier. Utilise <b>← →</b> pour naviguer rapidement.</div>
+    <div class="page-intro-title" data-i18n="intro_monthly_title">📆 Zoom sur un mois précis</div>
+    <div class="page-intro-sub" data-i18n-html="intro_monthly_sub">Sélectionne un mois pour analyser ta performance <b>isolée</b> : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour faire ton <b>bilan mensuel</b>, comparer ton évolution mois après mois, ou identifier un mois exceptionnel (bon ou mauvais) à étudier. Utilise <b>← →</b> pour naviguer rapidement.</div>
   </div>
   <div class="month-toolbar">
     <button class="month-nav" onclick="monthShift(-1)" title="Mois précédent">‹</button>
@@ -1602,8 +1602,8 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════════ TRIMESTRIEL ══════════ -->
 <div id="page-quarterly" class="page">
   <div class="page-intro">
-    <div class="page-intro-title">🗓️ Zoom sur un trimestre</div>
-    <div class="page-intro-sub">Sélectionne un trimestre (<b>Q1</b> Jan–Mar, <b>Q2</b> Avr–Juin, <b>Q3</b> Juil–Sep, <b>Q4</b> Oct–Déc) pour analyser ta performance sur 3 mois : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour ton <b>bilan trimestriel</b> et suivre ta progression dans le temps. Utilise <b>← →</b> pour naviguer.</div>
+    <div class="page-intro-title" data-i18n="intro_quarterly_title">🗓️ Zoom sur un trimestre</div>
+    <div class="page-intro-sub" data-i18n-html="intro_quarterly_sub">Sélectionne un trimestre (<b>Q1</b> Jan–Mar, <b>Q2</b> Avr–Juin, <b>Q3</b> Juil–Sep, <b>Q4</b> Oct–Déc) pour analyser ta performance sur 3 mois : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour ton <b>bilan trimestriel</b> et suivre ta progression dans le temps. Utilise <b>← →</b> pour naviguer.</div>
   </div>
   <div class="month-toolbar">
     <button class="month-nav" onclick="quarterShift(-1)" title="Trimestre précédent">‹</button>
@@ -1685,8 +1685,8 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════════ INSIGHTS ══════════ -->
 <div id="page-insights" class="page">
   <div class="page-intro">
-    <div class="page-intro-title">🧠 Insights & Discipline</div>
-    <div class="page-intro-sub">Ton coach automatique. Cette page transforme tes données en <b>recommandations concrètes</b> : ce qui te fait gagner, ce qui te coûte, et à quel point tu respectes ton process. Elle croise tes <b>erreurs</b>, tes <b>émotions</b>, ta <b>checklist</b> et ta <b>durée de détention</b> avec tes résultats réels.</div>
+    <div class="page-intro-title" data-i18n="intro_insights_title">🧠 Insights & Discipline</div>
+    <div class="page-intro-sub" data-i18n-html="intro_insights_sub">Ton coach automatique. Cette page transforme tes données en <b>recommandations concrètes</b> : ce qui te fait gagner, ce qui te coûte, et à quel point tu respectes ton process. Elle croise tes <b>erreurs</b>, tes <b>émotions</b>, ta <b>checklist</b> et ta <b>durée de détention</b> avec tes résultats réels.</div>
   </div>
 
   <!-- Score de discipline -->
@@ -1723,8 +1723,8 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════════ PERFORMANCE ══════════ -->
 <div id="page-perf" class="page">
   <div class="page-intro">
-    <div class="page-intro-title">📈 Analyse fine de ta performance</div>
-    <div class="page-intro-sub">Page de <b>data-mining</b> de tes trades. Combine plusieurs filtres (paire, TF, tendance, durée, résultat…) pour comparer des sous-ensembles entre eux. Découvre par exemple : <b>"mon WR sur EURUSD en H1 In Trend"</b> ou <b>"mon Profit Factor quand je trade contre les retails"</b>. Les patterns d'erreur t'aident à identifier tes <b>fuites récurrentes</b>.</div>
+    <div class="page-intro-title" data-i18n="intro_perf_title">📈 Analyse fine de ta performance</div>
+    <div class="page-intro-sub" data-i18n-html="intro_perf_sub">Page de <b>data-mining</b> de tes trades. Combine plusieurs filtres (paire, TF, tendance, durée, résultat…) pour comparer des sous-ensembles entre eux. Découvre par exemple : <b>"mon WR sur EURUSD en H1 In Trend"</b> ou <b>"mon Profit Factor quand je trade contre les retails"</b>. Les patterns d'erreur t'aident à identifier tes <b>fuites récurrentes</b>.</div>
   </div>
 
   <!-- Filters -->
@@ -1747,19 +1747,46 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════════ RÉGLAGES ══════════ -->
 <div id="page-settings" class="page">
   <div class="page-intro">
-    <div class="page-intro-title">⚙️ Réglages</div>
-    <div class="page-intro-sub">Personnalise ta <b>checklist pré-trade</b> et la liste de tes <b>erreurs types</b>. Tes réglages sont sauvegardés sur ton compte et synchronisés sur tous tes appareils.</div>
+    <div class="page-intro-title" data-i18n="intro_settings_title">⚙️ Réglages</div>
+    <div class="page-intro-sub" data-i18n-html="intro_settings_sub">Personnalise ta <b>checklist pré-trade</b> et la liste de tes <b>erreurs types</b>. Tes réglages sont sauvegardés sur ton compte et synchronisés sur tous tes appareils.</div>
   </div>
 
   <div class="settings-grid">
+    <!-- ─── Langue & Devise ─── -->
+    <div class="settings-card" style="grid-column:span 2">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title" data-i18n="set_langcur_title">🌍 Langue & Devise</div>
+          <div class="settings-card-sub" data-i18n="set_langcur_sub">Choisis la langue de l'interface et la devise de ton abonnement.</div>
+        </div>
+      </div>
+      <div class="langcur-row" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end">
+        <div style="flex:1;min-width:200px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px" data-i18n="set_lang_label">Langue de l'interface</label>
+          <select class="year-select" id="set-lang-select" style="width:100%">
+            <option value="fr">🇫🇷 Français</option>
+            <option value="en">🇬🇧 English</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px" data-i18n="set_currency_label">Devise</label>
+          <select class="year-select" id="set-currency-select" style="width:100%">
+            <option value="eur">€ EUR — 12€/mois</option>
+            <option value="usd">$ USD — $15/mo</option>
+          </select>
+        </div>
+        <button class="btn-orange" id="set-langcur-save" onclick="saveLangCurrency()" data-i18n="set_save" style="white-space:nowrap">💾 Enregistrer</button>
+      </div>
+    </div>
+
     <!-- ─── Checklist ─── -->
     <div class="settings-card">
       <div class="settings-card-head">
         <div>
-          <div class="settings-card-title">📋 Checklist pré-trade</div>
-          <div class="settings-card-sub">Liste des contrôles que tu valides avant chaque entrée</div>
+          <div class="settings-card-title" data-i18n="set_checklist_title">📋 Checklist pré-trade</div>
+          <div class="settings-card-sub" data-i18n="set_checklist_sub">Liste des contrôles que tu valides avant chaque entrée</div>
         </div>
-        <button class="settings-reset" onclick="resetChecklist()" title="Restaurer les valeurs par défaut">↺ Reset</button>
+        <button class="settings-reset" onclick="resetChecklist()" data-i18n="set_reset" title="Restaurer les valeurs par défaut">↺ Reset</button>
       </div>
       <div class="settings-list" id="settings-checklist"></div>
       <button class="settings-add" onclick="addChecklistItem()">＋ Ajouter un élément</button>
@@ -1769,10 +1796,10 @@ body.no-scroll { overflow: hidden; }
     <div class="settings-card">
       <div class="settings-card-head">
         <div>
-          <div class="settings-card-title">⚠️ Erreurs types</div>
-          <div class="settings-card-sub">Tags que tu peux assigner à tes trades pour identifier tes biais récurrents</div>
+          <div class="settings-card-title" data-i18n="set_errors_title">⚠️ Erreurs types</div>
+          <div class="settings-card-sub" data-i18n="set_errors_sub">Tags que tu peux assigner à tes trades pour identifier tes biais récurrents</div>
         </div>
-        <button class="settings-reset" onclick="resetErrors()" title="Restaurer les valeurs par défaut">↺ Reset</button>
+        <button class="settings-reset" onclick="resetErrors()" data-i18n="set_reset" title="Restaurer les valeurs par défaut">↺ Reset</button>
       </div>
       <div class="settings-list" id="settings-errors"></div>
       <button class="settings-add" onclick="addError()">＋ Ajouter une erreur</button>
@@ -1782,10 +1809,10 @@ body.no-scroll { overflow: hidden; }
     <div class="settings-card">
       <div class="settings-card-head">
         <div>
-          <div class="settings-card-title">📈 Tendances de marché</div>
-          <div class="settings-card-sub">Contextes dans lesquels tu trades (In Trend, Range, etc.)</div>
+          <div class="settings-card-title" data-i18n="set_tend_title">📈 Tendances de marché</div>
+          <div class="settings-card-sub" data-i18n="set_tend_sub">Contextes dans lesquels tu trades (In Trend, Range, etc.)</div>
         </div>
-        <button class="settings-reset" onclick="resetTendances()" title="Restaurer les valeurs par défaut">↺ Reset</button>
+        <button class="settings-reset" onclick="resetTendances()" data-i18n="set_reset" title="Restaurer les valeurs par défaut">↺ Reset</button>
       </div>
       <div class="settings-list" id="settings-tendances"></div>
       <button class="settings-add" onclick="addTendance()">＋ Ajouter une tendance</button>
@@ -1794,10 +1821,10 @@ body.no-scroll { overflow: hidden; }
     <div class="settings-card">
       <div class="settings-card-head">
         <div>
-          <div class="settings-card-title">🎯 Confluences</div>
-          <div class="settings-card-sub">Tes confluences récurrentes — insérables en 1 clic dans chaque trade</div>
+          <div class="settings-card-title" data-i18n="set_conf_title">🎯 Confluences</div>
+          <div class="settings-card-sub" data-i18n="set_conf_sub">Tes confluences récurrentes — insérables en 1 clic dans chaque trade</div>
         </div>
-        <button class="settings-reset" onclick="resetConfluences()" title="Restaurer les valeurs par défaut">↺ Reset</button>
+        <button class="settings-reset" onclick="resetConfluences()" data-i18n="set_reset" title="Restaurer les valeurs par défaut">↺ Reset</button>
       </div>
       <div class="settings-list" id="settings-confluences"></div>
       <button class="settings-add" onclick="addConfluence()">＋ Ajouter une confluence</button>
@@ -1807,8 +1834,8 @@ body.no-scroll { overflow: hidden; }
     <div class="settings-card" style="grid-column:span 2">
       <div class="settings-card-head">
         <div>
-          <div class="settings-card-title">📬 Contact & À propos</div>
-          <div class="settings-card-sub">Une question, une suggestion, un bug ? Écris-nous.</div>
+          <div class="settings-card-title" data-i18n="set_contact_title">📬 Contact & À propos</div>
+          <div class="settings-card-sub" data-i18n="set_contact_sub">Une question, une suggestion, un bug ? Écris-nous.</div>
         </div>
       </div>
       <a href="mailto:onertrade@outlook.com" class="settings-contact">
@@ -1821,8 +1848,8 @@ body.no-scroll { overflow: hidden; }
     <div class="settings-card danger-zone" style="grid-column:span 2">
       <div class="settings-card-head">
         <div>
-          <div class="settings-card-title" style="color:#ff453a">⚠️ Zone dangereuse</div>
-          <div class="settings-card-sub">Actions irréversibles — réfléchis bien avant de cliquer.</div>
+          <div class="settings-card-title" style="color:#ff453a" data-i18n="set_danger_title">⚠️ Zone dangereuse</div>
+          <div class="settings-card-sub" data-i18n="set_danger_sub">Actions irréversibles — réfléchis bien avant de cliquer.</div>
         </div>
       </div>
       <div class="danger-action">
@@ -2044,7 +2071,7 @@ body.no-scroll { overflow: hidden; }
 <div class="auth-gate" id="auth-gate">
   <div class="auth-card">
     <button type="button" onclick="backToLanding()" style="background:transparent;border:none;color:var(--text3);font-size:.78rem;cursor:pointer;padding:4px 0;margin-bottom:6px;display:inline-flex;align-items:center;gap:6px">
-      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15l-5-5 5-5"/></svg> Retour à l'accueil
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15l-5-5 5-5"/></svg> <span data-i18n="auth_back">Retour à l'accueil</span>
     </button>
     <div class="auth-logo">
       <svg viewBox="0 0 40 40" width="44" height="44">
@@ -2056,27 +2083,44 @@ body.no-scroll { overflow: hidden; }
     <div class="auth-sub" id="auth-sub">Accède à ton journal de trading</div>
 
     <div class="auth-tabs">
-      <button class="auth-tab on" id="tab-login" onclick="switchAuthTab('login')">Se connecter</button>
-      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Créer un compte</button>
+      <button class="auth-tab on" id="tab-login" onclick="switchAuthTab('login')" data-i18n="auth_tab_login">Se connecter</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')" data-i18n="auth_tab_signup">Créer un compte</button>
     </div>
 
     <form class="auth-form" onsubmit="event.preventDefault();submitAuth()">
       <div class="auth-field">
-        <label>Email</label>
-        <input type="email" id="auth-email" autocomplete="email" required placeholder="ton@email.com">
+        <label data-i18n="auth_label_email">Email</label>
+        <input type="email" id="auth-email" autocomplete="email" required placeholder="ton@email.com" data-i18n-ph="auth_ph_email">
       </div>
       <div class="auth-field">
-        <label>Mot de passe</label>
-        <input type="password" id="auth-password" autocomplete="current-password" required placeholder="••••••••" minlength="6">
+        <label data-i18n="auth_label_password">Mot de passe</label>
+        <input type="password" id="auth-password" autocomplete="current-password" required placeholder="••••••••" minlength="6" data-i18n-ph="auth_ph_password">
+      </div>
+      <!-- ─── Langue & Devise (visibles uniquement à l'inscription) ─── -->
+      <div id="signup-prefs" style="display:none">
+        <div class="auth-field">
+          <label data-i18n="auth_label_lang">Langue</label>
+          <select id="signup-lang" class="year-select" style="width:100%" onchange="setLang(this.value)">
+            <option value="fr">🇫🇷 Français</option>
+            <option value="en">🇬🇧 English</option>
+          </select>
+        </div>
+        <div class="auth-field">
+          <label data-i18n="auth_label_currency">Devise</label>
+          <select id="signup-currency" class="year-select" style="width:100%">
+            <option value="eur">€ EUR — 12€/mois</option>
+            <option value="usd">$ USD — $15/mo</option>
+          </select>
+        </div>
       </div>
       <div class="auth-error" id="auth-error" style="display:none"></div>
       <div class="auth-success" id="auth-success" style="display:none"></div>
       <button class="btn-orange auth-submit" id="auth-submit" type="submit">Se connecter</button>
-      <button type="button" class="auth-forgot" id="auth-forgot" onclick="forgotPassword()">Mot de passe oublié ?</button>
+      <button type="button" class="auth-forgot" id="auth-forgot" onclick="forgotPassword()" data-i18n="auth_forgot">Mot de passe oublié ?</button>
     </form>
 
-    <div class="auth-footer">🔒 Tes trades sont protégés et chiffrés — seul toi y as accès.</div>
-    <div class="auth-help-line">Une question ? <a href="mailto:onertrade@outlook.com">onertrade@outlook.com</a></div>
+    <div class="auth-footer" data-i18n="auth_footer">🔒 Tes trades sont protégés et chiffrés — seul toi y as accès.</div>
+    <div class="auth-help-line"><span data-i18n="auth_help">Une question ?</span> <a href="mailto:onertrade@outlook.com">onertrade@outlook.com</a></div>
   </div>
 </div>
 
@@ -2290,6 +2334,159 @@ body.no-scroll { overflow: hidden; }
 
 <script>
 // ───────────────────────────────────────────
+//  I18N — LANGUE & DEVISE
+// ───────────────────────────────────────────
+let currentLang = (()=>{ try{ return localStorage.getItem('app_lang')||'fr'; }catch(e){ return 'fr'; } })();
+let currentCurrency = (()=>{ try{ return localStorage.getItem('app_currency')||'eur'; }catch(e){ return 'eur'; } })();
+
+const CURRENCY = {
+  eur: { code:'EUR', symbol:'€', plan:'12€/mois',  planMo:'12 €/mois', planYr:'120 €/an' },
+  usd: { code:'USD', symbol:'$', plan:'$15/mo',    planMo:'$15/mo',    planYr:'$150/yr' },
+};
+function curSym(){ return (CURRENCY[currentCurrency]||CURRENCY.eur).symbol; }
+
+const STRINGS = {
+  fr: {
+    // Navigation
+    nav_overview:"Vue d'ensemble", nav_trades:"Trades", nav_setups:"Setups",
+    nav_calendar:"Calendrier", nav_performance:"Performance", nav_monthly:"Mensuel",
+    nav_quarterly:"Trimestriel", nav_insights:"Insights", nav_settings:"Réglages",
+    // Page intros
+    intro_trades_title:"📋 Tous tes trades, un seul endroit",
+    intro_trades_sub:"Filtre par <b>paire</b>, <b>time-frame</b>, <b>résultat</b>, <b>type d'ordre</b> ou <b>jour</b> pour retrouver instantanément n'importe quel trade. Clique sur une ligne pour voir le détail complet (screenshots, management, confluences, état psy…) et le modifier. Trie par date pour suivre ta progression chronologique.",
+    intro_calendar_title:"📅 Vue calendrier de ton activité",
+    intro_calendar_sub:"Chaque case du mois affiche le <b>P&L cumulé</b> et le <b>nombre de trades</b> de cette journée. Vert = journée gagnante, rouge = journée perdante. Repère d'un coup d'œil tes <b>jours de forme</b>, tes <b>périodes d'overtrading</b>, et les jours où tu aurais mieux fait de ne pas trader.",
+    intro_monthly_title:"📆 Zoom sur un mois précis",
+    intro_monthly_sub:"Sélectionne un mois pour analyser ta performance <b>isolée</b> : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour faire ton <b>bilan mensuel</b>, comparer ton évolution mois après mois, ou identifier un mois exceptionnel (bon ou mauvais) à étudier. Utilise <b>← →</b> pour naviguer rapidement.",
+    intro_quarterly_title:"🗓️ Zoom sur un trimestre",
+    intro_quarterly_sub:"Sélectionne un trimestre (<b>Q1</b> Jan–Mar, <b>Q2</b> Avr–Juin, <b>Q3</b> Juil–Sep, <b>Q4</b> Oct–Déc) pour analyser ta performance sur 3 mois : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour ton <b>bilan trimestriel</b> et suivre ta progression dans le temps. Utilise <b>← →</b> pour naviguer.",
+    intro_insights_title:"🧠 Insights & Discipline",
+    intro_insights_sub:"Ton coach automatique. Cette page transforme tes données en <b>recommandations concrètes</b> : ce qui te fait gagner, ce qui te coûte, et à quel point tu respectes ton process. Elle croise tes <b>erreurs</b>, tes <b>émotions</b>, ta <b>checklist</b> et ta <b>durée de détention</b> avec tes résultats réels.",
+    intro_perf_title:"📈 Analyse fine de ta performance",
+    intro_perf_sub:"Page de <b>data-mining</b> de tes trades. Combine plusieurs filtres (paire, TF, tendance, durée, résultat…) pour comparer des sous-ensembles entre eux. Découvre par exemple : <b>\"mon WR sur EURUSD en H1 In Trend\"</b> ou <b>\"mon Profit Factor quand je trade contre les retails\"</b>. Les patterns d'erreur t'aident à identifier tes <b>fuites récurrentes</b>.",
+    intro_settings_title:"⚙️ Réglages",
+    intro_settings_sub:"Personnalise ta <b>checklist pré-trade</b> et la liste de tes <b>erreurs types</b>. Tes réglages sont sauvegardés sur ton compte et synchronisés sur tous tes appareils.",
+    // Auth
+    auth_back:"Retour à l'accueil",
+    auth_title_login:"Connexion", auth_title_signup:"Créer un compte",
+    auth_sub_login:"Accède à ton journal de trading", auth_sub_signup:"Crée ton journal en 10 secondes",
+    auth_tab_login:"Se connecter", auth_tab_signup:"Créer un compte",
+    auth_label_email:"Email", auth_label_password:"Mot de passe",
+    auth_ph_email:"ton@email.com", auth_ph_password:"••••••••",
+    auth_label_lang:"Langue", auth_label_currency:"Devise",
+    auth_submit_login:"Se connecter", auth_submit_signup:"Créer mon compte",
+    auth_forgot:"Mot de passe oublié ?",
+    auth_footer:"🔒 Tes trades sont protégés et chiffrés — seul toi y as accès.",
+    auth_help:"Une question ?",
+    // Settings cards
+    set_checklist_title:"📋 Checklist pré-trade",
+    set_checklist_sub:"Liste des contrôles que tu valides avant chaque entrée",
+    set_errors_title:"⚠️ Erreurs types",
+    set_errors_sub:"Tags que tu peux assigner à tes trades pour identifier tes biais récurrents",
+    set_tend_title:"📈 Tendances de marché",
+    set_tend_sub:"Contextes dans lesquels tu trades (In Trend, Range, etc.)",
+    set_conf_title:"🎯 Confluences",
+    set_conf_sub:"Tes confluences récurrentes — insérables en 1 clic dans chaque trade",
+    set_contact_title:"📬 Contact & À propos",
+    set_contact_sub:"Une question, une suggestion, un bug ? Écris-nous.",
+    set_danger_title:"⚠️ Zone dangereuse",
+    set_danger_sub:"Actions irréversibles — réfléchis bien avant de cliquer.",
+    set_reset:"↺ Reset",
+    // Langue & Devise (settings)
+    set_langcur_title:"🌍 Langue & Devise",
+    set_langcur_sub:"Choisis la langue de l'interface et la devise de ton abonnement.",
+    set_lang_label:"Langue de l'interface",
+    set_currency_label:"Devise",
+    set_save:"💾 Enregistrer",
+    set_saved:"✓ Préférences enregistrées",
+  },
+  en: {
+    nav_overview:"Overview", nav_trades:"Trades", nav_setups:"Setups",
+    nav_calendar:"Calendar", nav_performance:"Performance", nav_monthly:"Monthly",
+    nav_quarterly:"Quarterly", nav_insights:"Insights", nav_settings:"Settings",
+    intro_trades_title:"📋 All your trades, in one place",
+    intro_trades_sub:"Filter by <b>pair</b>, <b>time-frame</b>, <b>result</b>, <b>order type</b> or <b>day</b> to instantly find any trade. Click a row to see the full detail (screenshots, management, confluences, psychology…) and edit it. Sort by date to follow your progress over time.",
+    intro_calendar_title:"📅 Calendar view of your activity",
+    intro_calendar_sub:"Each cell of the month shows the <b>cumulative P&L</b> and the <b>number of trades</b> for that day. Green = winning day, red = losing day. Spot at a glance your <b>good days</b>, your <b>overtrading periods</b>, and the days you'd have been better off not trading.",
+    intro_monthly_title:"📆 Zoom in on a specific month",
+    intro_monthly_sub:"Select a month to analyze your performance in <b>isolation</b>: equity curve, P&L trade by trade, hit rate, profit/loss and streaks. Perfect for your <b>monthly review</b>, comparing month over month, or studying an exceptional month (good or bad). Use <b>← →</b> to navigate quickly.",
+    intro_quarterly_title:"🗓️ Zoom in on a quarter",
+    intro_quarterly_sub:"Select a quarter (<b>Q1</b> Jan–Mar, <b>Q2</b> Apr–Jun, <b>Q3</b> Jul–Sep, <b>Q4</b> Oct–Dec) to analyze your performance over 3 months: equity curve, P&L trade by trade, hit rate, profit/loss and streaks. Perfect for your <b>quarterly review</b> and tracking your progress over time. Use <b>← →</b> to navigate.",
+    intro_insights_title:"🧠 Insights & Discipline",
+    intro_insights_sub:"Your automatic coach. This page turns your data into <b>concrete recommendations</b>: what makes you win, what costs you, and how well you respect your process. It cross-references your <b>mistakes</b>, your <b>emotions</b>, your <b>checklist</b> and your <b>holding time</b> with your real results.",
+    intro_perf_title:"📈 Deep analysis of your performance",
+    intro_perf_sub:"A <b>data-mining</b> page for your trades. Combine multiple filters (pair, TF, trend, duration, result…) to compare subsets against each other. Discover for example: <b>\"my WR on EURUSD in H1 In Trend\"</b> or <b>\"my Profit Factor when I trade against retail\"</b>. Error patterns help you identify your <b>recurring leaks</b>.",
+    intro_settings_title:"⚙️ Settings",
+    intro_settings_sub:"Customize your <b>pre-trade checklist</b> and your list of <b>typical mistakes</b>. Your settings are saved to your account and synced across all your devices.",
+    auth_back:"Back to home",
+    auth_title_login:"Sign in", auth_title_signup:"Create account",
+    auth_sub_login:"Access your trading journal", auth_sub_signup:"Create your journal in 10 seconds",
+    auth_tab_login:"Sign in", auth_tab_signup:"Create account",
+    auth_label_email:"Email", auth_label_password:"Password",
+    auth_ph_email:"you@email.com", auth_ph_password:"••••••••",
+    auth_label_lang:"Language", auth_label_currency:"Currency",
+    auth_submit_login:"Sign in", auth_submit_signup:"Create my account",
+    auth_forgot:"Forgot password?",
+    auth_footer:"🔒 Your trades are protected and encrypted — only you can access them.",
+    auth_help:"A question?",
+    set_checklist_title:"📋 Pre-trade checklist",
+    set_checklist_sub:"List of checks you validate before each entry",
+    set_errors_title:"⚠️ Typical mistakes",
+    set_errors_sub:"Tags you can assign to your trades to identify your recurring biases",
+    set_tend_title:"📈 Market trends",
+    set_tend_sub:"Contexts you trade in (In Trend, Range, etc.)",
+    set_conf_title:"🎯 Confluences",
+    set_conf_sub:"Your recurring confluences — insertable in 1 click in each trade",
+    set_contact_title:"📬 Contact & About",
+    set_contact_sub:"A question, a suggestion, a bug? Write to us.",
+    set_danger_title:"⚠️ Danger zone",
+    set_danger_sub:"Irreversible actions — think carefully before clicking.",
+    set_reset:"↺ Reset",
+    set_langcur_title:"🌍 Language & Currency",
+    set_langcur_sub:"Choose the interface language and your subscription currency.",
+    set_lang_label:"Interface language",
+    set_currency_label:"Currency",
+    set_save:"💾 Save",
+    set_saved:"✓ Preferences saved",
+  },
+};
+
+function t(key){
+  const lang = STRINGS[currentLang] ? currentLang : 'fr';
+  const v = STRINGS[lang][key];
+  if(v!==undefined) return v;
+  // fallback français puis la clé brute
+  return (STRINGS.fr[key]!==undefined) ? STRINGS.fr[key] : key;
+}
+
+// Parcourt le DOM et applique les traductions sur les éléments marqués
+function applyTranslations(root){
+  const scope = root || document;
+  scope.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  scope.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.getAttribute('data-i18n-html')); });
+  scope.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph'))); });
+  scope.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.setAttribute('title', t(el.getAttribute('data-i18n-title'))); });
+  try{ document.documentElement.setAttribute('lang', currentLang); }catch(e){}
+}
+
+function setLang(lang, opts){
+  if(!STRINGS[lang]) lang='fr';
+  currentLang = lang;
+  try{ localStorage.setItem('app_lang', lang); }catch(e){}
+  applyTranslations();
+  // Met à jour les libellés dynamiques de l'auth si la modale est ouverte
+  if(typeof authMode!=='undefined' && typeof refreshAuthLabels==='function') refreshAuthLabels();
+  // Re-rend la page courante (les rendus JS utilisent t())
+  if(!(opts&&opts.silent) && typeof refreshCurrentPage==='function') refreshCurrentPage();
+  if(typeof renderSettings==='function' && typeof currentPage!=='undefined' && currentPage==='settings') renderSettings();
+}
+function setCurrency(cur){
+  if(!CURRENCY[cur]) cur='eur';
+  currentCurrency = cur;
+  try{ localStorage.setItem('app_currency', cur); }catch(e){}
+}
+
+// ───────────────────────────────────────────
 //  DATA MODEL
 // ───────────────────────────────────────────
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
@@ -2425,6 +2622,8 @@ async function saveUserPreferences(){
         checklist: CHECKLIST,
         errors:    ERRORS,
         tendances: TEND_OPTIONS,
+        language:  currentLang,
+        currency:  currentCurrency,
       }, { onConflict: 'user_id' });
       if (error) console.error('[Prefs] save error', error);
       else console.log('[Prefs] sauvegardé');
@@ -2437,7 +2636,7 @@ async function loadUserPreferences(){
   try {
     const { data, error } = await sb
       .from('user_preferences')
-      .select('checklist, errors, tendances')
+      .select('checklist, errors, tendances, language, currency')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     if (error) { console.error('[Prefs] load error', error); return; }
@@ -2452,16 +2651,29 @@ async function loadUserPreferences(){
       if (Array.isArray(data.tendances) && data.tendances.length) {
         TEND_OPTIONS = data.tendances.slice();
       }
-      console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs,', TEND_OPTIONS.length, 'tendances');
+      // ─── Langue & devise ───
+      if (data.language && STRINGS[data.language]) { setLang(data.language, {silent:true}); }
+      if (data.currency && CURRENCY[data.currency]) { setCurrency(data.currency); }
+      applyTranslations();
+      console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs,', TEND_OPTIONS.length, 'tendances · lang=', currentLang, '· devise=', currentCurrency);
     } else {
-      // Pas de ligne → on crée avec les valeurs par défaut
+      // Pas de ligne → on crée avec les valeurs par défaut (ou le choix fait à l'inscription)
       console.log('[Prefs] première fois — création avec valeurs par défaut');
+      let signupLang = currentLang, signupCur = currentCurrency;
+      try {
+        const sl = localStorage.getItem('signup_pref_lang'); if(sl && STRINGS[sl]) signupLang = sl;
+        const sc = localStorage.getItem('signup_pref_currency'); if(sc && CURRENCY[sc]) signupCur = sc;
+      } catch(e){}
+      setLang(signupLang, {silent:true}); setCurrency(signupCur); applyTranslations();
       await sb.from('user_preferences').insert({
         user_id:   currentUser.id,
         checklist: CHECKLIST,
         errors:    ERRORS,
         tendances: TEND_OPTIONS,
+        language:  signupLang,
+        currency:  signupCur,
       });
+      try { localStorage.removeItem('signup_pref_lang'); localStorage.removeItem('signup_pref_currency'); } catch(e){}
     }
   } catch(e) { console.error('[Prefs] exception load', e); }
 }
@@ -4850,6 +5062,12 @@ function renderSettings(){
       </div>`).join('');
   };
 
+  // Sélecteurs Langue & Devise
+  const lsel = document.getElementById('set-lang-select');
+  const csel = document.getElementById('set-currency-select');
+  if(lsel) lsel.value = currentLang;
+  if(csel) csel.value = currentCurrency;
+
   clEl.innerHTML = buildList(CHECKLIST,   'editChecklistItem', 'delChecklistItem', 'Aucun élément. Clique sur « + Ajouter un élément » pour commencer.');
   erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         'Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.');
   tdEl.innerHTML = buildList(TEND_OPTIONS,'editTendance',      'delTendance',      'Aucune tendance. Clique sur « + Ajouter une tendance » pour commencer.');
@@ -4858,6 +5076,18 @@ function renderSettings(){
   // Compteur de trades pour la zone dangereuse
   const cnt = document.getElementById('danger-count');
   if (cnt) cnt.textContent = trades.length;
+}
+
+// ─── Enregistre Langue & Devise depuis les Réglages ───
+function saveLangCurrency(){
+  const lsel = document.getElementById('set-lang-select');
+  const csel = document.getElementById('set-currency-select');
+  const lang = lsel ? lsel.value : currentLang;
+  const cur  = csel ? csel.value : currentCurrency;
+  setLang(lang);       // applique la traduction en direct + re-render
+  setCurrency(cur);
+  if(typeof saveUserPreferences==='function') saveUserPreferences();
+  if(typeof showToast==='function') showToast(t('set_saved'));
 }
 
 function escapeHtml(s){
@@ -4912,13 +5142,26 @@ function switchAuthTab(mode){
   authMode = mode;
   document.getElementById('tab-login').classList.toggle('on', mode==='login');
   document.getElementById('tab-signup').classList.toggle('on', mode==='signup');
-  document.getElementById('auth-title').textContent = mode==='login' ? 'Connexion' : 'Créer un compte';
-  document.getElementById('auth-sub').textContent = mode==='login' ? 'Accède à ton journal de trading' : 'Crée ton journal en 10 secondes';
-  document.getElementById('auth-submit').textContent = mode==='login' ? 'Se connecter' : 'Créer mon compte';
+  const sp = document.getElementById('signup-prefs');
+  if(sp) sp.style.display = mode==='signup' ? '' : 'none';
+  // Pré-remplit les sélecteurs d'inscription sur la langue/devise courantes
+  const sl = document.getElementById('signup-lang'); if(sl) sl.value = currentLang;
+  const sc = document.getElementById('signup-currency'); if(sc) sc.value = currentCurrency;
+  refreshAuthLabels();
   document.getElementById('auth-forgot').style.display = mode==='login' ? '' : 'none';
   document.getElementById('auth-password').setAttribute('autocomplete', mode==='login' ? 'current-password' : 'new-password');
   document.getElementById('auth-error').style.display = 'none';
   document.getElementById('auth-success').style.display = 'none';
+}
+// Met à jour les libellés dynamiques de l'auth (titre, sous-titre, bouton submit) selon la langue + le mode
+function refreshAuthLabels(){
+  const mode = (typeof authMode!=='undefined') ? authMode : 'login';
+  const ttl = document.getElementById('auth-title');
+  const sub = document.getElementById('auth-sub');
+  const btn = document.getElementById('auth-submit');
+  if(ttl) ttl.textContent = mode==='login' ? t('auth_title_login') : t('auth_title_signup');
+  if(sub) sub.textContent = mode==='login' ? t('auth_sub_login') : t('auth_sub_signup');
+  if(btn) btn.textContent = mode==='login' ? t('auth_submit_login') : t('auth_submit_signup');
 }
 
 function showAuthError(msg){
@@ -4947,10 +5190,23 @@ async function submitAuth(){
       if(error) throw error;
       // onAuthStateChange prendra le relais
     } else {
+      // Mémorise le choix langue/devise fait à l'inscription : il sera appliqué
+      // et sauvegardé dans user_preferences à la 1re connexion (RLS exige une session).
+      const slEl = document.getElementById('signup-lang');
+      const scEl = document.getElementById('signup-currency');
+      const chosenLang = slEl ? slEl.value : currentLang;
+      const chosenCur  = scEl ? scEl.value : currentCurrency;
+      try {
+        localStorage.setItem('signup_pref_lang', chosenLang);
+        localStorage.setItem('signup_pref_currency', chosenCur);
+      } catch(e){}
+      setLang(chosenLang); setCurrency(chosenCur);
       const { data, error } = await sb.auth.signUp({ email, password });
       if(error) throw error;
       if(data.user && !data.session){
-        showAuthSuccess('✓ Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.');
+        showAuthSuccess(currentLang==='en'
+          ? '✓ Account created! Check your inbox to confirm your address, then sign in.'
+          : '✓ Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.');
         switchAuthTab('login');
       }
     }
@@ -5341,6 +5597,9 @@ async function startCheckout(plan) {
 
 // ─── Bootstrap auth ───
 renderYearSelect();
+// Applique la langue mémorisée (localStorage) dès le chargement, avant toute connexion
+applyTranslations();
+if(typeof refreshAuthLabels==='function') refreshAuthLabels();
 
 // ⚠️ IMPORTANT — supabase-js v2 footgun :
 // On ne fait AUCUN appel async/await à des méthodes Supabase à l'intérieur du listener
