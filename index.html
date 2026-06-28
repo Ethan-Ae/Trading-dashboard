@@ -1523,12 +1523,12 @@ body.no-scroll { overflow: hidden; }
     <div class="page-intro-sub" data-i18n-html="intro_monthly_sub">Sélectionne un mois pour analyser ta performance <b>isolée</b> : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour faire ton <b>bilan mensuel</b>, comparer ton évolution mois après mois, ou identifier un mois exceptionnel (bon ou mauvais) à étudier. Utilise <b>← →</b> pour naviguer rapidement.</div>
   </div>
   <div class="month-toolbar">
-    <button class="month-nav" onclick="monthShift(-1)" title="Mois précédent">‹</button>
+    <button class="month-nav" onclick="monthShift(-1)" title="Mois précédent" data-i18n-title="mm_prev_month">‹</button>
     <div class="month-title-wrap">
       <div class="month-title-sub" id="month-sub">Performance mensuelle</div>
       <div class="month-title" id="month-title">—</div>
     </div>
-    <button class="month-nav" onclick="monthShift(1)" title="Mois suivant">›</button>
+    <button class="month-nav" onclick="monthShift(1)" title="Mois suivant" data-i18n-title="mm_next_month">›</button>
     <div style="flex:1"></div>
     <select class="year-select" id="month-year-select" onchange="onMonthlyYearChange(this.value)" style="margin-right:6px"></select>
     <select class="year-select" id="month-month-select" onchange="onMonthlyMonthChange(this.value)"></select>
@@ -1537,7 +1537,7 @@ body.no-scroll { overflow: hidden; }
   <!-- Hero KPIs -->
   <div class="month-hero">
     <div class="month-hero-main">
-      <div class="month-hero-label">Total R du mois</div>
+      <div class="month-hero-label" data-i18n="mh_totalr">Total R du mois</div>
       <div class="month-hero-value" id="mh-totalR">—</div>
       <div class="month-hero-sub" id="mh-sub">—</div>
     </div>
@@ -1552,13 +1552,13 @@ body.no-scroll { overflow: hidden; }
   <!-- Equity + per-trade -->
   <div class="month-grid">
     <div class="month-card">
-      <div class="month-card-title">Équité cumulée</div>
-      <div class="month-card-sub" id="mh-eq-sub">R cumulés trade par trade</div>
+      <div class="month-card-title" data-i18n="mm_equity">Équité cumulée</div>
+      <div class="month-card-sub" id="mh-eq-sub" data-i18n="mm_equity_sub">R cumulés trade par trade</div>
       <div class="month-chart-wrap"><canvas id="m-eq-chart"></canvas></div>
     </div>
     <div class="month-card">
-      <div class="month-card-title">P&L par trade</div>
-      <div class="month-card-sub">vert = win, rouge = loss</div>
+      <div class="month-card-title" data-i18n="mm_plpertrade">P&L par trade</div>
+      <div class="month-card-sub" data-i18n="mm_greenred">vert = win, rouge = loss</div>
       <div class="month-chart-wrap"><canvas id="m-pl-chart"></canvas></div>
     </div>
   </div>
@@ -1578,16 +1578,16 @@ body.no-scroll { overflow: hidden; }
       <div class="month-donut-wrap"><canvas id="m-pl-pie"></canvas><div class="month-donut-center" id="mh-net">0R</div></div>
       <div class="month-donut-legend">
         <span><span class="dot" style="background:var(--green)"></span>Profits <b id="mh-profits">0R</b></span>
-        <span><span class="dot" style="background:var(--red)"></span>Pertes <b id="mh-loss">0R</b></span>
+        <span><span class="dot" style="background:var(--red)"></span><span data-i18n="mm_losses">Pertes</span> <b id="mh-loss">0R</b></span>
       </div>
     </div>
     <div class="month-donut-card month-streak">
-      <div class="month-card-title">Séries</div>
+      <div class="month-card-title" data-i18n="mm_streaks">Séries</div>
       <div class="month-streak-grid">
-        <div class="month-streak-cell pos"><div class="month-streak-label">Meilleure série</div><div class="month-streak-value" id="mh-bestw">0</div><div class="month-streak-sub">wins consécutifs</div></div>
-        <div class="month-streak-cell neg"><div class="month-streak-label">Pire série</div><div class="month-streak-value" id="mh-bestl">0</div><div class="month-streak-sub">losses consécutifs</div></div>
-        <div class="month-streak-cell"><div class="month-streak-label">Meilleur trade</div><div class="month-streak-value pos" id="mh-best">+0R</div></div>
-        <div class="month-streak-cell"><div class="month-streak-label">Pire trade</div><div class="month-streak-value neg" id="mh-worst">0R</div></div>
+        <div class="month-streak-cell pos"><div class="month-streak-label" data-i18n="mm_beststreak">Meilleure série</div><div class="month-streak-value" id="mh-bestw">0</div><div class="month-streak-sub" data-i18n="mm_winstreak_sub">wins consécutifs</div></div>
+        <div class="month-streak-cell neg"><div class="month-streak-label" data-i18n="mm_worststreak">Pire série</div><div class="month-streak-value" id="mh-bestl">0</div><div class="month-streak-sub" data-i18n="mm_lossstreak_sub">losses consécutifs</div></div>
+        <div class="month-streak-cell"><div class="month-streak-label" data-i18n="mm_besttrade">Meilleur trade</div><div class="month-streak-value pos" id="mh-best">+0R</div></div>
+        <div class="month-streak-cell"><div class="month-streak-label" data-i18n="mm_worsttrade">Pire trade</div><div class="month-streak-value neg" id="mh-worst">0R</div></div>
       </div>
     </div>
   </div>
@@ -1595,7 +1595,7 @@ body.no-scroll { overflow: hidden; }
   <!-- Empty state -->
   <div class="month-empty" id="month-empty" style="display:none">
     <div style="font-size:2.5rem;opacity:.3">📊</div>
-    <div style="margin-top:8px;color:var(--text3);font-size:.85rem">Aucun trade pour ce mois</div>
+    <div style="margin-top:8px;color:var(--text3);font-size:.85rem" data-i18n="mm_empty_month">Aucun trade pour ce mois</div>
   </div>
 </div>
 
@@ -1606,12 +1606,12 @@ body.no-scroll { overflow: hidden; }
     <div class="page-intro-sub" data-i18n-html="intro_quarterly_sub">Sélectionne un trimestre (<b>Q1</b> Jan–Mar, <b>Q2</b> Avr–Juin, <b>Q3</b> Juil–Sep, <b>Q4</b> Oct–Déc) pour analyser ta performance sur 3 mois : courbe de capital, P&L trade par trade, hit rate, profit/loss et séries. Idéal pour ton <b>bilan trimestriel</b> et suivre ta progression dans le temps. Utilise <b>← →</b> pour naviguer.</div>
   </div>
   <div class="month-toolbar">
-    <button class="month-nav" onclick="quarterShift(-1)" title="Trimestre précédent">‹</button>
+    <button class="month-nav" onclick="quarterShift(-1)" title="Trimestre précédent" data-i18n-title="mm_prev_q">‹</button>
     <div class="month-title-wrap">
       <div class="month-title-sub" id="quarter-sub">Performance trimestrielle</div>
       <div class="month-title" id="quarter-title">—</div>
     </div>
-    <button class="month-nav" onclick="quarterShift(1)" title="Trimestre suivant">›</button>
+    <button class="month-nav" onclick="quarterShift(1)" title="Trimestre suivant" data-i18n-title="mm_next_q">›</button>
     <div style="flex:1"></div>
     <select class="year-select" id="quarter-year-select" onchange="onQuarterlyYearChange(this.value)" style="margin-right:6px"></select>
     <select class="year-select" id="quarter-q-select" onchange="onQuarterlyQuarterChange(this.value)"></select>
@@ -1620,7 +1620,7 @@ body.no-scroll { overflow: hidden; }
   <!-- Hero KPIs -->
   <div class="month-hero">
     <div class="month-hero-main">
-      <div class="month-hero-label">Total R du trimestre</div>
+      <div class="month-hero-label" data-i18n="qh_totalr">Total R du trimestre</div>
       <div class="month-hero-value" id="qh-totalR">—</div>
       <div class="month-hero-sub" id="qh-sub">—</div>
     </div>
@@ -1635,13 +1635,13 @@ body.no-scroll { overflow: hidden; }
   <!-- Equity + per-trade -->
   <div class="month-grid">
     <div class="month-card">
-      <div class="month-card-title">Équité cumulée</div>
-      <div class="month-card-sub" id="qh-eq-sub">R cumulés trade par trade</div>
+      <div class="month-card-title" data-i18n="mm_equity">Équité cumulée</div>
+      <div class="month-card-sub" id="qh-eq-sub" data-i18n="mm_equity_sub">R cumulés trade par trade</div>
       <div class="month-chart-wrap"><canvas id="q-eq-chart"></canvas></div>
     </div>
     <div class="month-card">
-      <div class="month-card-title">P&L par trade</div>
-      <div class="month-card-sub">vert = win, rouge = loss</div>
+      <div class="month-card-title" data-i18n="mm_plpertrade">P&L par trade</div>
+      <div class="month-card-sub" data-i18n="mm_greenred">vert = win, rouge = loss</div>
       <div class="month-chart-wrap"><canvas id="q-pl-chart"></canvas></div>
     </div>
   </div>
@@ -1661,16 +1661,16 @@ body.no-scroll { overflow: hidden; }
       <div class="month-donut-wrap"><canvas id="q-pl-pie"></canvas><div class="month-donut-center" id="qh-net">0R</div></div>
       <div class="month-donut-legend">
         <span><span class="dot" style="background:var(--green)"></span>Profits <b id="qh-profits">0R</b></span>
-        <span><span class="dot" style="background:var(--red)"></span>Pertes <b id="qh-loss">0R</b></span>
+        <span><span class="dot" style="background:var(--red)"></span><span data-i18n="mm_losses">Pertes</span> <b id="qh-loss">0R</b></span>
       </div>
     </div>
     <div class="month-donut-card month-streak">
-      <div class="month-card-title">Séries</div>
+      <div class="month-card-title" data-i18n="mm_streaks">Séries</div>
       <div class="month-streak-grid">
-        <div class="month-streak-cell pos"><div class="month-streak-label">Meilleure série</div><div class="month-streak-value" id="qh-bestw">0</div><div class="month-streak-sub">wins consécutifs</div></div>
-        <div class="month-streak-cell neg"><div class="month-streak-label">Pire série</div><div class="month-streak-value" id="qh-bestl">0</div><div class="month-streak-sub">losses consécutifs</div></div>
-        <div class="month-streak-cell"><div class="month-streak-label">Meilleur trade</div><div class="month-streak-value pos" id="qh-best">+0R</div></div>
-        <div class="month-streak-cell"><div class="month-streak-label">Pire trade</div><div class="month-streak-value neg" id="qh-worst">0R</div></div>
+        <div class="month-streak-cell pos"><div class="month-streak-label" data-i18n="mm_beststreak">Meilleure série</div><div class="month-streak-value" id="qh-bestw">0</div><div class="month-streak-sub" data-i18n="mm_winstreak_sub">wins consécutifs</div></div>
+        <div class="month-streak-cell neg"><div class="month-streak-label" data-i18n="mm_worststreak">Pire série</div><div class="month-streak-value" id="qh-bestl">0</div><div class="month-streak-sub" data-i18n="mm_lossstreak_sub">losses consécutifs</div></div>
+        <div class="month-streak-cell"><div class="month-streak-label" data-i18n="mm_besttrade">Meilleur trade</div><div class="month-streak-value pos" id="qh-best">+0R</div></div>
+        <div class="month-streak-cell"><div class="month-streak-label" data-i18n="mm_worsttrade">Pire trade</div><div class="month-streak-value neg" id="qh-worst">0R</div></div>
       </div>
     </div>
   </div>
@@ -1678,7 +1678,7 @@ body.no-scroll { overflow: hidden; }
   <!-- Empty state -->
   <div class="month-empty" id="quarter-empty" style="display:none">
     <div style="font-size:2.5rem;opacity:.3">📊</div>
-    <div style="margin-top:8px;color:var(--text3);font-size:.85rem">Aucun trade pour ce trimestre</div>
+    <div style="margin-top:8px;color:var(--text3);font-size:.85rem" data-i18n="mm_empty_quarter">Aucun trade pour ce trimestre</div>
   </div>
 </div>
 
@@ -1694,12 +1694,12 @@ body.no-scroll { overflow: hidden; }
     <div class="discipline-card">
       <div class="discipline-gauge-wrap">
         <canvas id="discipline-gauge"></canvas>
-        <div class="discipline-center"><div class="discipline-val" id="discipline-score">—</div><div class="discipline-sub">discipline</div></div>
+        <div class="discipline-center"><div class="discipline-val" id="discipline-score">—</div><div class="discipline-sub" data-i18n="in_discipline">discipline</div></div>
       </div>
       <div class="discipline-bars" id="discipline-bars"></div>
     </div>
     <div class="reco-card">
-      <div class="reco-title">💡 Recommandations</div>
+      <div class="reco-title" data-i18n="in_reco">💡 Recommandations</div>
       <div class="reco-list" id="reco-list"></div>
     </div>
   </div>
@@ -1707,14 +1707,14 @@ body.no-scroll { overflow: hidden; }
   <!-- Analyses durée & émotions -->
   <div class="ins-grid">
     <div class="ins-card">
-      <div class="ins-card-title">⏱️ Performance par durée de détention</div>
-      <div class="ins-card-sub">R moyen et nombre de trades selon combien de temps tu gardes ta position</div>
+      <div class="ins-card-title" data-i18n="in_byhold">⏱️ Performance par durée de détention</div>
+      <div class="ins-card-sub" data-i18n="in_byhold_sub">R moyen et nombre de trades selon combien de temps tu gardes ta position</div>
       <div class="ins-chart-wrap"><canvas id="hold-chart"></canvas></div>
       <div id="hold-table"></div>
     </div>
     <div class="ins-card">
-      <div class="ins-card-title">🧠 Performance par émotion</div>
-      <div class="ins-card-sub">Quelles émotions accompagnent tes meilleurs (et pires) trades</div>
+      <div class="ins-card-title" data-i18n="in_byemo">🧠 Performance par émotion</div>
+      <div class="ins-card-sub" data-i18n="in_byemo_sub">Quelles émotions accompagnent tes meilleurs (et pires) trades</div>
       <div id="emotion-table"></div>
     </div>
   </div>
@@ -1730,8 +1730,8 @@ body.no-scroll { overflow: hidden; }
   <!-- Filters -->
   <div class="perf-filters">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <span style="font-size:.88rem;font-weight:600">Filtres actifs</span>
-      <button class="perf-reset" onclick="resetPerfFilters()">Tout réinitialiser</button>
+      <span style="font-size:.88rem;font-weight:600" data-i18n="pf_active">Filtres actifs</span>
+      <button class="perf-reset" onclick="resetPerfFilters()" data-i18n="pf_reset">Tout réinitialiser</button>
     </div>
     <div class="perf-filter-row" id="perf-filter-row"></div>
   </div>
@@ -2183,18 +2183,18 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════ ADD TRADE MODAL ══════ -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
-    <div class="modal-title">Nouveau Trade</div>
+    <div class="modal-title" data-i18n="am_title">Nouveau Trade</div>
     <div class="form-2col">
       <div class="form-group" style="grid-column:span 2">
-        <label>Actif</label>
-        <input type="text" id="m-pair" placeholder="ex: eurusd ou EURUSD…" oninput="this.value=this.value.toUpperCase()">
+        <label data-i18n="am_asset">Actif</label>
+        <input type="text" id="m-pair" placeholder="ex: eurusd ou EURUSD…" data-i18n-ph="am_asset_ph" oninput="this.value=this.value.toUpperCase()">
       </div>
-      <div class="form-group"><label>Date de création</label><input type="date" id="m-date" onchange="syncModalPriseDate()"></div>
-      <div class="form-group"><label>Date prise de position <span style="color:var(--text3);font-weight:400;font-size:.7rem">(base des stats)</span></label><input type="date" id="m-prise-date" oninput="this.dataset.touched='1'"></div>
-      <div class="form-group" style="grid-column:span 2"><label>Time-Frame <span style="color:var(--text3);font-weight:400;font-size:.7rem">(plusieurs possibles)</span></label>
+      <div class="form-group"><label data-i18n="am_created">Date de création</label><input type="date" id="m-date" onchange="syncModalPriseDate()"></div>
+      <div class="form-group"><label><span data-i18n="am_entrydate">Date prise de position</span> <span style="color:var(--text3);font-weight:400;font-size:.7rem" data-i18n="am_entrydate_hint">(base des stats)</span></label><input type="date" id="m-prise-date" oninput="this.dataset.touched='1'"></div>
+      <div class="form-group" style="grid-column:span 2"><label>Time-Frame <span style="color:var(--text3);font-weight:400;font-size:.7rem" data-i18n="am_multi">(plusieurs possibles)</span></label>
         <div id="m-tf-group" class="emoji-btn-group" style="flex-wrap:wrap;gap:6px"></div>
       </div>
-      <div class="form-group"><label>Type d'Ordre</label>
+      <div class="form-group"><label data-i18n="am_ordertype">Type d'Ordre</label>
         <select id="m-ordre">
           <option>MARKET BUY</option><option>MARKET SELL</option>
           <option>BUY LIMIT</option><option>SELL LIMIT</option>
@@ -2211,37 +2211,37 @@ body.no-scroll { overflow: hidden; }
       <div class="form-group"><label>R/R Initial</label>
         <input type="number" id="m-rri" step=".01" placeholder="ex: 3.2">
       </div>
-      <div class="form-group"><label>Tendance</label>
+      <div class="form-group"><label data-i18n="am_trend">Tendance</label>
         <select id="m-tend">
-          <option>In Trend</option><option>Range Trade</option><option>Counter Trend</option><option>Reversal</option>
+          <option data-i18n-val="In Trend">In Trend</option><option data-i18n-val="Range Trade">Range Trade</option><option data-i18n-val="Counter Trend">Counter Trend</option><option data-i18n-val="Reversal">Reversal</option>
         </select>
       </div>
-      <div class="form-group"><label>Type de Trade</label>
+      <div class="form-group"><label data-i18n="am_tradetype">Type de Trade</label>
         <select id="m-type">
-          <option>50% Technique 50% Fondamental</option>
-          <option>75% Technique 25% Fondamental</option>
-          <option>75% Fondamental 25% Technique</option>
-          <option>100% Technique</option>
-          <option>100% Fondamental</option>
+          <option data-i18n-val="50% Technique 50% Fondamental">50% Technique 50% Fondamental</option>
+          <option data-i18n-val="75% Technique 25% Fondamental">75% Technique 25% Fondamental</option>
+          <option data-i18n-val="75% Fondamental 25% Technique">75% Fondamental 25% Technique</option>
+          <option data-i18n-val="100% Technique">100% Technique</option>
+          <option data-i18n-val="100% Fondamental">100% Fondamental</option>
         </select>
       </div>
-      <div class="form-group"><label>Résultat</label>
+      <div class="form-group"><label data-i18n="am_result">Résultat</label>
         <select id="m-result">
-          <option>En attente</option><option>En cours</option><option>TP Total</option><option>Profit Partiel</option>
-          <option>SL Total</option><option>Perte Partiel</option><option>BE</option><option>Save</option><option>Non Pris</option>
+          <option data-i18n-val="En attente">En attente</option><option data-i18n-val="En cours">En cours</option><option data-i18n-val="TP Total">TP Total</option><option data-i18n-val="Profit Partiel">Profit Partiel</option>
+          <option data-i18n-val="SL Total">SL Total</option><option data-i18n-val="Perte Partiel">Perte Partiel</option><option data-i18n-val="BE">BE</option><option data-i18n-val="Save">Save</option><option data-i18n-val="Non Pris">Non Pris</option>
         </select>
       </div>
-      <div class="form-group"><label>Position vs Retails</label>
+      <div class="form-group"><label data-i18n="am_retails">Position vs Retails</label>
         <select id="m-retails">
           <option value="">—</option>
-          <option>Avec les Retails</option>
-          <option>Contre les Retails</option>
+          <option data-i18n-val="Avec les Retails">Avec les Retails</option>
+          <option data-i18n-val="Contre les Retails">Contre les Retails</option>
         </select>
       </div>
-      <div class="form-group"><label>R/R Final <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
+      <div class="form-group"><label>R/R Final <span style="color:var(--text3);font-size:.65rem" data-i18n="am_ifclosed">(si clôturé)</span></label>
         <input type="number" id="m-rrf" step=".01" placeholder="ex: 3.2 ou -1">
       </div>
-      <div class="form-group"><label>Holding <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
+      <div class="form-group"><label>Holding <span style="color:var(--text3);font-size:.65rem" data-i18n="am_ifclosed">(si clôturé)</span></label>
         <select id="m-hold">
           <option value="">—</option>
           <option>&lt; 1H</option><option>&lt; 5H</option><option>&lt; 24H</option>
@@ -2249,14 +2249,14 @@ body.no-scroll { overflow: hidden; }
           <option>&lt; 15J</option><option>&gt; 15J</option>
         </select>
       </div>
-      <div class="form-group"><label>Trade Management <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
+      <div class="form-group"><label>Trade Management <span style="color:var(--text3);font-size:.65rem" data-i18n="am_ifclosed">(si clôturé)</span></label>
         <div class="emoji-btn-group" id="m-manage-group">
           <button type="button" class="emoji-btn" data-val="" onclick="pickModalEmoji(this,'m-manage-group')">—</button>
           <button type="button" class="emoji-btn" data-val="👍" onclick="pickModalEmoji(this,'m-manage-group')">👍</button>
           <button type="button" class="emoji-btn" data-val="👎" onclick="pickModalEmoji(this,'m-manage-group')">👎</button>
         </div>
       </div>
-      <div class="form-group"><label>Bon Trade ? <span style="color:var(--text3);font-size:.65rem">(si clôturé)</span></label>
+      <div class="form-group"><label><span data-i18n="am_goodtrade">Bon Trade ?</span> <span style="color:var(--text3);font-size:.65rem" data-i18n="am_ifclosed">(si clôturé)</span></label>
         <div class="emoji-btn-group" id="m-bon-group">
           <button type="button" class="emoji-btn" data-val="" onclick="pickModalEmoji(this,'m-bon-group')">—</button>
           <button type="button" class="emoji-btn" data-val="true" onclick="pickModalEmoji(this,'m-bon-group')">✅</button>
@@ -2264,36 +2264,36 @@ body.no-scroll { overflow: hidden; }
         </div>
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label>Erreurs <span style="color:var(--text3);font-size:.65rem">(plusieurs possibles)</span></label>
+        <label><span data-i18n="am_errors">Erreurs</span> <span style="color:var(--text3);font-size:.65rem" data-i18n="am_multi">(plusieurs possibles)</span></label>
         <div class="emoji-btn-group" id="m-errs-group" style="flex-wrap:wrap;gap:6px"></div>
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label>Raisons & Confluences</label>
+        <label data-i18n="am_reasons">Raisons & Confluences</label>
         <div id="m-confluences-chips"></div>
-        <textarea id="m-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…"></textarea>
+        <textarea id="m-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…" data-i18n-ph="am_reasons_ph"></textarea>
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label>Émotions <span style="color:var(--text3);font-size:.65rem">(plusieurs possibles)</span></label>
+        <label><span data-i18n="am_emotions">Émotions</span> <span style="color:var(--text3);font-size:.65rem" data-i18n="am_multi">(plusieurs possibles)</span></label>
         <div class="emoji-btn-group" id="m-emotions-group" style="flex-wrap:wrap;gap:6px"></div>
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label>État Psychologique</label>
-        <textarea id="m-psy" class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…"></textarea>
+        <label data-i18n="am_psy">État Psychologique</label>
+        <textarea id="m-psy" class="field-textarea" placeholder="Comment tu te sentais avant / pendant le trade…" data-i18n-ph="am_psy_ph"></textarea>
       </div>
       <div class="form-group" style="grid-column:span 2">
-        <label>Screenshot d'Exécution</label>
+        <label data-i18n="am_screenshot">Screenshot d'Exécution</label>
         <div id="m-ss-slot" class="ss-slot" style="height:90px;"
           ondragover="event.preventDefault();this.classList.add('drag-over')"
           ondragleave="this.classList.remove('drag-over')"
           ondrop="event.preventDefault();this.classList.remove('drag-over');handleModalDrop(event)">
           <div class="ss-slot-icon" id="m-ss-icon">📸</div>
-          <div class="ss-slot-label" id="m-ss-label">Glisser une image ou <span style="color:var(--orange)">Ctrl+V</span></div>
+          <div class="ss-slot-label" id="m-ss-label" data-i18n-html="am_drag">Glisser une image ou <span style="color:var(--orange)">Ctrl+V</span></div>
         </div>
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn-ghost" onclick="closeAddModal()">Annuler</button>
-      <button class="btn-orange" onclick="saveTrade()">Enregistrer</button>
+      <button class="btn-ghost" onclick="closeAddModal()" data-i18n="am_cancel">Annuler</button>
+      <button class="btn-orange" onclick="saveTrade()" data-i18n="am_save">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -2302,14 +2302,14 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════ NOUVEAU MODAL CSV IMPORT avec mapping ══════ -->
 <div class="modal-overlay" id="csvImportModal">
   <div class="modal csv-preview">
-    <h2>📊 Configuration de l'import CSV</h2>
-    <div class="csv-preview-sub">
+    <h2 data-i18n="csv_title">📊 Configuration de l'import CSV</h2>
+    <div class="csv-preview-sub" data-i18n-html="csv_sub">
       Associe chaque champ du journal à une colonne de ton fichier. Les colonnes non mappées sont préservées dans <code>extra_data</code> — <b>aucune donnée perdue</b>.
     </div>
 
-    <h3 class="csv-section-title">Mapping des colonnes</h3>
+    <h3 class="csv-section-title" data-i18n="csv_mapping">Mapping des colonnes</h3>
     <div class="csv-mapping" id="csv-mapping-grid"></div>
-    <div class="csv-mapping-hint"><span class="csv-required">*</span> champ obligatoire — sans ça la ligne est ignorée</div>
+    <div class="csv-mapping-hint" data-i18n-html="csv_mapping_hint"><span class="csv-required">*</span> champ obligatoire — sans ça la ligne est ignorée</div>
 
     <div class="csv-stats" id="csv-stats"></div>
 
@@ -2318,16 +2318,16 @@ body.no-scroll { overflow: hidden; }
     </div>
 
     <div class="csv-skipped-box" id="csv-skipped-box" style="display:none">
-      <h4>⚠️ Lignes ignorées</h4>
+      <h4 data-i18n="csv_skipped">⚠️ Lignes ignorées</h4>
       <ul id="csv-skipped-list"></ul>
     </div>
 
-    <h3 class="csv-section-title">Aperçu (5 premières lignes valides)</h3>
+    <h3 class="csv-section-title" data-i18n="csv_preview">Aperçu (5 premières lignes valides)</h3>
     <div class="csv-table-wrap" id="csv-preview-table"></div>
 
     <div class="form-actions">
-      <button class="btn-ghost" onclick="closeCsvImport()">Annuler</button>
-      <button class="btn-orange" id="csv-import-confirm" onclick="confirmCsvImport()">Importer</button>
+      <button class="btn-ghost" onclick="closeCsvImport()" data-i18n="am_cancel">Annuler</button>
+      <button class="btn-orange" id="csv-import-confirm" onclick="confirmCsvImport()" data-i18n="csv_import_btn">Importer</button>
     </div>
   </div>
 </div>
@@ -2390,6 +2390,37 @@ const STRINGS = {
     th_asset:"Actif", th_date:"Date", th_taken:"Prise", th_tf:"TF", th_order:"Ordre", th_risk:"Risk",
     th_result:"Résultat", th_rri:"R/R init", th_rrf:"R/R final", th_day:"Jour",
     th_holding:"Holding", th_tradetype:"Type Trade", th_goodtrade:"Bon Trade",
+    // Add-trade modal (FR)
+    am_title:"Nouveau Trade", am_asset:"Actif", am_asset_ph:"ex: eurusd ou EURUSD…",
+    am_created:"Date de création", am_entrydate:"Date prise de position", am_entrydate_hint:"(base des stats)",
+    am_multi:"(plusieurs possibles)", am_ordertype:"Type d'Ordre", am_trend:"Tendance", am_tradetype:"Type de Trade",
+    am_result:"Résultat", am_retails:"Position vs Retails", am_ifclosed:"(si clôturé)", am_goodtrade:"Bon Trade ?",
+    am_errors:"Erreurs", am_reasons:"Raisons & Confluences", am_reasons_ph:"Décris tes confluences, la raison du trade…",
+    am_emotions:"Émotions", am_psy:"État Psychologique", am_psy_ph:"Comment tu te sentais avant / pendant le trade…",
+    am_screenshot:"Screenshot d'Exécution", am_drag:"Glisser une image ou <span style=\"color:var(--orange)\">Ctrl+V</span>",
+    am_cancel:"Annuler", am_save:"Enregistrer",
+    // Monthly / Quarterly (FR)
+    mm_equity:"Équité cumulée", mm_equity_sub:"R cumulés trade par trade",
+    mm_plpertrade:"P&L par trade", mm_greenred:"vert = win, rouge = loss",
+    mm_streaks:"Séries", mm_beststreak:"Meilleure série", mm_worststreak:"Pire série",
+    mm_winstreak_sub:"wins consécutifs", mm_lossstreak_sub:"losses consécutifs",
+    mm_besttrade:"Meilleur trade", mm_worsttrade:"Pire trade", mm_losses:"Pertes",
+    mh_totalr:"Total R du mois", qh_totalr:"Total R du trimestre",
+    mm_empty_month:"Aucun trade pour ce mois", mm_empty_quarter:"Aucun trade pour ce trimestre",
+    mm_prev_month:"Mois précédent", mm_next_month:"Mois suivant",
+    mm_prev_q:"Trimestre précédent", mm_next_q:"Trimestre suivant",
+    // Insights page (FR)
+    in_discipline:"discipline", in_reco:"💡 Recommandations",
+    in_byhold:"⏱️ Performance par durée de détention",
+    in_byhold_sub:"R moyen et nombre de trades selon combien de temps tu gardes ta position",
+    in_byemo:"🧠 Performance par émotion",
+    in_byemo_sub:"Quelles émotions accompagnent tes meilleurs (et pires) trades",
+    // CSV import modal (FR)
+    csv_title:"📊 Configuration de l'import CSV",
+    csv_sub:"Associe chaque champ du journal à une colonne de ton fichier. Les colonnes non mappées sont préservées dans <code>extra_data</code> — <b>aucune donnée perdue</b>.",
+    csv_mapping:"Mapping des colonnes",
+    csv_mapping_hint:"<span class=\"csv-required\">*</span> champ obligatoire — sans ça la ligne est ignorée",
+    csv_skipped:"⚠️ Lignes ignorées", csv_preview:"Aperçu (5 premières lignes valides)", csv_import_btn:"Importer",
     // Setups page (FR)
     su_intro_title:"🎯 Qu'est-ce qui marche pour toi ?",
     su_intro_sub:"Cette page croise tes données pour révéler tes <b>combinaisons gagnantes</b> (Tendance × Time-Frame × Type d'ordre) et celles que tu devrais éviter. Minimum <b>3 trades</b> par combo pour être pertinent.",
@@ -2530,6 +2561,37 @@ const STRINGS = {
     th_asset:"Asset", th_date:"Date", th_taken:"Taken", th_tf:"TF", th_order:"Order", th_risk:"Risk",
     th_result:"Result", th_rri:"R/R init", th_rrf:"R/R final", th_day:"Day",
     th_holding:"Holding", th_tradetype:"Trade Type", th_goodtrade:"Good Trade",
+    // Add-trade modal (EN)
+    am_title:"New Trade", am_asset:"Asset", am_asset_ph:"e.g. eurusd or EURUSD…",
+    am_created:"Creation date", am_entrydate:"Entry date", am_entrydate_hint:"(basis for stats)",
+    am_multi:"(multiple possible)", am_ordertype:"Order Type", am_trend:"Trend", am_tradetype:"Trade Type",
+    am_result:"Result", am_retails:"Position vs Retail", am_ifclosed:"(if closed)", am_goodtrade:"Good Trade?",
+    am_errors:"Errors", am_reasons:"Reasons & Confluences", am_reasons_ph:"Describe your confluences, the reason for the trade…",
+    am_emotions:"Emotions", am_psy:"Psychological State", am_psy_ph:"How you felt before / during the trade…",
+    am_screenshot:"Execution Screenshot", am_drag:"Drag an image or <span style=\"color:var(--orange)\">Ctrl+V</span>",
+    am_cancel:"Cancel", am_save:"Save",
+    // Monthly / Quarterly (EN)
+    mm_equity:"Cumulative equity", mm_equity_sub:"Cumulative R trade by trade",
+    mm_plpertrade:"P&L per trade", mm_greenred:"green = win, red = loss",
+    mm_streaks:"Streaks", mm_beststreak:"Best streak", mm_worststreak:"Worst streak",
+    mm_winstreak_sub:"consecutive wins", mm_lossstreak_sub:"consecutive losses",
+    mm_besttrade:"Best trade", mm_worsttrade:"Worst trade", mm_losses:"Losses",
+    mh_totalr:"Total R this month", qh_totalr:"Total R this quarter",
+    mm_empty_month:"No trades for this month", mm_empty_quarter:"No trades for this quarter",
+    mm_prev_month:"Previous month", mm_next_month:"Next month",
+    mm_prev_q:"Previous quarter", mm_next_q:"Next quarter",
+    // Insights page (EN)
+    in_discipline:"discipline", in_reco:"💡 Recommendations",
+    in_byhold:"⏱️ Performance by holding duration",
+    in_byhold_sub:"Average R and number of trades by how long you hold your position",
+    in_byemo:"🧠 Performance by emotion",
+    in_byemo_sub:"Which emotions accompany your best (and worst) trades",
+    // CSV import modal (EN)
+    csv_title:"📊 CSV import configuration",
+    csv_sub:"Map each journal field to a column in your file. Unmapped columns are preserved in <code>extra_data</code> — <b>no data lost</b>.",
+    csv_mapping:"Column mapping",
+    csv_mapping_hint:"<span class=\"csv-required\">*</span> required field — without it the row is skipped",
+    csv_skipped:"⚠️ Skipped rows", csv_preview:"Preview (first 5 valid rows)", csv_import_btn:"Import",
     // Setups page (EN)
     su_intro_title:"🎯 What works for you?",
     su_intro_sub:"This page cross-references your data to reveal your <b>winning combinations</b> (Trend × Time-Frame × Order type) and the ones you should avoid. At least <b>3 trades</b> per combo to be meaningful.",
@@ -2921,14 +2983,14 @@ async function loadUserPreferences(){
 
 // ─── CHECKLIST ───
 function addChecklistItem(){
-  const label = prompt('Nouvel élément de checklist :');
+  const label = prompt(L('Nouvel élément de checklist :','New checklist item:'));
   if(!label||!label.trim()) return;
   CHECKLIST.push(label.trim()); saveChecklist();
   if(activeTrade){ if(!activeTrade.checklist) activeTrade.checklist=[]; activeTrade.checklist.push(false); dbUpsert(activeTrade); openPanel(activeTrade.id); }
   if(currentPage==='settings') renderSettings();
 }
 function editChecklistItem(i){
-  const label = prompt('Modifier l\'élément :', CHECKLIST[i]);
+  const label = prompt(L('Modifier l\'élément :','Edit item:'), CHECKLIST[i]);
   if(label===null) return;
   if(!label.trim()){ delChecklistItem(i); return; }
   CHECKLIST[i] = label.trim(); saveChecklist();
@@ -2936,7 +2998,7 @@ function editChecklistItem(i){
   if(currentPage==='settings') renderSettings();
 }
 function delChecklistItem(i){
-  if(!confirm('Supprimer cet élément ?')) return;
+  if(!confirm(L('Supprimer cet élément ?','Delete this item?'))) return;
   CHECKLIST.splice(i,1); saveChecklist();
   if(activeTrade){ if(activeTrade.checklist) activeTrade.checklist.splice(i,1); dbUpsert(activeTrade); openPanel(activeTrade.id); }
   if(currentPage==='settings') renderSettings();
@@ -2944,72 +3006,72 @@ function delChecklistItem(i){
 
 // ─── ERREURS (même logique) ───
 function addError(){
-  const label = prompt('Nouvelle erreur :');
+  const label = prompt(L('Nouvelle erreur :','New error:'));
   if(!label||!label.trim()) return;
-  if(ERRORS.includes(label.trim())) { alert('Cette erreur existe déjà'); return; }
+  if(ERRORS.includes(label.trim())) { alert(L('Cette erreur existe déjà','This error already exists')); return; }
   ERRORS.push(label.trim()); saveErrors();
   if(currentPage==='settings') renderSettings();
 }
 function editError(i){
-  const label = prompt('Modifier l\'erreur :', ERRORS[i]);
+  const label = prompt(L('Modifier l\'erreur :','Edit error:'), ERRORS[i]);
   if(label===null) return;
   if(!label.trim()){ delError(i); return; }
   ERRORS[i] = label.trim(); saveErrors();
   if(currentPage==='settings') renderSettings();
 }
 function delError(i){
-  if(!confirm('Supprimer cette erreur ?\n\nLes trades qui la portaient gardent leur tag historique, mais elle ne pourra plus être ajoutée.')) return;
+  if(!confirm(L('Supprimer cette erreur ?\n\nLes trades qui la portaient gardent leur tag historique, mais elle ne pourra plus être ajoutée.','Delete this error?\n\nTrades that had it keep their historical tag, but it can no longer be added.'))) return;
   ERRORS.splice(i,1); saveErrors();
   if(currentPage==='settings') renderSettings();
 }
 function resetChecklist(){
-  if(!confirm('Réinitialiser la checklist aux valeurs par défaut ?')) return;
+  if(!confirm(L('Réinitialiser la checklist aux valeurs par défaut ?','Reset the checklist to default values?'))) return;
   CHECKLIST = CHECKLIST_DEFAULT.slice(); saveChecklist();
   if(currentPage==='settings') renderSettings();
 }
 function resetErrors(){
-  if(!confirm('Réinitialiser les erreurs aux valeurs par défaut ?')) return;
+  if(!confirm(L('Réinitialiser les erreurs aux valeurs par défaut ?','Reset errors to default values?'))) return;
   ERRORS = ERRORS_DEFAULT.slice(); saveErrors();
   if(currentPage==='settings') renderSettings();
 }
 
 // ─── TENDANCES ───
 function addTendance(){
-  const label = prompt('Nouvelle tendance :');
+  const label = prompt(L('Nouvelle tendance :','New trend:'));
   if(!label||!label.trim()) return;
-  if(TEND_OPTIONS.includes(label.trim())) { alert('Cette tendance existe déjà'); return; }
+  if(TEND_OPTIONS.includes(label.trim())) { alert(L('Cette tendance existe déjà','This trend already exists')); return; }
   TEND_OPTIONS.push(label.trim()); saveTendances();
   if(currentPage==='settings') renderSettings();
 }
 function editTendance(i){
-  const label = prompt('Modifier la tendance :', TEND_OPTIONS[i]);
+  const label = prompt(L('Modifier la tendance :','Edit trend:'), TEND_OPTIONS[i]);
   if(label===null) return;
   if(!label.trim()){ delTendance(i); return; }
   TEND_OPTIONS[i] = label.trim(); saveTendances();
   if(currentPage==='settings') renderSettings();
 }
 function delTendance(i){
-  if(!confirm('Supprimer cette tendance ?\n\nLes trades qui la portaient gardent leur tag historique.')) return;
+  if(!confirm(L('Supprimer cette tendance ?\n\nLes trades qui la portaient gardent leur tag historique.','Delete this trend?\n\nTrades that had it keep their historical tag.'))) return;
   TEND_OPTIONS.splice(i,1); saveTendances();
   if(currentPage==='settings') renderSettings();
 }
 function resetTendances(){
-  if(!confirm('Réinitialiser les tendances aux valeurs par défaut ?')) return;
+  if(!confirm(L('Réinitialiser les tendances aux valeurs par défaut ?','Reset trends to default values?'))) return;
   TEND_OPTIONS = TEND_OPTIONS_DEFAULT.slice(); saveTendances();
   if(currentPage==='settings') renderSettings();
 }
 
 // ─── CONFLUENCES (liste globale réutilisable) ───
 function addConfluence(){
-  const label = prompt('Nouvelle confluence :');
+  const label = prompt(L('Nouvelle confluence :','New confluence:'));
   if(!label||!label.trim()) return;
-  if(CONFLUENCES.includes(label.trim())) { alert('Cette confluence existe déjà'); return; }
+  if(CONFLUENCES.includes(label.trim())) { alert(L('Cette confluence existe déjà','This confluence already exists')); return; }
   CONFLUENCES.push(label.trim()); saveConfluences();
   if(currentPage==='settings') renderSettings();
   if(activeTrade) openPanel(activeTrade.id);
 }
 function editConfluence(i){
-  const label = prompt('Modifier la confluence :', CONFLUENCES[i]);
+  const label = prompt(L('Modifier la confluence :','Edit confluence:'), CONFLUENCES[i]);
   if(label===null) return;
   if(!label.trim()){ delConfluence(i); return; }
   CONFLUENCES[i] = label.trim(); saveConfluences();
@@ -3017,13 +3079,13 @@ function editConfluence(i){
   if(activeTrade) openPanel(activeTrade.id);
 }
 function delConfluence(i){
-  if(!confirm('Supprimer cette confluence de ta liste ?\n\nLes trades où tu l\'as déjà insérée gardent leur texte.')) return;
+  if(!confirm(L('Supprimer cette confluence de ta liste ?\n\nLes trades où tu l\'as déjà insérée gardent leur texte.','Delete this confluence from your list?\n\nTrades where you already inserted it keep their text.'))) return;
   CONFLUENCES.splice(i,1); saveConfluences();
   if(currentPage==='settings') renderSettings();
   if(activeTrade) openPanel(activeTrade.id);
 }
 function resetConfluences(){
-  if(!confirm('Réinitialiser les confluences aux valeurs par défaut ?')) return;
+  if(!confirm(L('Réinitialiser les confluences aux valeurs par défaut ?','Reset confluences to default values?'))) return;
   CONFLUENCES = CONFLUENCES_DEFAULT.slice(); saveConfluences();
   if(currentPage==='settings') renderSettings();
   if(activeTrade) openPanel(activeTrade.id);
@@ -3056,14 +3118,14 @@ function insertConfluencePanel(id,i){
 
 // ─── DELETE ALL TRADES (quick wipe pour tester les imports) ───
 async function deleteAllTrades(){
-  if(!currentUser){ alert('Tu dois être connecté.'); return; }
+  if(!currentUser){ alert(L('Tu dois être connecté.','You must be logged in.')); return; }
   const count = trades.length;
-  if(count === 0){ showToast('Aucun trade à supprimer'); return; }
+  if(count === 0){ showToast(L('Aucun trade à supprimer','No trades to delete')); return; }
 
-  if(!confirm(`Supprimer tes ${count} trades ?`)) return;
+  if(!confirm(L(`Supprimer tes ${count} trades ?`,`Delete your ${count} trades?`))) return;
 
   const btn = document.querySelector('.btn-danger');
-  if(btn){ btn.disabled = true; btn.textContent = '⏳ Suppression…'; }
+  if(btn){ btn.disabled = true; btn.textContent = L('⏳ Suppression…','⏳ Deleting…'); }
 
   console.log('[Delete All] suppression de', count, 'trades pour user', currentUser.id);
 
@@ -3074,12 +3136,12 @@ async function deleteAllTrades(){
     trades = [];
     rebuildPairDatalist();
     refreshCurrentPage();
-    showToast('🗑 ' + count + ' trades supprimés');
+    showToast(L('🗑 ' + count + ' trades supprimés','🗑 ' + count + ' trades deleted'));
   } catch(e) {
     console.error('[Delete All] échec', e);
-    alert('Erreur : ' + (e.message || e));
+    alert(L('Erreur : ','Error: ') + (e.message || e));
   } finally {
-    if(btn){ btn.disabled = false; btn.textContent = '🗑 Tout supprimer'; }
+    if(btn){ btn.disabled = false; btn.textContent = L('🗑 Tout supprimer','🗑 Delete all'); }
     if(currentPage==='settings') renderSettings();
   }
 }
@@ -3154,10 +3216,10 @@ function onYearChange(val){
 }
 
 function addYear(){
-  const val = prompt('Ajouter une année (ex: 2023, 2027, 2030…) :');
+  const val = prompt(L('Ajouter une année (ex: 2023, 2027, 2030…) :','Add a year (e.g. 2023, 2027, 2030…):'));
   if (!val) return;
   const y = parseInt(val);
-  if (isNaN(y) || y < 1900 || y > 2200) { alert('Année invalide (entre 1900 et 2200)'); return; }
+  if (isNaN(y) || y < 1900 || y > 2200) { alert(L('Année invalide (entre 1900 et 2200)','Invalid year (between 1900 and 2200)')); return; }
   if (JOURNAL_YEARS.includes(y)) {
     // Déjà présente → on bascule juste dessus
     currentYear = y;
@@ -3382,38 +3444,38 @@ function generateInsights(ts){
   // Jour de la semaine
   const wd=extremes(groupPerf(ts,t=>[getTradeJour(t)]));
   if(wd){
-    if(wd.worst[1].r<0) out.push({sev:'bad',icon:'📅',text:`Ton pire jour est <b>${wd.worst[0]}</b> (${fmtR(wd.worst[1].r)} sur ${wd.worst[1].n} trades). Envisage de réduire ou d'éviter ce jour.`});
-    if(wd.best[1].r>0 && wd.best[0]!==wd.worst[0]) out.push({sev:'good',icon:'📅',text:`Ton meilleur jour est <b>${wd.best[0]}</b> (${fmtR(wd.best[1].r)} sur ${wd.best[1].n} trades).`});
+    if(wd.worst[1].r<0) out.push({sev:'bad',icon:'📅',text:L(`Ton pire jour est <b>${tVal(wd.worst[0])}</b> (${fmtR(wd.worst[1].r)} sur ${wd.worst[1].n} trades). Envisage de réduire ou d'éviter ce jour.`,`Your worst day is <b>${tVal(wd.worst[0])}</b> (${fmtR(wd.worst[1].r)} over ${wd.worst[1].n} trades). Consider reducing or avoiding this day.`)});
+    if(wd.best[1].r>0 && wd.best[0]!==wd.worst[0]) out.push({sev:'good',icon:'📅',text:L(`Ton meilleur jour est <b>${tVal(wd.best[0])}</b> (${fmtR(wd.best[1].r)} sur ${wd.best[1].n} trades).`,`Your best day is <b>${tVal(wd.best[0])}</b> (${fmtR(wd.best[1].r)} over ${wd.best[1].n} trades).`)});
   }
   // Paire / actif
   const pr=extremes(groupPerf(ts,t=>[t.pair]));
   if(pr){
-    if(pr.worst[1].r<0) out.push({sev:'bad',icon:'💱',text:`<b>${pr.worst[0]}</b> te coûte (${fmtR(pr.worst[1].r)} sur ${pr.worst[1].n} trades). Analyse pourquoi, ou écarte cette paire.`});
-    if(pr.best[1].r>0 && pr.best[0]!==pr.worst[0]) out.push({sev:'good',icon:'💱',text:`<b>${pr.best[0]}</b> est ta paire la plus rentable (${fmtR(pr.best[1].r)} sur ${pr.best[1].n} trades).`});
+    if(pr.worst[1].r<0) out.push({sev:'bad',icon:'💱',text:L(`<b>${pr.worst[0]}</b> te coûte (${fmtR(pr.worst[1].r)} sur ${pr.worst[1].n} trades). Analyse pourquoi, ou écarte cette paire.`,`<b>${pr.worst[0]}</b> is costing you (${fmtR(pr.worst[1].r)} over ${pr.worst[1].n} trades). Analyse why, or drop this pair.`)});
+    if(pr.best[1].r>0 && pr.best[0]!==pr.worst[0]) out.push({sev:'good',icon:'💱',text:L(`<b>${pr.best[0]}</b> est ta paire la plus rentable (${fmtR(pr.best[1].r)} sur ${pr.best[1].n} trades).`,`<b>${pr.best[0]}</b> is your most profitable pair (${fmtR(pr.best[1].r)} over ${pr.best[1].n} trades).`)});
   }
   // Tendance / contexte
   const td=extremes(groupPerf(ts,t=>[t.tend]));
-  if(td && td.worst[1].r<0) out.push({sev:'bad',icon:'📈',text:`En <b>${td.worst[0]}</b> tu es négatif (${fmtR(td.worst[1].r)} sur ${td.worst[1].n} trades).`});
-  if(td && td.best[1].r>0) out.push({sev:'good',icon:'📈',text:`Ton contexte le plus rentable : <b>${td.best[0]}</b> (${fmtR(td.best[1].r)}).`});
+  if(td && td.worst[1].r<0) out.push({sev:'bad',icon:'📈',text:L(`En <b>${tVal(td.worst[0])}</b> tu es négatif (${fmtR(td.worst[1].r)} sur ${td.worst[1].n} trades).`,`In <b>${tVal(td.worst[0])}</b> you're negative (${fmtR(td.worst[1].r)} over ${td.worst[1].n} trades).`)});
+  if(td && td.best[1].r>0) out.push({sev:'good',icon:'📈',text:L(`Ton contexte le plus rentable : <b>${tVal(td.best[0])}</b> (${fmtR(td.best[1].r)}).`,`Your most profitable context: <b>${tVal(td.best[0])}</b> (${fmtR(td.best[1].r)}).`)});
   // Time-Frame
   const tf=extremes(groupPerf(ts,t=>dimSplit(t.tf).filter(v=>v!==DIM_EMPTY)));
-  if(tf && tf.worst[1].r<0 && tf.worst[1].n>=minN) out.push({sev:'bad',icon:'⏱️',text:`Le Time-Frame <b>${tf.worst[0]}</b> est perdant (${fmtR(tf.worst[1].r)} sur ${tf.worst[1].n} trades).`});
+  if(tf && tf.worst[1].r<0 && tf.worst[1].n>=minN) out.push({sev:'bad',icon:'⏱️',text:L(`Le Time-Frame <b>${tf.worst[0]}</b> est perdant (${fmtR(tf.worst[1].r)} sur ${tf.worst[1].n} trades).`,`Time-Frame <b>${tf.worst[0]}</b> is losing (${fmtR(tf.worst[1].r)} over ${tf.worst[1].n} trades).`)});
   // Patterns d'erreurs
   const errMap={};
   ts.forEach(t=>(t.errs||[]).forEach(e=>{ if(!e||e==='Aucune')return; const g=errMap[e]||(errMap[e]={r:0,n:0,l:0}); g.n++; if(isLoss(t))g.l++; g.r+=rrfNum(t)||0; }));
   const errEntries=Object.entries(errMap).filter(([,v])=>v.n>=minN).sort((a,b)=>a[1].r-b[1].r);
   if(errEntries.length){
     const [name,v]=errEntries[0];
-    out.push({sev:'bad',icon:'🎯',text:`Erreur la plus coûteuse : <b>${name}</b> (${v.n} fois, ${fmtR(v.r)}, ${Math.round(v.l/v.n*100)}% de pertes).`});
+    out.push({sev:'bad',icon:'🎯',text:L(`Erreur la plus coûteuse : <b>${tVal(name)}</b> (${v.n} fois, ${fmtR(v.r)}, ${Math.round(v.l/v.n*100)}% de pertes).`,`Most costly error: <b>${tVal(name)}</b> (${v.n} times, ${fmtR(v.r)}, ${Math.round(v.l/v.n*100)}% losses).`)});
   }
   // Émotions à risque
   const emoMap=groupPerf(ts,t=>getEmotions(t));
   const emoEntries=Object.entries(emoMap).filter(([,v])=>v.n>=minN).sort((a,b)=>a[1].r-b[1].r);
   if(emoEntries.length){
     const [name,v]=emoEntries[0];
-    if(v.r<0){ const e=EMOTION_BY_LABEL[name]; out.push({sev:'bad',icon:e?e.emoji:'🧠',text:`Quand tu ressens <b>${name}</b>, tu perds (${fmtR(v.r)} sur ${v.n} trades). Surveille cet état.`}); }
+    if(v.r<0){ const e=EMOTION_BY_LABEL[name]; out.push({sev:'bad',icon:e?e.emoji:'🧠',text:L(`Quand tu ressens <b>${tVal(name)}</b>, tu perds (${fmtR(v.r)} sur ${v.n} trades). Surveille cet état.`,`When you feel <b>${tVal(name)}</b>, you lose (${fmtR(v.r)} over ${v.n} trades). Watch this state.`)}); }
     const bestEmo=emoEntries[emoEntries.length-1];
-    if(bestEmo && bestEmo[1].r>0){ const e=EMOTION_BY_LABEL[bestEmo[0]]; out.push({sev:'good',icon:e?e.emoji:'🧠',text:`Tu performes le mieux en étant <b>${bestEmo[0]}</b> (${fmtR(bestEmo[1].r)} sur ${bestEmo[1].n} trades).`}); }
+    if(bestEmo && bestEmo[1].r>0){ const e=EMOTION_BY_LABEL[bestEmo[0]]; out.push({sev:'good',icon:e?e.emoji:'🧠',text:L(`Tu performes le mieux en étant <b>${tVal(bestEmo[0])}</b> (${fmtR(bestEmo[1].r)} sur ${bestEmo[1].n} trades).`,`You perform best when <b>${tVal(bestEmo[0])}</b> (${fmtR(bestEmo[1].r)} over ${bestEmo[1].n} trades).`)}); }
   }
   // Checklist : comparer trades à checklist complète vs incomplète
   const full=ts.filter(t=>Array.isArray(t.checklist)&&t.checklist.length&&t.checklist.every(Boolean));
@@ -3421,16 +3483,16 @@ function generateInsights(ts){
   if(full.length>=minN && partial.length>=minN){
     const rFull=full.reduce((s,t)=>s+(rrfNum(t)||0),0)/full.length;
     const rPart=partial.reduce((s,t)=>s+(rrfNum(t)||0),0)/partial.length;
-    if(rFull>rPart) out.push({sev:'good',icon:'✅',text:`Checklist complète = meilleure perf : ${fmtR(rFull)}/trade vs ${fmtR(rPart)}/trade sans. Garde la discipline.`});
+    if(rFull>rPart) out.push({sev:'good',icon:'✅',text:L(`Checklist complète = meilleure perf : ${fmtR(rFull)}/trade vs ${fmtR(rPart)}/trade sans. Garde la discipline.`,`Full checklist = better perf: ${fmtR(rFull)}/trade vs ${fmtR(rPart)}/trade without. Keep the discipline.`)});
   }
   // Position vs Retails
   const rt=groupPerf(ts,t=>[t.retails]);
   if(rt['Contre les Retails'] && rt['Contre les Retails'].n>=minN && rt['Contre les Retails'].r<0)
-    out.push({sev:'bad',icon:'👥',text:`Trader <b>contre les retails</b> ne paie pas ici (${fmtR(rt['Contre les Retails'].r)} sur ${rt['Contre les Retails'].n} trades).`});
+    out.push({sev:'bad',icon:'👥',text:L(`Trader <b>contre les retails</b> ne paie pas ici (${fmtR(rt['Contre les Retails'].r)} sur ${rt['Contre les Retails'].n} trades).`,`Trading <b>against retail</b> doesn't pay here (${fmtR(rt['Contre les Retails'].r)} over ${rt['Contre les Retails'].n} trades).`)});
   // Tri : mauvaises d'abord, puis bonnes, puis info
   const rank={bad:0,good:1,info:2};
   out.sort((a,b)=>rank[a.sev]-rank[b.sev]);
-  if(!out.length) out.push({sev:'info',icon:'📊',text:`Pas encore assez de données pour des recommandations fiables. Continue de logguer tes trades (idéalement 10+ par catégorie).`});
+  if(!out.length) out.push({sev:'info',icon:'📊',text:L(`Pas encore assez de données pour des recommandations fiables. Continue de logguer tes trades (idéalement 10+ par catégorie).`,`Not enough data yet for reliable recommendations. Keep logging your trades (ideally 10+ per category).`)});
   return out;
 }
 
@@ -4046,11 +4108,15 @@ function renderSetups(){
 // ───────────────────────────────────────────
 let calY=new Date().getFullYear(), calM=new Date().getMonth();
 const MONTH_FR=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const MONTH_EN=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_FR=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const DAY_EN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+function monthName(i){ return (currentLang==='en'?MONTH_EN:MONTH_FR)[i]; }
 
 function renderCalendar(){
-  document.getElementById('cal-title').textContent=`${MONTH_FR[calM]} ${calY}`;
-  document.getElementById('cal-hdr').innerHTML=DAY_FR.map(d=>`<div class="cal-dh">${d}</div>`).join('');
+  const DAY = currentLang==='en'?DAY_EN:DAY_FR;
+  document.getElementById('cal-title').textContent=`${monthName(calM)} ${calY}`;
+  document.getElementById('cal-hdr').innerHTML=DAY.map(d=>`<div class="cal-dh">${d}</div>`).join('');
 
   const today=new Date().toISOString().slice(0,10);
   const dailyMap={};
@@ -4074,7 +4140,7 @@ function renderCalendar(){
     html+=`<div class="${cls}" onclick="calDayClick('${ds}')">
       <div class="cal-dn">${d}</div>
       ${hasTrade?`<div class="cal-pnl" style="color:${pnl>=0?'var(--green)':'var(--red)'}">${pnl>0?'+':''}${pnl.toFixed(1)}R</div>`:''}
-      ${hasTrade?`<div class="cal-cnt">${dt.length} trade${dt.length>1?'s':''}</div>`:''}
+      ${hasTrade?`<div class="cal-cnt">${dt.length} ${L('trade','trade')}${dt.length>1?'s':''}</div>`:''}
     </div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
@@ -4083,7 +4149,7 @@ function renderCalendar(){
   const mTs=trades.filter(isTradePris).filter(t=>{ const d=new Date(getTradeDate(t)); return d.getFullYear()===calY&&d.getMonth()===calM; });
   const ms=calcStats(mTs);
   document.getElementById('cal-kpi').innerHTML=`
-    <div class="kpi"><div class="kpi-label">Trades ce mois</div><div class="kpi-value">${ms.total}</div></div>
+    <div class="kpi"><div class="kpi-label">${L('Trades ce mois','Trades this month')}</div><div class="kpi-value">${ms.total}</div></div>
     <div class="kpi"><div class="kpi-label">Win Rate</div><div class="kpi-value ora">${ms.winRate.toFixed(0)}%</div></div>
     <div class="kpi"><div class="kpi-label">Total R</div><div class="kpi-value ${ms.totalR>=0?'pos':'neg'}">${ms.totalR>0?'+':''}${ms.totalR}R</div></div>
     <div class="kpi"><div class="kpi-label">Profit Factor</div><div class="kpi-value">${ms.pf}</div></div>
@@ -4099,7 +4165,7 @@ function calDayClick(ds){
   const [y,m,d]=ds.split('-');
   const totalR=list.reduce((s,t)=>s+(rrfNum(t)||0),0);
   document.getElementById('day-modal-title').innerHTML=
-    `${d}/${m}/${y} · ${list.length} trades <span style="color:${totalR>=0?'var(--green)':'var(--red)'};font-weight:600">${totalR>0?'+':''}${totalR.toFixed(1)}R</span>`;
+    `${d}/${m}/${y} · ${list.length} ${L('trades','trades')} <span style="color:${totalR>=0?'var(--green)':'var(--red)'};font-weight:600">${totalR>0?'+':''}${totalR.toFixed(1)}R</span>`;
   document.getElementById('day-modal-list').innerHTML=list.map(t=>{
     const r=rrfNum(t);
     const rTxt = r===null ? '—' : `${r>0?'+':''}${r}R`;
@@ -4108,7 +4174,7 @@ function calDayClick(ds){
       <div class="day-trade-emoji">${RESULT_EMOJI[t.result]||'•'}</div>
       <div class="day-trade-main">
         <div class="day-trade-pair">${escapeHtml(t.pair||'—')}</div>
-        <div class="day-trade-sub">${escapeHtml(t.result||'')}${t.ordre?' · '+escapeHtml(t.ordre):''}</div>
+        <div class="day-trade-sub">${escapeHtml(tVal(t.result)||'')}${t.ordre?' · '+escapeHtml(tVal(t.ordre)):''}</div>
       </div>
       <div class="day-trade-r" style="color:${rCol}">${rTxt}</div>
     </div>`;
@@ -4186,7 +4252,7 @@ function buildPanelHTML(t){
     ?'var(--blue)':'var(--orange)';
 
   const checkItems = CHECKLIST.length === 0
-    ? `<div style="color:var(--text3);font-size:.78rem;font-style:italic;padding:10px 0">Aucun élément de checklist. <a href="#" onclick="event.preventDefault();closePanel();showPage('settings',document.querySelector('[onclick*=\\'settings\\']'))" style="color:var(--orange);text-decoration:underline">Configure-la dans Réglages</a>.</div>`
+    ? `<div style="color:var(--text3);font-size:.78rem;font-style:italic;padding:10px 0">${L('Aucun élément de checklist.','No checklist items.')} <a href="#" onclick="event.preventDefault();closePanel();showPage('settings',document.querySelector('[onclick*=\\'settings\\']'))" style="color:var(--orange);text-decoration:underline">${L('Configure-la dans Réglages','Set it up in Settings')}</a>.</div>`
     : CHECKLIST.map((c,i)=>`
       <div class="check-item">
         <div class="check-box ${(t.checklist||[])[i]?'checked':''}" onclick="toggleCheck(${t.id},${i})">
@@ -4209,7 +4275,7 @@ function buildPanelHTML(t){
            <div style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);border-radius:6px;padding:2px 8px;font-size:.6rem;color:#fff;pointer-events:none">🔍 Zoom</div>`
         : `<div class="ss-slot-icon">${icon}</div>
            <div class="ss-slot-title">${label}</div>
-           <div class="ss-slot-label">Glisser une image ou <span style="color:var(--orange)">Ctrl+V</span></div>`
+           <div class="ss-slot-label">${L('Glisser une image ou','Drop an image or')} <span style="color:var(--orange)">Ctrl+V</span></div>`
       }
     </div>`;
   };
@@ -4220,58 +4286,58 @@ function buildPanelHTML(t){
     const list = (val && !opts.includes(val)) ? [val, ...opts] : opts;
     return `
     <select class="field-select" onchange="updateField(${t.id},'${key}',this.value)">
-      ${list.map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
+      ${list.map(o=>`<option value="${o}" ${o===val?'selected':''}>${tVal(o)}</option>`).join('')}
     </select>`;
   };
 
   return `
-    ${field(icoCalendar,'Actif',`<input class="field-input" value="${t.pair||''}" oninput="this.value=this.value.toUpperCase()" onchange="updateField(${t.id},'pair',this.value)">`)}
-    ${field(icoCalendar,'Date de création',`<input class="field-input" type="date" value="${t.date||''}" onchange="updatePanelDate(${t.id},this.value)">`)}
-    ${field(icoCalendar,'Date prise de position',`<input class="field-input" type="date" value="${getTradeDate(t)||''}" onchange="updatePriseDate(${t.id},this.value)"><div style="color:var(--text3);font-size:.68rem;margin-top:3px">Base de toutes les statistiques. Par défaut = date de création.</div>`)}
-    ${field(icoCalendar,'Prise de Position',`<button class="toggle ${t.prise?'on':''}" onclick="togglePrise(${t.id},this)"></button>`)}
+    ${field(icoCalendar,L('Actif','Asset'),`<input class="field-input" value="${t.pair||''}" oninput="this.value=this.value.toUpperCase()" onchange="updateField(${t.id},'pair',this.value)">`)}
+    ${field(icoCalendar,L('Date de création','Creation date'),`<input class="field-input" type="date" value="${t.date||''}" onchange="updatePanelDate(${t.id},this.value)">`)}
+    ${field(icoCalendar,L('Date prise de position','Entry date'),`<input class="field-input" type="date" value="${getTradeDate(t)||''}" onchange="updatePriseDate(${t.id},this.value)"><div style="color:var(--text3);font-size:.68rem;margin-top:3px">${L('Base de toutes les statistiques. Par défaut = date de création.','Basis of all statistics. Defaults to the creation date.')}</div>`)}
+    ${field(icoCalendar,L('Prise de Position','Position taken'),`<button class="toggle ${t.prise?'on':''}" onclick="togglePrise(${t.id},this)"></button>`)}
     ${field(icoTF,'Time-Frame',tfChips(t))}
-    ${field(icoOrdre,'Type d\'Ordre',sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
+    ${field(icoOrdre,L("Type d'Ordre",'Order Type'),sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
     ${field(icoRisk,'Risk',sel(['0.25%','0.33%','0.50%','0.66%','1.00%','1.50%','2.00%','2.50%'],t.risk,'risk'))}
-    ${field(icoRisk,'R/R Initial',`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="ex: 3.2" onchange="updateField(${t.id},'rri',+this.value)">`)}
-    ${field(icoRisk,'Résultat',sel(RESULT_OPTIONS,t.result,'result'))}
-    ${field(icoRisk,'R/R Final',`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="ex: -1 ou 3.2" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
-    ${field(icoJour,'Jour',`<span style="color:var(--text2);font-size:.82rem">${getTradeJour(t)||'—'}</span>`)}
-    ${field(icoType,'Type de Trade',sel(TYPE_OPTIONS,t.type,'type'))}
-    ${field(icoTend,'Tendance',sel(TEND_OPTIONS,t.tend,'tend'))}
-    ${field('👥','Position vs Retails',sel(RETAILS_OPTIONS,t.retails||'—','retails'))}
+    ${field(icoRisk,L('R/R Initial','Initial R/R'),`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="${L('ex: 3.2','e.g. 3.2')}" onchange="updateField(${t.id},'rri',+this.value)">`)}
+    ${field(icoRisk,L('Résultat','Result'),sel(RESULT_OPTIONS,t.result,'result'))}
+    ${field(icoRisk,L('R/R Final','Final R/R'),`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="${L('ex: -1 ou 3.2','e.g. -1 or 3.2')}" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
+    ${field(icoJour,L('Jour','Day'),`<span style="color:var(--text2);font-size:.82rem">${tVal(getTradeJour(t))||'—'}</span>`)}
+    ${field(icoType,L('Type de Trade','Trade Type'),sel(TYPE_OPTIONS,t.type,'type'))}
+    ${field(icoTend,L('Tendance','Trend'),sel(TEND_OPTIONS,t.tend,'tend'))}
+    ${field('👥',L('Position vs Retails','Position vs Retail'),sel(RETAILS_OPTIONS,t.retails||'—','retails'))}
     ${field(icoHold,'Holding Period',sel(['— ',...HOLD_OPTIONS],t.hold||'— ','hold'))}
-    ${field(icoErr,'Erreurs',`<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px">
-      ${ERRORS.map(e=>`<button class="emoji-btn ${(t.errs||[]).includes(e)?'selected':''}" style="font-size:.75rem;padding:4px 10px" onclick="toggleErr(${t.id},'${e}',this)">${e}</button>`).join('')}
+    ${field(icoErr,L('Erreurs','Mistakes'),`<div class="emoji-btn-group" style="flex-wrap:wrap;gap:6px">
+      ${ERRORS.map(e=>`<button class="emoji-btn ${(t.errs||[]).includes(e)?'selected':''}" style="font-size:.75rem;padding:4px 10px" onclick="toggleErr(${t.id},'${e}',this)">${tVal(e)}</button>`).join('')}
     </div>`)}
     <div id="panel-manage-section">${t.result==='En cours'
-      ? field('🎯','Trade Management',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
+      ? field('🎯','Trade Management',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">${L('Disponible une fois le trade clôturé','Available once the trade is closed')}</div>`)
       : field('🎯','Trade Management',`
       <div class="emoji-btn-group">
         <button class="emoji-btn ${t.manageTrade==='👍'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👍',this)">👍</button>
         <button class="emoji-btn ${t.manageTrade==='👎'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👎',this)">👎</button>
       </div>`)}</div>
     <div id="panel-bontrade-section">${t.result==='En cours'
-      ? field('✅','Bon Trade?',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
-      : field('✅','Bon Trade?',`
+      ? field('✅',L('Bon Trade?','Good Trade?'),`<div style="color:var(--text3);font-size:.78rem;font-style:italic">${L('Disponible une fois le trade clôturé','Available once the trade is closed')}</div>`)
+      : field('✅',L('Bon Trade?','Good Trade?'),`
       <div class="emoji-btn-group">
         <button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',true,this)">✅</button>
         <button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',false,this)">❌</button>
       </div>`)}</div>
-    <div class="panel-section-title">Raisons & Confluences</div>
+    <div class="panel-section-title">${L('Raisons & Confluences','Reasons & Confluences')}</div>
     ${confluenceChipsHTML(t.id)}
-    <textarea id="panel-confluences" class="field-textarea" placeholder="Décris tes confluences, la raison du trade…" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
-    ${photoSectionHTML(t,'confluences','🖼️ Images des raisons','(captures fondamentales / analyses)')}
-    <div class="panel-section-title">État Psychologique</div>
+    <textarea id="panel-confluences" class="field-textarea" placeholder="${L('Décris tes confluences, la raison du trade…','Describe your confluences, the reason for the trade…')}" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
+    ${photoSectionHTML(t,'confluences',L('🖼️ Images des raisons','🖼️ Reason images'),L('(captures fondamentales / analyses)','(fundamental captures / analysis)'))}
+    <div class="panel-section-title">${L('État Psychologique','Psychological State')}</div>
     ${emotionChipsHTML(t)}
-    <textarea class="field-textarea" style="margin-top:8px" placeholder="Comment tu te sentais avant / pendant le trade…" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
+    <textarea class="field-textarea" style="margin-top:8px" placeholder="${L('Comment tu te sentais avant / pendant le trade…','How you felt before / during the trade…')}" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
     <div class="panel-section-title">Checklist</div>
     <div class="checklist-wrap">${checkItems}</div>
     ${customFieldsHTML(t)}
-    ${photoSectionHTML(t,'exec','📸 Exécution','(toutes tes prises de position)',true)}
-    ${photoSectionHTML(t,'addin','➕ Add-in','(une 2ᵉ position prise dans la première)',true)}
-    ${photoSectionHTML(t,'mgmt','🔄 Management','(suis ton raisonnement étape par étape)',true)}
-    ${photoSectionHTML(t,'close','🏁 Clôture','(le moment où tu sors)',true)}
-    ${photoSectionHTML(t,'after','📈 Après position','(où le prix est allé après ta sortie)',true)}
+    ${photoSectionHTML(t,'exec',L('📸 Exécution','📸 Execution'),L('(toutes tes prises de position)','(all your entries)'),true)}
+    ${photoSectionHTML(t,'addin','➕ Add-in',L('(une 2ᵉ position prise dans la première)','(a 2nd position taken within the first)'),true)}
+    ${photoSectionHTML(t,'mgmt','🔄 Management',L('(suis ton raisonnement étape par étape)','(follow your reasoning step by step)'),true)}
+    ${photoSectionHTML(t,'close',L('🏁 Clôture','🏁 Close'),L('(le moment où tu sors)','(the moment you exit)'),true)}
+    ${photoSectionHTML(t,'after',L('📈 Après position','📈 After position'),L('(où le prix est allé après ta sortie)','(where price went after your exit)'),true)}
     <div style="height:28px"></div>
   `;
 }
@@ -4280,9 +4346,8 @@ function updatePanelDate(id,val){
   const t=trades.find(x=>x.id===id); if(!t) return;
   t.date=val; t.jour=JOURS[new Date(val).getDay()];
   dbUpsert(t);
-  // refresh jour display
-  const panel=document.getElementById('panel-body');
-  if(panel){ const spans=[...panel.querySelectorAll('.field-row')]; spans.forEach(row=>{ if(row.querySelector('.field-label')&&row.querySelector('.field-label').textContent==='Jour') row.querySelector('.field-value span').textContent=t.jour||'—'; }); }
+  // refresh jour display (rebuild panel — robuste quelle que soit la langue du libellé)
+  openPanel(id);
 }
 // Met à jour la date de prise de position (extra_data["Date Prise de Position"], format FR).
 // Vide ou égale à la date de création → on retire l'override (la date suit alors la création).
@@ -4301,11 +4366,11 @@ function updateField(id,field,val){
     const ms=document.getElementById('panel-manage-section');
     const bs=document.getElementById('panel-bontrade-section');
     if(ms) ms.innerHTML = val==='En cours'
-      ? field_('🎯','Trade Management',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
+      ? field_('🎯','Trade Management',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">${L('Disponible une fois le trade clôturé','Available once the trade is closed')}</div>`)
       : field_('🎯','Trade Management',`<div class="emoji-btn-group"><button class="emoji-btn ${t.manageTrade==='👍'?'selected':''}" onclick="setEmoji(${id},'manageTrade','👍',this)">👍</button><button class="emoji-btn ${t.manageTrade==='👎'?'selected':''}" onclick="setEmoji(${id},'manageTrade','👎',this)">👎</button></div>`);
     if(bs) bs.innerHTML = val==='En cours'
-      ? field_('✅','Bon Trade?',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">Disponible une fois le trade clôturé</div>`)
-      : field_('✅','Bon Trade?',`<div class="emoji-btn-group"><button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',true,this)">✅</button><button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',false,this)">❌</button></div>`);
+      ? field_('✅',L('Bon Trade?','Good Trade?'),`<div style="color:var(--text3);font-size:.78rem;font-style:italic">${L('Disponible une fois le trade clôturé','Available once the trade is closed')}</div>`)
+      : field_('✅',L('Bon Trade?','Good Trade?'),`<div class="emoji-btn-group"><button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',true,this)">✅</button><button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',false,this)">❌</button></div>`);
     document.getElementById('p-result-chip').innerHTML=resultChip(val);
   }
 }
@@ -4350,15 +4415,15 @@ function customFieldsHTML(t){
         <div class="custom-field-value" contenteditable="true"
              oninput="updateCustomField(${t.id}, ${JSON.stringify(k).replace(/"/g,'&quot;')}, this.textContent)"
              onblur="this.scrollLeft=0">${safeVal}</div>
-        <button class="custom-field-del" onclick="delCustomField(${t.id}, ${JSON.stringify(k).replace(/"/g,'&quot;')})" title="Supprimer ce champ">✕</button>
+        <button class="custom-field-del" onclick="delCustomField(${t.id}, ${JSON.stringify(k).replace(/"/g,'&quot;')})" title="${L('Supprimer ce champ','Delete this field')}">✕</button>
       </div>`;
   }).join('');
 
   return `
-    <div class="panel-section-title">Informations supplémentaires <span style="color:var(--text3);font-weight:400;font-size:.7rem">(${keys.length} champ${keys.length>1?'s':''})</span></div>
+    <div class="panel-section-title">${L('Informations supplémentaires','Additional information')} <span style="color:var(--text3);font-weight:400;font-size:.7rem">(${keys.length} ${L('champ'+(keys.length>1?'s':''),'field'+(keys.length>1?'s':''))})</span></div>
     <div class="custom-fields-wrap">
       ${rows}
-      <button class="custom-field-add" onclick="addCustomField(${t.id})">＋ Ajouter un champ</button>
+      <button class="custom-field-add" onclick="addCustomField(${t.id})">${L('＋ Ajouter un champ','＋ Add a field')}</button>
     </div>`;
 }
 
@@ -4373,18 +4438,18 @@ function updateCustomField(tradeId, key, value){
 }
 function delCustomField(tradeId, key){
   const t = trades.find(x => x.id === tradeId); if(!t) return;
-  if(!confirm(`Supprimer le champ "${key}" de ce trade ?`)) return;
+  if(!confirm(L(`Supprimer le champ "${key}" de ce trade ?`,`Delete the field "${key}" from this trade?`))) return;
   if(t.extra_data) delete t.extra_data[key];
   dbUpsert(t);
   openPanel(tradeId);
 }
 function addCustomField(tradeId){
   const t = trades.find(x => x.id === tradeId); if(!t) return;
-  const name = prompt('Nom du champ :');
+  const name = prompt(L('Nom du champ :','Field name:'));
   if(!name || !name.trim()) return;
   if(!t.extra_data) t.extra_data = {};
-  if(t.extra_data[name.trim()] != null){ alert('Ce champ existe déjà'); return; }
-  const val = prompt('Valeur :', '');
+  if(t.extra_data[name.trim()] != null){ alert(L('Ce champ existe déjà','This field already exists')); return; }
+  const val = prompt(L('Valeur :','Value:'), '');
   if(val === null) return;
   t.extra_data[name.trim()] = val;
   dbUpsert(t);
@@ -4397,7 +4462,7 @@ function photoSectionHTML(t, key, title, hint, withNote){
   const label = title.replace(/^[^\s]+\s/,'');
   const noteHtml = withNote ? `
     <textarea class="field-textarea" style="margin-top:8px;min-height:56px"
-      placeholder="Notes sur ${escapeHtml(label)}…"
+      placeholder="${L('Notes sur','Notes on')} ${escapeHtml(label)}…"
       onchange="updateSectionNote(${t.id},'${key}',this.value)">${escapeHtml(sectionNote(t,key))}</textarea>` : '';
   return `
     <div class="panel-section-title" style="margin-top:18px;display:flex;align-items:center;justify-content:space-between">
@@ -4430,7 +4495,7 @@ function photoGallery(t, key, label){
       ondrop="event.preventDefault();this.classList.remove('drag-over');handlePhotoDrop(event,${t.id},'${key}')"
       onclick="event.stopPropagation();setPasteTarget('${key}')">
       <div style="font-size:1.4rem">＋</div>
-      <div style="font-size:.62rem;text-align:center;padding:0 6px;line-height:1.3">Glisser ou <span style="color:var(--orange)">Ctrl+V</span></div>
+      <div style="font-size:.62rem;text-align:center;padding:0 6px;line-height:1.3">${L('Glisser ou','Drop or')} <span style="color:var(--orange)">Ctrl+V</span></div>
     </div>`;
   return items + add;
 }
@@ -4467,7 +4532,7 @@ async function handlePhotoDrop(e, id, key){
   const dataUrl = await resolveDropToDataUrl(e);
   if(!dataUrl) return;
   addPhoto(id, key, dataUrl);
-  showToast('📸 Photo ajoutée');
+  showToast(L('📸 Photo ajoutée','📸 Photo added'));
 }
 // Backwards-compat for any remaining callers
 function addMgmtPhoto(id, dataUrl){ addPhoto(id, 'mgmt', dataUrl); }
@@ -4476,7 +4541,7 @@ async function handleDropOnSlot(e,id,key){
   const dataUrl = await resolveDropToDataUrl(e);
   if(!dataUrl) return;
   const t=trades.find(x=>x.id===id); if(!t) return;
-  t.screenshots[key]=dataUrl; dbUpsert(t); openPanel(id); showToast('📸 Image ajoutée');
+  t.screenshots[key]=dataUrl; dbUpsert(t); openPanel(id); showToast(L('📸 Image ajoutée','📸 Image added'));
 }
 function saveImgToSlot(id,key,dataUrl){
   const t=trades.find(x=>x.id===id); if(!t) return;
@@ -4523,7 +4588,7 @@ function setPasteTarget(key){
   document.querySelectorAll('.ss-mgmt-add[data-key]').forEach(el=>{
     el.classList.toggle('pt-active', el.getAttribute('data-key') === key);
   });
-  showToast('Colle ici : Ctrl+V');
+  showToast(L('Colle ici : Ctrl+V','Paste here: Ctrl+V'));
 }
 
 // Show a floating paste hint when panel is open
@@ -4572,7 +4637,7 @@ async function resolveDropToDataUrl(e){
     return (blob && blob.type && blob.type.startsWith('image/')) ? await blobToDataURL(blob) : url;
   }catch(err){
     // CORS / réseau bloqué (fréquent avec Notion) → on garde le lien tel quel.
-    showToast('⚠️ Image liée depuis le web : le lien peut expirer. Pour une copie permanente, télécharge l\'image puis glisse le fichier.', true);
+    showToast(L('⚠️ Image liée depuis le web : le lien peut expirer. Pour une copie permanente, télécharge l\'image puis glisse le fichier.','⚠️ Image linked from the web: the link may expire. For a permanent copy, download the image then drag the file.'), true);
     return url;
   }
 }
@@ -4607,7 +4672,7 @@ document.addEventListener('paste', async function(e){
     }catch(err){
       // CORS / réseau bloqué (fréquent avec Notion) → on enregistre le lien tel quel.
       dataUrl = url;
-      showToast('⚠️ Image liée depuis Notion : le lien peut expirer. Pour une copie permanente, ouvre l\'image dans Notion puis "Copier l\'image".', true);
+      showToast(L('⚠️ Image liée depuis Notion : le lien peut expirer. Pour une copie permanente, ouvre l\'image dans Notion puis "Copier l\'image".','⚠️ Image linked from Notion: the link may expire. For a permanent copy, open the image in Notion then "Copy image".'), true);
     }
   }
   if(!dataUrl) return;
@@ -4615,13 +4680,13 @@ document.addEventListener('paste', async function(e){
   if(activeTrade){
     const key = pasteTargetKey || 'exec';
     addPhoto(activeTrade.id, key, dataUrl);
-    const names={exec:'Exécution',addin:'Add-in',mgmt:'Management',close:'Clôture',after:'Après position',confluences:'Images des raisons'};
-    showToast('📸 Image ajoutée dans "' + (names[key]||key) + '"');
+    const names=currentLang==='en'?{exec:'Execution',addin:'Add-in',mgmt:'Management',close:'Close',after:'After position',confluences:'Reason images'}:{exec:'Exécution',addin:'Add-in',mgmt:'Management',close:'Clôture',after:'Après position',confluences:'Images des raisons'};
+    showToast(L('📸 Image ajoutée dans "','📸 Image added to "') + (names[key]||key) + '"');
     return;
   }
   if(modalOpen){
     applyModalScreenshot(dataUrl);
-    showToast('📸 Image collée');
+    showToast(L('📸 Image collée','📸 Image pasted'));
   }
 });
 
@@ -4656,10 +4721,10 @@ function openAddModal(){
   if(cfChips) cfChips.innerHTML = confluenceChipsHTML('modal');
   // Populate errors chips
   const errsGroup = document.getElementById('m-errs-group');
-  errsGroup.innerHTML = ERRORS.map(e=>`<button type="button" class="emoji-btn" data-val="${e}" style="font-size:.75rem;padding:4px 10px" onclick="toggleModalErr(this)">${e}</button>`).join('');
+  errsGroup.innerHTML = ERRORS.map(e=>`<button type="button" class="emoji-btn" data-val="${e}" style="font-size:.75rem;padding:4px 10px" onclick="toggleModalErr(this)">${tVal(e)}</button>`).join('');
   // Populate emotions chips
   const emoGroup = document.getElementById('m-emotions-group');
-  if(emoGroup) emoGroup.innerHTML = EMOTIONS.map(e=>`<button type="button" class="emoji-btn" data-val="${e.label}" style="font-size:.74rem;padding:4px 10px" onclick="toggleModalErr(this)">${e.emoji} ${e.label}</button>`).join('');
+  if(emoGroup) emoGroup.innerHTML = EMOTIONS.map(e=>`<button type="button" class="emoji-btn" data-val="${e.label}" style="font-size:.74rem;padding:4px 10px" onclick="toggleModalErr(this)">${e.emoji} ${tVal(e.label)}</button>`).join('');
   modalExecScreenshot = null;
   const slot = document.getElementById('m-ss-slot');
   slot.querySelectorAll('img').forEach(i=>i.remove());
@@ -4685,7 +4750,7 @@ async function handleModalDrop(e){
   const dataUrl = await resolveDropToDataUrl(e);
   if(!dataUrl) return;
   applyModalScreenshot(dataUrl);
-  showToast('📸 Image ajoutée');
+  showToast(L('📸 Image ajoutée','📸 Image added'));
 }
 function applyModalScreenshot(dataUrl){
   modalExecScreenshot = dataUrl;
@@ -4778,15 +4843,15 @@ document.getElementById('addModal').addEventListener('click',e=>{ if(e.target===
 //  PERFORMANCE PAGE
 // ───────────────────────────────────────────
 const PERF_DIMS = [
-  { key:'tf',    label:'Time-Frame',     vals: null, get: t=>t.tf, getMulti: t=>dimSplit(t.tf).filter(v=>v!==DIM_EMPTY) },
-  { key:'pair',  label:'Devise',         vals: null, get: t=>t.pair }, // null = compute from data
-  { key:'ordre', label:'Type d\'Ordre',  vals: ['MARKET BUY','MARKET SELL','BUY LIMIT','SELL LIMIT','BUY STOP','SELL STOP'], get: t=>t.ordre },
-  { key:'tend',  label:'Tendance',       vals: TEND_OPTIONS, get: t=>t.tend },
-  { key:'retails',label:'Position vs Retails', vals:['Avec les Retails','Contre les Retails'], get:t=>t.retails },
-  { key:'hold',  label:'Holding',        vals: HOLD_OPTIONS, get: t=>t.hold },
-  { key:'jour',  label:'Jour',           vals: ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'], get: t=>getTradeJour(t) },
-  { key:'result',label:'Résultat',       vals: RESULT_OPTIONS, get: t=>t.result },
-  { key:'risk',  label:'Risk',           vals: ['0.25%','0.33%','0.50%','0.66%','1.00%','1.50%','2.00%','2.50%'], get: t=>t.risk },
+  { key:'tf',    label:'Time-Frame',     labelEn:'Time-Frame', vals: null, get: t=>t.tf, getMulti: t=>dimSplit(t.tf).filter(v=>v!==DIM_EMPTY) },
+  { key:'pair',  label:'Devise',         labelEn:'Pair',       vals: null, get: t=>t.pair }, // null = compute from data
+  { key:'ordre', label:'Type d\'Ordre',  labelEn:'Order Type', vals: ['MARKET BUY','MARKET SELL','BUY LIMIT','SELL LIMIT','BUY STOP','SELL STOP'], get: t=>t.ordre },
+  { key:'tend',  label:'Tendance',       labelEn:'Trend',      vals: TEND_OPTIONS, get: t=>t.tend },
+  { key:'retails',label:'Position vs Retails', labelEn:'Position vs Retail', vals:['Avec les Retails','Contre les Retails'], get:t=>t.retails },
+  { key:'hold',  label:'Holding',        labelEn:'Holding',    vals: HOLD_OPTIONS, get: t=>t.hold },
+  { key:'jour',  label:'Jour',           labelEn:'Day',        vals: ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'], get: t=>getTradeJour(t) },
+  { key:'result',label:'Résultat',       labelEn:'Result',     vals: RESULT_OPTIONS, get: t=>t.result },
+  { key:'risk',  label:'Risk',           labelEn:'Risk',       vals: ['0.25%','0.33%','0.50%','0.66%','1.00%','1.50%','2.00%','2.50%'], get: t=>t.risk },
 ];
 
 // active filter state: { dimKey: Set(vals) }
@@ -4830,9 +4895,9 @@ function renderPerfFilters(){
     let vals = d.vals || [...new Set(ts.flatMap(t=>perfDimVals(d,t)).filter(Boolean))].sort();
     if(!vals.length) return '';
     const chips=vals.map(v=>`
-      <span class="pchip ${perfFilters[d.key].has(v)?'on':''}" onclick="togglePerfFilter('${d.key}','${v}')">${v}</span>
+      <span class="pchip ${perfFilters[d.key].has(v)?'on':''}" onclick="togglePerfFilter('${d.key}','${v}')">${tVal(v)}</span>
     `).join('');
-    return `<div class="perf-filter-group"><label>${d.label}</label><div class="perf-chips">${chips}</div></div>`;
+    return `<div class="perf-filter-group"><label>${currentLang==='en'?d.labelEn:d.label}</label><div class="perf-chips">${chips}</div></div>`;
   }).join('');
 }
 
@@ -4851,7 +4916,7 @@ function bdRow(dim, ts, val){
   const wrColor=wr>=60?'var(--green)':wr>=45?'var(--orange)':'var(--red)';
   const fillColor=wr>=60?'#30d158':wr>=45?'#ff9f0a':'#ff453a';
   return `<tr>
-    <td style="font-weight:600">${val}</td>
+    <td style="font-weight:600">${tVal(val)}</td>
     <td>${sub.length}</td>
     <td>
       <div class="wr-bar-wrap">
@@ -4896,10 +4961,10 @@ function renderMonthly(){
   }
   const monSel = document.getElementById('month-month-select');
   if(monSel){
-    monSel.innerHTML = MONTH_NAMES.map((m,i)=>`<option value="${i}" ${i===monthM?'selected':''}>${m}</option>`).join('');
+    monSel.innerHTML = MONTH_NAMES.map((m,i)=>`<option value="${i}" ${i===monthM?'selected':''}>${monthName(i)}</option>`).join('');
   }
-  document.getElementById('month-title').textContent = `${MONTH_NAMES[monthM]} ${monthY}`;
-  document.getElementById('month-sub').textContent = `Performance mensuelle`;
+  document.getElementById('month-title').textContent = `${monthName(monthM)} ${monthY}`;
+  document.getElementById('month-sub').textContent = L('Performance mensuelle','Monthly performance');
 
   // Filter trades to this month
   const prefix = `${monthY}-${String(monthM+1).padStart(2,'0')}-`;
@@ -4948,7 +5013,7 @@ function renderPeriodBody(ts, P, C, emptyId){
   const totalEl = $(P+'totalR');
   totalEl.textContent = (totalR>=0?'+':'') + totalR + 'R';
   totalEl.className = 'month-hero-value ' + (totalR>=0?'pos':'neg');
-  $(P+'sub').textContent = `${closed.length} trade${closed.length>1?'s':''} clôturé${closed.length>1?'s':''} · ${ts.length - closed.length} en cours`;
+  $(P+'sub').textContent = L(`${closed.length} trade${closed.length>1?'s':''} clôturé${closed.length>1?'s':''} · ${ts.length - closed.length} en cours`, `${closed.length} closed trade${closed.length>1?'s':''} · ${ts.length - closed.length} open`);
   $(P+'total').textContent = ts.length;
   $(P+'wr').textContent = wr.toFixed(0) + '%';
   $(P+'pf').textContent = isFinite(pf) ? pf : '∞';
@@ -5003,7 +5068,7 @@ function renderPeriodBody(ts, P, C, emptyId){
       pointBorderColor: '#000', pointBorderWidth: 1.5, pointRadius: 3.5, pointHoverRadius: 5.5,
     }]},
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R cumulés` } } },
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}` } } },
       scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:fmtRTick}} },
       animation:{duration:600,easing:'easeOutCubic'}
     }
@@ -5065,7 +5130,7 @@ function renderQuarterly(){
   if(qSel) qSel.innerHTML = [0,1,2,3].map(i=>`<option value="${i}" ${i===quartQ?'selected':''}>Q${i+1}</option>`).join('');
   const mo = QUARTER_MONTHS[quartQ];
   document.getElementById('quarter-title').textContent = `Q${quartQ+1} ${quartY}`;
-  document.getElementById('quarter-sub').textContent = `${MONTH_NAMES[mo[0]]} – ${MONTH_NAMES[mo[2]]} ${quartY}`;
+  document.getElementById('quarter-sub').textContent = `${monthName(mo[0])} – ${monthName(mo[2])} ${quartY}`;
 
   // Filtre : trades dont la date tombe dans le trimestre sélectionné
   const ts = trades
@@ -5084,10 +5149,10 @@ function renderPerf(){
   // KPIs
   const kpiEl=document.getElementById('perf-kpi');
   if(kpiEl) kpiEl.innerHTML=`
-    <div class="kpi"><div class="kpi-label">Trades filtrés</div><div class="kpi-value">${s.total}</div><div class="kpi-sub">${s.wins}W · ${s.losses}L</div></div>
+    <div class="kpi"><div class="kpi-label">${L('Trades filtrés','Filtered trades')}</div><div class="kpi-value">${s.total}</div><div class="kpi-sub">${s.wins}W · ${s.losses}L</div></div>
     <div class="kpi"><div class="kpi-label">Win Rate</div><div class="kpi-value ora">${s.winRate.toFixed(1)}%</div></div>
     <div class="kpi"><div class="kpi-label">Total R</div><div class="kpi-value ${s.totalR>=0?'pos':'neg'}">${s.totalR>0?'+':''}${s.totalR}R</div></div>
-    <div class="kpi"><div class="kpi-label">R moyen</div><div class="kpi-value ${s.avgR>=0?'pos':'neg'}">${s.avgR>0?'+':''}${s.avgR}R</div></div>
+    <div class="kpi"><div class="kpi-label">${L('R moyen','Avg R')}</div><div class="kpi-value ${s.avgR>=0?'pos':'neg'}">${s.avgR>0?'+':''}${s.avgR}R</div></div>
     <div class="kpi"><div class="kpi-label">Profit Factor</div><div class="kpi-value ora">${s.pf}</div></div>
     <div class="kpi"><div class="kpi-label">Avg Win</div><div class="kpi-value pos">+${s.avgWin}R</div></div>
     <div class="kpi"><div class="kpi-label">Avg Loss</div><div class="kpi-value neg">-${s.avgLoss}R</div></div>
@@ -5117,7 +5182,7 @@ function renderPerf(){
         const avgR=v.total?+(v.r/v.total).toFixed(2):0;
         const lrColor=lossRate>=60?'var(--red)':lossRate>=30?'var(--orange)':'var(--green)';
         return `<tr>
-          <td style="font-weight:600">${name}</td>
+          <td style="font-weight:600">${tVal(name)}</td>
           <td>${v.total}</td>
           <td style="color:${lrColor};font-weight:600">${lossRate}%</td>
           <td class="${rClass(avgR)}">${avgR>0?'+':''}${avgR}R</td>
@@ -5127,12 +5192,12 @@ function renderPerf(){
     if(!rows) return '';
     return `<div class="breakdown-card" style="margin-bottom:16px">
       <div class="breakdown-header">
-        <span class="breakdown-title">🎯 Patterns d'Erreurs</span>
-        <span class="breakdown-count">impact sur tes pertes</span>
+        <span class="breakdown-title">${L('🎯 Patterns d\'Erreurs','🎯 Error Patterns')}</span>
+        <span class="breakdown-count">${L('impact sur tes pertes','impact on your losses')}</span>
       </div>
       <div style="overflow-x:auto">
         <table class="bd-table">
-          <thead><tr><th>Erreur</th><th>Occurrences</th><th>Taux de Perte</th><th>Avg R</th><th>Impact R Total</th></tr></thead>
+          <thead><tr><th>${L('Erreur','Error')}</th><th>${L('Occurrences','Occurrences')}</th><th>${L('Taux de Perte','Loss Rate')}</th><th>Avg R</th><th>${L('Impact R Total','Total R Impact')}</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
@@ -5141,10 +5206,10 @@ function renderPerf(){
 
   const SHOW_DIMS=[
     {key:'tf',label:'Time-Frame'},
-    {key:'pair',label:'Devise / Actif'},
-    {key:'ordre',label:'Type d\'Ordre'},
-    {key:'tend',label:'Tendance'},
-    {key:'jour',label:'Jour de la Semaine'},
+    {key:'pair',label:L('Devise / Actif','Pair / Asset')},
+    {key:'ordre',label:L('Type d\'Ordre','Order Type')},
+    {key:'tend',label:L('Tendance','Trend')},
+    {key:'jour',label:L('Jour de la Semaine','Day of Week')},
     {key:'hold',label:'Holding Period'},
     {key:'risk',label:'Risk %'},
   ];
@@ -5166,13 +5231,13 @@ function renderPerf(){
       <div class="breakdown-card">
         <div class="breakdown-header">
           <span class="breakdown-title">${label}</span>
-          <span class="breakdown-count">${sortedVals.length} catégories · ${ts.length} trades</span>
+          <span class="breakdown-count">${sortedVals.length} ${L('catégories','categories')} · ${ts.length} trades</span>
         </div>
         <div style="overflow-x:auto">
           <table class="bd-table">
             <thead><tr>
               <th>${label}</th><th>Trades</th><th>Win Rate</th><th>W/L</th>
-              <th>Total R</th><th>Avg R</th><th>PF</th><th>Meilleur</th><th>Pire</th>
+              <th>Total R</th><th>Avg R</th><th>PF</th><th>${L('Meilleur','Best')}</th><th>${L('Pire','Worst')}</th>
             </tr></thead>
             <tbody>${sortedRows.join('')}</tbody>
           </table>
@@ -5202,9 +5267,9 @@ function renderInsights(){
   const barsEl = document.getElementById('discipline-bars');
   if(barsEl){
     const comp=[
-      {label:'Checklist remplie', val:disc.checklist},
-      {label:'Trades sans erreur', val:disc.errorFree},
-      {label:'Émotions maîtrisées', val:disc.emotion},
+      {label:L('Checklist remplie','Checklist completed'), val:disc.checklist},
+      {label:L('Trades sans erreur','Error-free trades'), val:disc.errorFree},
+      {label:L('Émotions maîtrisées','Emotions under control'), val:disc.emotion},
     ];
     barsEl.innerHTML = comp.map(c=>{
       const v = c.val;
@@ -5238,13 +5303,13 @@ function renderInsights(){
     ch['hold-chart'] = new Chart(document.getElementById('hold-chart'),{
       type:'bar',
       data:{ labels:holdOrder, datasets:[{ data:avgs, backgroundColor:avgs.map(v=>v>=0?'rgba(48,209,88,.8)':'rgba(255,69,58,.8)'), borderRadius:4 }] },
-      options: chartDefaults({ responsive:true, animation:{duration:400}, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R moyen`}}} })
+      options: chartDefaults({ responsive:true, animation:{duration:400}, plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('moyen','avg')}`}}} })
     });
   }
   const holdTableEl = document.getElementById('hold-table');
   if(holdTableEl){
-    if(!holdOrder.length){ holdTableEl.innerHTML = `<div class="ins-empty">Renseigne la durée de détention (Holding Period) de tes trades pour activer cette analyse.</div>`; }
-    else holdTableEl.innerHTML = `<table class="bd-table" style="margin-top:12px"><thead><tr><th>Durée</th><th>Trades</th><th>W/L</th><th>Avg R</th><th>Total R</th></tr></thead><tbody>${
+    if(!holdOrder.length){ holdTableEl.innerHTML = `<div class="ins-empty">${L('Renseigne la durée de détention (Holding Period) de tes trades pour activer cette analyse.','Fill in the Holding Period of your trades to enable this analysis.')}</div>`; }
+    else holdTableEl.innerHTML = `<table class="bd-table" style="margin-top:12px"><thead><tr><th>${L('Durée','Duration')}</th><th>Trades</th><th>W/L</th><th>Avg R</th><th>Total R</th></tr></thead><tbody>${
       holdOrder.map(h=>{ const v=holdMap[h]; const avg=+(v.r/v.n).toFixed(2); return `<tr><td style="font-weight:600">${h}</td><td>${v.n}</td><td>${v.w}/${v.l}</td><td class="${rClass(avg)}">${avg>0?'+':''}${avg}R</td><td class="${rClass(v.r)}">${v.r>0?'+':''}${+v.r.toFixed(2)}R</td></tr>`; }).join('')
     }</tbody></table>`;
   }
@@ -5254,9 +5319,9 @@ function renderInsights(){
   const emoKeys = Object.keys(emoMap).sort((a,b)=>emoMap[b].r-emoMap[a].r);
   const emoEl = document.getElementById('emotion-table');
   if(emoEl){
-    if(!emoKeys.length){ emoEl.innerHTML = `<div class="ins-empty">Tague l'émotion de tes trades (dans le panneau ou à la création) pour découvrir comment ton mental impacte tes résultats.</div>`; }
-    else emoEl.innerHTML = `<table class="bd-table" style="margin-top:12px"><thead><tr><th>Émotion</th><th>Trades</th><th>W/L</th><th>Avg R</th><th>Total R</th></tr></thead><tbody>${
-      emoKeys.map(k=>{ const v=emoMap[k]; const e=EMOTION_BY_LABEL[k]; const avg=+(v.r/v.n).toFixed(2); return `<tr><td style="font-weight:600">${e?e.emoji+' ':''}${k}</td><td>${v.n}</td><td>${v.w}/${v.l}</td><td class="${rClass(avg)}">${avg>0?'+':''}${avg}R</td><td class="${rClass(v.r)}">${v.r>0?'+':''}${+v.r.toFixed(2)}R</td></tr>`; }).join('')
+    if(!emoKeys.length){ emoEl.innerHTML = `<div class="ins-empty">${L("Tague l'émotion de tes trades (dans le panneau ou à la création) pour découvrir comment ton mental impacte tes résultats.","Tag the emotion of your trades (in the panel or at creation) to discover how your mindset impacts your results.")}</div>`; }
+    else emoEl.innerHTML = `<table class="bd-table" style="margin-top:12px"><thead><tr><th>${L('Émotion','Emotion')}</th><th>Trades</th><th>W/L</th><th>Avg R</th><th>Total R</th></tr></thead><tbody>${
+      emoKeys.map(k=>{ const v=emoMap[k]; const e=EMOTION_BY_LABEL[k]; const avg=+(v.r/v.n).toFixed(2); return `<tr><td style="font-weight:600">${e?e.emoji+' ':''}${tVal(k)}</td><td>${v.n}</td><td>${v.w}/${v.l}</td><td class="${rClass(avg)}">${avg>0?'+':''}${avg}R</td><td class="${rClass(v.r)}">${v.r>0?'+':''}${+v.r.toFixed(2)}R</td></tr>`; }).join('')
     }</tbody></table>`;
   }
 }
@@ -5298,8 +5363,8 @@ function renderSettings(){
       <div class="settings-row">
         <div class="settings-row-text">${escapeHtml(item)}</div>
         <div class="settings-row-actions">
-          <button onclick="${editFn}(${i})" title="Modifier">✏️</button>
-          <button class="del" onclick="${delFn}(${i})" title="Supprimer">✕</button>
+          <button onclick="${editFn}(${i})" title="${L('Modifier','Edit')}">✏️</button>
+          <button class="del" onclick="${delFn}(${i})" title="${L('Supprimer','Delete')}">✕</button>
         </div>
       </div>`).join('');
   };
@@ -5310,10 +5375,10 @@ function renderSettings(){
   if(lsel) lsel.value = currentLang;
   if(csel) csel.value = currentCurrency;
 
-  clEl.innerHTML = buildList(CHECKLIST,   'editChecklistItem', 'delChecklistItem', 'Aucun élément. Clique sur « + Ajouter un élément » pour commencer.');
-  erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         'Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.');
-  tdEl.innerHTML = buildList(TEND_OPTIONS,'editTendance',      'delTendance',      'Aucune tendance. Clique sur « + Ajouter une tendance » pour commencer.');
-  if(cfEl) cfEl.innerHTML = buildList(CONFLUENCES,'editConfluence','delConfluence','Aucune confluence. Clique sur « + Ajouter une confluence » pour commencer.');
+  clEl.innerHTML = buildList(CHECKLIST,   'editChecklistItem', 'delChecklistItem', L('Aucun élément. Clique sur « + Ajouter un élément » pour commencer.','No items. Click "+ Add an item" to get started.'));
+  erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         L('Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.','No errors. Click "+ Add an error" to get started.'));
+  tdEl.innerHTML = buildList(TEND_OPTIONS,'editTendance',      'delTendance',      L('Aucune tendance. Clique sur « + Ajouter une tendance » pour commencer.','No trends. Click "+ Add a trend" to get started.'));
+  if(cfEl) cfEl.innerHTML = buildList(CONFLUENCES,'editConfluence','delConfluence',L('Aucune confluence. Clique sur « + Ajouter une confluence » pour commencer.','No confluences. Click "+ Add a confluence" to get started.'));
 
   // Compteur de trades pour la zone dangereuse
   const cnt = document.getElementById('danger-count');
@@ -5582,7 +5647,7 @@ async function loadTradesFromDb() {
     const { data, error, status } = await sb.from('trades').select('*').order('date', { ascending: false });
     if (error) {
       console.error('[Supabase] SELECT échec', { status, error, fullError: JSON.stringify(error) });
-      showToast('Erreur chargement : '+error.message, true);
+      showToast(L('Erreur chargement : ','Loading error: ')+error.message, true);
       return;
     }
     console.log('[Supabase] SELECT OK :', (data||[]).length, 'trades reçus');
@@ -5617,7 +5682,7 @@ async function loadTradesFromDb() {
         currentYear = bestYear;
         localStorage.setItem('journal_active_year', String(currentYear));
         renderYearSelect();
-        showToast('📅 Bascule sur ' + bestYear + ' (où sont tes trades)');
+        showToast(L('📅 Bascule sur ' + bestYear + ' (où sont tes trades)','📅 Switched to ' + bestYear + ' (where your trades are)'));
       }
     }
 
@@ -5625,7 +5690,7 @@ async function loadTradesFromDb() {
     refreshCurrentPage();
   } catch(e) {
     console.error('[Supabase] SELECT exception', e);
-    showToast('Erreur : '+e.message, true);
+    showToast(L('Erreur : ','Error: ')+e.message, true);
   } finally {
     _loadingTrades = false;
   }
@@ -5655,9 +5720,9 @@ function setSaveStatus(state){
   if(!el) return;
   clearTimeout(_saveStatusTimer);
   const conf = {
-    saving: { cls:'saving', txt:'Sauvegarde…' },
-    saved:  { cls:'saved',  txt:'Sauvegardé' },
-    error:  { cls:'error',  txt:'Échec de sauvegarde' },
+    saving: { cls:'saving', txt:L('Sauvegarde…','Saving…') },
+    saved:  { cls:'saved',  txt:L('Sauvegardé','Saved') },
+    error:  { cls:'error',  txt:L('Échec de sauvegarde','Save failed') },
   }[state];
   if(!conf){ el.className='save-status'; el.innerHTML=''; return; }
   el.className = 'save-status show ' + conf.cls;
@@ -5668,7 +5733,7 @@ function setSaveStatus(state){
 }
 
 async function dbUpsert(trade) {
-  if (!currentUser){ console.warn('[Supabase] UPSERT abandonné — pas d\'utilisateur'); showToast('⚠️ Non connecté', true); return; }
+  if (!currentUser){ console.warn('[Supabase] UPSERT abandonné — pas d\'utilisateur'); showToast(L('⚠️ Non connecté','⚠️ Not logged in'), true); return; }
   const row = localToDb(trade);
   // ⚠️ On n'envoie PAS user_id : Supabase le remplit via DEFAULT auth.uid()
   if('user_id' in row){ delete row.user_id; }
@@ -5677,7 +5742,7 @@ async function dbUpsert(trade) {
   const { data, error, status } = await sb.from('trades').upsert(row, { onConflict: 'id' }).select();
   if (error) {
     console.error('[Supabase] UPSERT échec', { status, error, fullError: JSON.stringify(error), row });
-    showToast('Erreur : ' + (error.message || JSON.stringify(error)), true);
+    showToast(L('Erreur : ','Error: ') + (error.message || JSON.stringify(error)), true);
     setSaveStatus('error');
     return;
   }
@@ -5691,7 +5756,7 @@ async function dbDelete(id) {
   const { error, status } = await sb.from('trades').delete().eq('id', id);
   if (error) {
     console.error('[Supabase] DELETE échec', { status, error, fullError: JSON.stringify(error) });
-    showToast('Erreur suppression : '+error.message, true);
+    showToast(L('Erreur suppression : ','Delete error: ')+error.message, true);
   } else {
     console.log('[Supabase] DELETE OK');
   }
@@ -5787,20 +5852,20 @@ function hideTrialBanner() {
 }
 
 async function startCheckout(plan) {
-  if (plan !== 'monthly' && plan !== 'yearly') { showToast('Plan inconnu : ' + plan, true); return; }
+  if (plan !== 'monthly' && plan !== 'yearly') { showToast(L('Plan inconnu : ','Unknown plan: ') + plan, true); return; }
   // Le Price ID est résolu côté serveur à partir de (plan, devise)
   const currency = (typeof currentCurrency !== 'undefined') ? currentCurrency : 'eur';
 
   // Empêche les doubles-clics : on désactive tous les boutons de plan
   const allBtns = document.querySelectorAll('.pay-plan, .trial-cta');
   allBtns.forEach(b => b.disabled = true);
-  showToast('⏳ Redirection vers le paiement…');
+  showToast(L('⏳ Redirection vers le paiement…','⏳ Redirecting to payment…'));
 
   try {
     // 1) Récupérer le JWT Supabase de l'utilisateur courant
     const { data: { session }, error: sessErr } = await sb.auth.getSession();
     if (sessErr || !session) {
-      throw new Error('Tu dois être connecté pour t\'abonner.');
+      throw new Error(L('Tu dois être connecté pour t\'abonner.','You must be logged in to subscribe.'));
     }
 
     console.log('[Checkout] POST /api/create-checkout', { plan, currency });
@@ -5819,7 +5884,7 @@ async function startCheckout(plan) {
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok || !data.url) {
-      throw new Error(data.error || `Erreur serveur (HTTP ${res.status})`);
+      throw new Error(data.error || L(`Erreur serveur (HTTP ${res.status})`,`Server error (HTTP ${res.status})`));
     }
 
     console.log('[Checkout] Redirection vers', data.url);
@@ -5828,7 +5893,7 @@ async function startCheckout(plan) {
     window.location.href = data.url;
   } catch (err) {
     console.error('[Checkout] échec', err);
-    showToast('❌ ' + (err.message || 'Erreur inconnue'), true);
+    showToast('❌ ' + (err.message || L('Erreur inconnue','Unknown error')), true);
     allBtns.forEach(b => b.disabled = false);
   }
 }
@@ -5888,12 +5953,12 @@ function getGoal(){ return +(localStorage.getItem('monthly_r_goal')||'10'); }
 function setGoal(v){ localStorage.setItem('monthly_r_goal', String(v)); renderGoalCard(tradesOfYear()); }
 function editGoal(){
   const cur = getGoal();
-  const v = prompt('Objectif mensuel en R :', cur);
+  const v = prompt(L('Objectif mensuel en R :','Monthly goal in R:'), cur);
   if(v===null) return;
   const n = parseFloat(v);
-  if(isNaN(n) || n<=0) return showToast('Valeur invalide');
+  if(isNaN(n) || n<=0) return showToast(L('Valeur invalide','Invalid value'));
   setGoal(n);
-  showToast('🎯 Objectif mis à jour');
+  showToast(L('🎯 Objectif mis à jour','🎯 Goal updated'));
 }
 function renderGoalCard(ts){
   const card = document.getElementById('goal-card');
@@ -5907,18 +5972,18 @@ function renderGoalCard(ts){
   const overPct = r>goal && goal>0 ? Math.min(100, ((r-goal)/goal)*100) : 0;
   const done = r>=goal;
   const neg = r<0;
-  const monthName = now.toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
+  const monthName = now.toLocaleDateString(currentLang==='en'?'en-US':'fr-FR',{month:'long', year:'numeric'});
   card.className = 'goal-card on';
   card.innerHTML = `
     <div class="goal-head">
-      <div class="goal-title">🎯 Objectif du mois <small>${monthName}</small></div>
+      <div class="goal-title">${L('🎯 Objectif du mois','🎯 Monthly goal')} <small>${monthName}</small></div>
       <div class="goal-val ${neg?'neg':done?'pos':'ora'}">${r>0?'+':''}${r.toFixed(2)}R / ${goal}R <span style="color:var(--text3);font-weight:500;margin-left:6px">${monthTs.length} trades</span></div>
-      <div class="goal-actions"><button class="goal-edit" onclick="editGoal()">Modifier</button></div>
+      <div class="goal-actions"><button class="goal-edit" onclick="editGoal()">${L('Modifier','Edit')}</button></div>
     </div>
     <div class="goal-bar"><div class="goal-bar-fill ${neg?'over':done?'done':''}" style="width:${neg?Math.min(100,Math.abs(r)/goal*100):pct}%"></div></div>
     <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:.7rem;color:var(--text3)">
-      <span>${done?'✅ Objectif atteint':neg?'⚠️ En drawdown — protège ton capital':pct.toFixed(0)+'% accompli'}</span>
-      <span>${done && overPct>0 ? '+'+(r-goal).toFixed(2)+'R au-dessus' : (goal-r>0?'reste '+ (goal-r).toFixed(2)+'R':'')}</span>
+      <span>${done?L('✅ Objectif atteint','✅ Goal reached'):neg?L('⚠️ En drawdown — protège ton capital','⚠️ In drawdown — protect your capital'):pct.toFixed(0)+L('% accompli','% complete')}</span>
+      <span>${done && overPct>0 ? '+'+(r-goal).toFixed(2)+L('R au-dessus','R above') : (goal-r>0?L('reste ','left ')+ (goal-r).toFixed(2)+'R':'')}</span>
     </div>`;
 }
 
@@ -5940,7 +6005,7 @@ function exportJSON(){
   a.href = url; a.download = `journal-trading-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
-  showToast('💾 Sauvegarde exportée');
+  showToast(L('💾 Sauvegarde exportée','💾 Backup exported'));
 }
 // ═══════════════════════════════════════════════════════════════
 //  IMPORT — dispatcher JSON / CSV
@@ -6538,10 +6603,10 @@ function importCSV(input) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      if (!currentUser) { alert('Connecte-toi avant d\'importer.'); return; }
+      if (!currentUser) { alert(L('Connecte-toi avant d\'importer.','Log in before importing.')); return; }
 
       const rows = parseCSV(e.target.result);
-      if (rows.length < 2) throw new Error('CSV vide ou sans en-tête.');
+      if (rows.length < 2) throw new Error(L('CSV vide ou sans en-tête.','Empty CSV or no header.'));
 
       const header = rows[0].map(h => (h || '').toString().trim());
       const dataRows = rows.slice(1).filter(r => r.length && r.some(v => v && v.toString().trim()));
@@ -6557,7 +6622,7 @@ function importCSV(input) {
 
     } catch(err){
       console.error('[Import CSV] erreur', err);
-      alert('Erreur import CSV :\n\n' + err.message);
+      alert(L('Erreur import CSV :\n\n','CSV import error:\n\n') + err.message);
     }
     input.value = '';
   };
@@ -6683,11 +6748,11 @@ async function confirmCsvImport() {
   if (!st || !st.valid || !st.valid.length) return;
 
   const btn = document.getElementById('csv-import-confirm');
-  btn.disabled = true; btn.textContent = '⏳ Import en cours…';
+  btn.disabled = true; btn.textContent = L('⏳ Import en cours…','⏳ Importing…');
   closeCsvImport();
 
   const newTrades = st.valid;
-  showToast('⏳ Import CSV… 0/' + newTrades.length);
+  showToast(L('⏳ Import CSV… 0/','⏳ CSV import… 0/') + newTrades.length);
   let ok = 0, fail = 0;
 
   for (let i = 0; i < newTrades.length; i++) {
@@ -6700,15 +6765,15 @@ async function confirmCsvImport() {
       if (error) { fail++; console.error('[Import CSV] échec trade', t.id, error); }
       else ok++;
     } catch(err) { fail++; console.error('[Import CSV] exception', err); }
-    if (i % 5 === 0) showToast('⏳ Import CSV… ' + (i+1) + '/' + newTrades.length);
+    if (i % 5 === 0) showToast(L('⏳ Import CSV… ','⏳ CSV import… ') + (i+1) + '/' + newTrades.length);
   }
 
   ensureYearsCoverTrades();
   rebuildPairDatalist();
   refreshCurrentPage();
 
-  if (fail === 0) showToast('✅ ' + ok + ' trades importés');
-  else showToast(`⚠️ ${ok} importés, ${fail} échecs (voir console)`, true);
+  if (fail === 0) showToast(L('✅ ' + ok + ' trades importés','✅ ' + ok + ' trades imported'));
+  else showToast(L(`⚠️ ${ok} importés, ${fail} échecs (voir console)`,`⚠️ ${ok} imported, ${fail} failed (see console)`), true);
 }
 
 function importJSON(input){
@@ -6717,9 +6782,9 @@ function importJSON(input){
   reader.onload = async e => {
     try {
       const data = JSON.parse(e.target.result);
-      if(!Array.isArray(data.trades)) throw new Error('Format invalide');
-      if(!currentUser){ alert('Connecte-toi avant d\'importer.'); return; }
-      if(!confirm(`Importer ${data.trades.length} trades sur ce compte (${currentUser.email}) ?\n\nDe nouveaux IDs uniques seront générés pour éviter tout conflit.`)) { input.value=''; return; }
+      if(!Array.isArray(data.trades)) throw new Error(L('Format invalide','Invalid format'));
+      if(!currentUser){ alert(L('Connecte-toi avant d\'importer.','Log in before importing.')); return; }
+      if(!confirm(L(`Importer ${data.trades.length} trades sur ce compte (${currentUser.email}) ?\n\nDe nouveaux IDs uniques seront générés pour éviter tout conflit.`,`Import ${data.trades.length} trades into this account (${currentUser.email})?\n\nNew unique IDs will be generated to avoid any conflict.`))) { input.value=''; return; }
 
       // ─── Génère un NOUVEL ID unique par trade ───
       // Cela évite les collisions avec les trades d'autres utilisateurs (RLS rejette
@@ -6730,7 +6795,7 @@ function importJSON(input){
         id: base * 1000 + i // ID unique nano-précis + index, ne peut pas collisionner
       }));
 
-      showToast('⏳ Import en cours… 0/' + newTrades.length);
+      showToast(L('⏳ Import en cours… 0/','⏳ Importing… 0/') + newTrades.length);
       let ok = 0, fail = 0;
 
       // ─── Insert en séquentiel pour catcher les erreurs proprement ───
@@ -6744,7 +6809,7 @@ function importJSON(input){
           if (error) { fail++; console.error('[Import] échec trade', t.id, error); }
           else ok++;
         } catch(e) { fail++; console.error('[Import] exception', e); }
-        if (i % 5 === 0) showToast('⏳ Import… ' + (i+1) + '/' + newTrades.length);
+        if (i % 5 === 0) showToast(L('⏳ Import… ','⏳ Importing… ') + (i+1) + '/' + newTrades.length);
       }
 
       if(Array.isArray(data.checklist)){ CHECKLIST = data.checklist.slice(); saveChecklist(); }
@@ -6772,12 +6837,12 @@ function importJSON(input){
       refreshCurrentPage();
 
       if (fail === 0) {
-        showToast('✅ ' + ok + ' trades importés');
+        showToast(L('✅ ' + ok + ' trades importés','✅ ' + ok + ' trades imported'));
       } else {
-        showToast(`⚠️ ${ok} importés, ${fail} échecs (voir console)`, true);
+        showToast(L(`⚠️ ${ok} importés, ${fail} échecs (voir console)`,`⚠️ ${ok} imported, ${fail} failed (see console)`), true);
       }
     } catch(err){
-      alert('Erreur import : '+err.message);
+      alert(L('Erreur import : ','Import error: ')+err.message);
     }
     input.value='';
   };
