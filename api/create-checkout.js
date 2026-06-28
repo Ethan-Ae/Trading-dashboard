@@ -1,7 +1,11 @@
 // ════════════════════════════════════════════════════════════════
 //  POST /api/create-checkout
-//  Body : { priceId: string, accessToken: string }
+//  Body : { plan: 'monthly'|'yearly', currency: 'eur'|'usd', accessToken: string }
+//         (legacy : { priceId, accessToken } toujours accepté)
 //  Renvoie : { url: string }  ← URL Stripe Checkout
+//
+//  Le Price ID Stripe est résolu CÔTÉ SERVEUR à partir de (plan, devise),
+//  jamais dicté arbitrairement par le client.
 //
 //  Sécurité : on vérifie le JWT Supabase côté serveur avec la
 //  service_role key avant de faire quoi que ce soit. On ne fait
@@ -12,6 +16,30 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// ─── Price IDs Stripe par devise et par plan ───
+// EUR : variables d'env existantes (fallback : IDs connus actuels)
+// USD : nouvelles variables d'env STRIPE_PRICE_*_USD (fallback : IDs fournis)
+const PRICE_MAP = {
+  eur: {
+    monthly: process.env.STRIPE_PRICE_MONTHLY     || 'price_1TfO8LV05rss2qD0ibLUr4B0',
+    yearly:  process.env.STRIPE_PRICE_YEARLY      || 'price_1TfO7tV05rss2qD0D2j2eYiy',
+  },
+  usd: {
+    monthly: process.env.STRIPE_PRICE_MONTHLY_USD || 'price_1TnGKYV05rss2qD0luH0yQYd',
+    yearly:  process.env.STRIPE_PRICE_YEARLY_USD  || 'price_1TnGL6V05rss2qD0Lr41rt9R',
+  },
+};
+
+function resolvePriceId({ plan, currency, priceId }) {
+  // Résolution serveur par (devise, plan)
+  if (plan === 'monthly' || plan === 'yearly') {
+    const cur = currency === 'usd' ? 'usd' : 'eur';
+    return PRICE_MAP[cur][plan];
+  }
+  // Compat : ancien client qui envoie directement priceId
+  return priceId || null;
+}
 
 // Client admin Supabase — bypasse la RLS via la service_role key
 const supabaseAdmin = createClient(
@@ -31,8 +59,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { priceId, accessToken } = req.body || {};
-    if (!priceId)    return res.status(400).json({ error: 'priceId requis' });
+    const { plan, currency, priceId: legacyPriceId, accessToken } = req.body || {};
+    const priceId = resolvePriceId({ plan, currency, priceId: legacyPriceId });
+    if (!priceId)    return res.status(400).json({ error: 'plan (monthly|yearly) ou priceId requis' });
     if (!accessToken) return res.status(401).json({ error: 'accessToken requis' });
 
     // ─── 1) Vérifier le token Supabase et récupérer le VRAI user ───

@@ -2010,7 +2010,7 @@ body.no-scroll { overflow: hidden; }
       <div class="lp-price-grid">
         <div class="lp-price">
           <div class="lp-price-name">Mensuel</div>
-          <div class="lp-price-amt">12 €<span>/mois</span></div>
+          <div class="lp-price-amt" id="lp-price-monthly">12 €<span>/mois</span></div>
           <div class="lp-price-note">Sans engagement, résilie quand tu veux.</div>
           <ul>
             <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Trades & statistiques illimités</li>
@@ -2023,8 +2023,8 @@ body.no-scroll { overflow: hidden; }
         <div class="lp-price feat">
           <div class="lp-price-tag">★ 2 mois offerts</div>
           <div class="lp-price-name">Annuel</div>
-          <div class="lp-price-amt">120 €<span>/an</span></div>
-          <div class="lp-price-note">Soit 10 €/mois — économise 17 %.</div>
+          <div class="lp-price-amt" id="lp-price-yearly">120 €<span>/an</span></div>
+          <div class="lp-price-note">Soit <span id="lp-yearly-equiv">10 €/mois</span> — économise 17 %.</div>
           <ul>
             <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Tout le plan Mensuel inclus</li>
             <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> 2 mois gratuits chaque année</li>
@@ -2141,14 +2141,14 @@ body.no-scroll { overflow: hidden; }
     <div class="pay-plans">
       <button class="pay-plan" onclick="startCheckout('monthly')">
         <div class="pay-plan-name">Mensuel</div>
-        <div class="pay-plan-price">12 €<span>/mois</span></div>
+        <div class="pay-plan-price" id="pay-price-monthly">12 €<span>/mois</span></div>
         <div class="pay-plan-hint">Sans engagement, résilie quand tu veux</div>
       </button>
       <button class="pay-plan featured" onclick="startCheckout('yearly')">
         <div class="pay-plan-badge">−17 %</div>
         <div class="pay-plan-name">Annuel</div>
-        <div class="pay-plan-price">120 €<span>/an</span></div>
-        <div class="pay-plan-hint">Équivaut à 10 €/mois · 2 mois offerts</div>
+        <div class="pay-plan-price" id="pay-price-yearly">120 €<span>/an</span></div>
+        <div class="pay-plan-hint">Équivaut à <span id="pay-yearly-equiv">10 €/mois</span> · 2 mois offerts</div>
       </button>
     </div>
 
@@ -2340,10 +2340,28 @@ let currentLang = (()=>{ try{ return localStorage.getItem('app_lang')||'fr'; }ca
 let currentCurrency = (()=>{ try{ return localStorage.getItem('app_currency')||'eur'; }catch(e){ return 'eur'; } })();
 
 const CURRENCY = {
-  eur: { code:'EUR', symbol:'€', plan:'12€/mois',  planMo:'12 €/mois', planYr:'120 €/an' },
-  usd: { code:'USD', symbol:'$', plan:'$15/mo',    planMo:'$15/mo',    planYr:'$150/yr' },
+  eur: { code:'EUR', symbol:'€',
+         priceMonthly:'12 €', priceYearly:'120 €', perMonth:'/mois', perYear:'/an',
+         yearlyEquiv:'10 €/mois' },
+  usd: { code:'USD', symbol:'$',
+         priceMonthly:'$15', priceYearly:'$150', perMonth:'/mo', perYear:'/yr',
+         yearlyEquiv:'$12.50/mo' },
 };
 function curSym(){ return (CURRENCY[currentCurrency]||CURRENCY.eur).symbol; }
+
+// Affiche les prix (landing + paywall) selon la devise courante
+function applyCurrencyPrices(){
+  const c = CURRENCY[currentCurrency] || CURRENCY.eur;
+  const set = (id, html)=>{ const el = document.getElementById(id); if(el) el.innerHTML = html; };
+  const mo = c.priceMonthly + '<span>' + c.perMonth + '</span>';
+  const yr = c.priceYearly  + '<span>' + c.perYear  + '</span>';
+  set('lp-price-monthly', mo);
+  set('lp-price-yearly',  yr);
+  set('pay-price-monthly', mo);
+  set('pay-price-yearly',  yr);
+  set('lp-yearly-equiv',  c.yearlyEquiv);
+  set('pay-yearly-equiv', c.yearlyEquiv);
+}
 
 const STRINGS = {
   fr: {
@@ -2484,6 +2502,7 @@ function setCurrency(cur){
   if(!CURRENCY[cur]) cur='eur';
   currentCurrency = cur;
   try{ localStorage.setItem('app_currency', cur); }catch(e){}
+  if(typeof applyCurrencyPrices==='function') applyCurrencyPrices();
 }
 
 // ───────────────────────────────────────────
@@ -5544,15 +5563,10 @@ function hideTrialBanner() {
   document.body.classList.remove('has-trial-banner');
 }
 
-// ─── Stripe price IDs (mode test) ───
-const STRIPE_PRICES = {
-  monthly: 'price_1TfO8LV05rss2qD0ibLUr4B0',
-  yearly:  'price_1TfO7tV05rss2qD0D2j2eYiy',
-};
-
 async function startCheckout(plan) {
-  const priceId = STRIPE_PRICES[plan];
-  if (!priceId) { showToast('Plan inconnu : ' + plan, true); return; }
+  if (plan !== 'monthly' && plan !== 'yearly') { showToast('Plan inconnu : ' + plan, true); return; }
+  // Le Price ID est résolu côté serveur à partir de (plan, devise)
+  const currency = (typeof currentCurrency !== 'undefined') ? currentCurrency : 'eur';
 
   // Empêche les doubles-clics : on désactive tous les boutons de plan
   const allBtns = document.querySelectorAll('.pay-plan, .trial-cta');
@@ -5566,14 +5580,15 @@ async function startCheckout(plan) {
       throw new Error('Tu dois être connecté pour t\'abonner.');
     }
 
-    console.log('[Checkout] POST /api/create-checkout', { plan, priceId });
+    console.log('[Checkout] POST /api/create-checkout', { plan, currency });
 
     // 2) Appel à la function serverless Vercel
     const res = await fetch('/api/create-checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        priceId,
+        plan,
+        currency,
         accessToken: session.access_token,
       }),
     });
@@ -5599,6 +5614,7 @@ async function startCheckout(plan) {
 renderYearSelect();
 // Applique la langue mémorisée (localStorage) dès le chargement, avant toute connexion
 applyTranslations();
+applyCurrencyPrices();
 if(typeof refreshAuthLabels==='function') refreshAuthLabels();
 
 // ⚠️ IMPORTANT — supabase-js v2 footgun :
