@@ -1903,36 +1903,36 @@ body.no-scroll { overflow: hidden; }
     </div>
     <div class="lp-nav-spacer"></div>
     <div class="lp-nav-links">
-      <a href="#lp-features">Fonctionnalités</a>
-      <a href="#lp-how">Comment ça marche</a>
-      <a href="#lp-pricing">Tarifs</a>
-      <a href="#lp-faq">FAQ</a>
+      <a href="#lp-features" data-i18n="lp_nav_features">Fonctionnalités</a>
+      <a href="#lp-how" data-i18n="lp_nav_how">Comment ça marche</a>
+      <a href="#lp-pricing" data-i18n="lp_nav_pricing">Tarifs</a>
+      <a href="#lp-faq" data-i18n="lp_nav_faq">FAQ</a>
     </div>
-    <button class="lp-btn lp-btn-ghost lp-btn-sm lp-nav-login" onclick="openAuth('login')">Se connecter</button>
-    <button class="lp-btn lp-btn-primary lp-btn-sm" onclick="openAuth('signup')">Essai gratuit</button>
+    <button class="lp-btn lp-btn-ghost lp-btn-sm lp-nav-login" onclick="openAuth('login')" data-i18n="lp_nav_login">Se connecter</button>
+    <button class="lp-btn lp-btn-primary lp-btn-sm" onclick="openAuth('signup')" data-i18n="lp_nav_trial">Essai gratuit</button>
   </nav>
 
   <div class="lp-wrap">
 
     <!-- HERO -->
     <header class="lp-hero">
-      <div class="lp-pill"><span class="lp-dot"></span> Le journal de trading qui te fait progresser</div>
-      <h1 class="lp-h1">Arrête de trader à l'aveugle.<br><span class="grad">Analyse, comprends, progresse.</span></h1>
-      <p class="lp-sub">OneRtrade transforme chaque trade en données exploitables : R cumulé, win rate, calendrier, captures par étape, émotions et score de discipline. Tout ce qu'il te faut pour devenir constamment rentable.</p>
+      <div class="lp-pill"><span class="lp-dot"></span> <span data-i18n="lp_hero_pill">Le journal de trading qui te fait progresser</span></div>
+      <h1 class="lp-h1" data-i18n-html="lp_hero_h1">Arrête de trader à l'aveugle.<br><span class="grad">Analyse, comprends, progresse.</span></h1>
+      <p class="lp-sub" data-i18n="lp_hero_sub">OneRtrade transforme chaque trade en données exploitables : R cumulé, win rate, calendrier, captures par étape, émotions et score de discipline. Tout ce qu'il te faut pour devenir constamment rentable.</p>
       <div class="lp-cta-row">
-        <button class="lp-btn lp-btn-primary lp-btn-lg" onclick="openAuth('signup')">Commencer gratuitement →</button>
-        <button class="lp-btn lp-btn-ghost lp-btn-lg" onclick="openAuth('login')">J'ai déjà un compte</button>
+        <button class="lp-btn lp-btn-primary lp-btn-lg" onclick="openAuth('signup')" data-i18n="lp_hero_cta1">Commencer gratuitement →</button>
+        <button class="lp-btn lp-btn-ghost lp-btn-lg" onclick="openAuth('login')" data-i18n="lp_hero_cta2">J'ai déjà un compte</button>
       </div>
       <div class="lp-reassure">
-        <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Sans carte bancaire</span>
-        <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Essai gratuit complet</span>
-        <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Données chiffrées</span>
+        <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_hero_re1">Sans carte bancaire</span></span>
+        <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_hero_re2">Essai gratuit complet</span></span>
+        <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_hero_re3">Données chiffrées</span></span>
       </div>
 
       <!-- MOCKUP -->
       <div class="lp-mockup">
         <div class="lp-mockup-inner">
-          <div class="lp-mock-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span class="lp-mock-url">onertrade · mon journal</span></div>
+          <div class="lp-mock-bar"><i class="r"></i><i class="y"></i><i class="g"></i><span class="lp-mock-url" data-i18n="lp_mock_url">onertrade · mon journal</span></div>
           <div class="lp-mock-body">
             <div class="lp-mock-kpis">
               <div class="lp-mk"><div class="l">Total R</div><div class="v pos">+38.5R</div></div>
@@ -1962,98 +1962,98 @@ body.no-scroll { overflow: hidden; }
 
     <!-- FEATURES -->
     <section class="lp-section" id="lp-features">
-      <div class="lp-eyebrow">Fonctionnalités</div>
-      <h2 class="lp-h2">Tout ton trading, enfin sous contrôle</h2>
-      <p class="lp-lead">Un journal pensé par et pour les traders. Chaque détail compte pour transformer tes statistiques en décisions.</p>
+      <div class="lp-eyebrow" data-i18n="lp_feat_eyebrow">Fonctionnalités</div>
+      <h2 class="lp-h2" data-i18n="lp_feat_h2">Tout ton trading, enfin sous contrôle</h2>
+      <p class="lp-lead" data-i18n="lp_feat_lead">Un journal pensé par et pour les traders. Chaque détail compte pour transformer tes statistiques en décisions.</p>
       <div class="lp-feat-grid">
-        <div class="lp-feat"><div class="lp-feat-ico">📈</div><h3>R cumulé & statistiques</h3><p>Total R, win rate, profit factor, espérance, séries et drawdown calculés automatiquement à partir de tes trades.</p></div>
-        <div class="lp-feat"><div class="lp-feat-ico">📅</div><h3>Calendrier de performance</h3><p>Visualise tes journées gagnantes et perdantes d'un coup d'œil, et ouvre chaque jour pour revoir tous ses trades.</p></div>
-        <div class="lp-feat"><div class="lp-feat-ico">📸</div><h3>Captures par étape</h3><p>Glisse tes screenshots d'exécution, management, clôture et après-clôture — avec une zone de notes pour chaque phase.</p></div>
-        <div class="lp-feat"><div class="lp-feat-ico">🧠</div><h3>Score de discipline</h3><p>Une note objective basée sur ta checklist, tes erreurs évitées et la maîtrise de tes émotions, trade après trade.</p></div>
-        <div class="lp-feat"><div class="lp-feat-ico">💡</div><h3>Insights & recommandations</h3><p>Le site repère tes meilleurs jours, paires et setups — et te dit quoi corriger pour gagner plus.</p></div>
-        <div class="lp-feat"><div class="lp-feat-ico">🔒</div><h3>Sécurisé & synchronisé</h3><p>Tes trades sont chiffrés et sauvegardés dans le cloud. Accède à ton journal depuis n'importe quel appareil.</p></div>
+        <div class="lp-feat"><div class="lp-feat-ico">📈</div><h3 data-i18n="lp_feat1_h3">R cumulé & statistiques</h3><p data-i18n="lp_feat1_p">Total R, win rate, profit factor, espérance, séries et drawdown calculés automatiquement à partir de tes trades.</p></div>
+        <div class="lp-feat"><div class="lp-feat-ico">📅</div><h3 data-i18n="lp_feat2_h3">Calendrier de performance</h3><p data-i18n="lp_feat2_p">Visualise tes journées gagnantes et perdantes d'un coup d'œil, et ouvre chaque jour pour revoir tous ses trades.</p></div>
+        <div class="lp-feat"><div class="lp-feat-ico">📸</div><h3 data-i18n="lp_feat3_h3">Captures par étape</h3><p data-i18n="lp_feat3_p">Glisse tes screenshots d'exécution, management, clôture et après-clôture — avec une zone de notes pour chaque phase.</p></div>
+        <div class="lp-feat"><div class="lp-feat-ico">🧠</div><h3 data-i18n="lp_feat4_h3">Score de discipline</h3><p data-i18n="lp_feat4_p">Une note objective basée sur ta checklist, tes erreurs évitées et la maîtrise de tes émotions, trade après trade.</p></div>
+        <div class="lp-feat"><div class="lp-feat-ico">💡</div><h3 data-i18n="lp_feat5_h3">Insights & recommandations</h3><p data-i18n="lp_feat5_p">Le site repère tes meilleurs jours, paires et setups — et te dit quoi corriger pour gagner plus.</p></div>
+        <div class="lp-feat"><div class="lp-feat-ico">🔒</div><h3 data-i18n="lp_feat6_h3">Sécurisé & synchronisé</h3><p data-i18n="lp_feat6_p">Tes trades sont chiffrés et sauvegardés dans le cloud. Accède à ton journal depuis n'importe quel appareil.</p></div>
       </div>
     </section>
 
     <!-- HOW IT WORKS -->
     <section class="lp-section" id="lp-how">
-      <div class="lp-eyebrow">Comment ça marche</div>
-      <h2 class="lp-h2">Opérationnel en 2 minutes</h2>
-      <p class="lp-lead">Pas de configuration compliquée. Crée ton compte et commence à journaliser dès maintenant.</p>
+      <div class="lp-eyebrow" data-i18n="lp_how_eyebrow">Comment ça marche</div>
+      <h2 class="lp-h2" data-i18n="lp_how_h2">Opérationnel en 2 minutes</h2>
+      <p class="lp-lead" data-i18n="lp_how_lead">Pas de configuration compliquée. Crée ton compte et commence à journaliser dès maintenant.</p>
       <div class="lp-steps">
-        <div class="lp-step"><h3>Crée ton compte</h3><p>Inscription en 10 secondes avec ton email. Aucune carte bancaire demandée pour démarrer ton essai gratuit.</p></div>
-        <div class="lp-step"><h3>Enregistre tes trades</h3><p>Saisis paire, ordre, risque, R/R, captures et émotions. Marque même tes trades « en attente » ou « en cours ».</p></div>
-        <div class="lp-step"><h3>Analyse & progresse</h3><p>Laisse les statistiques, le calendrier et les insights révéler tes patterns gagnants et tes fuites de capital.</p></div>
+        <div class="lp-step"><h3 data-i18n="lp_step1_h3">Crée ton compte</h3><p data-i18n="lp_step1_p">Inscription en 10 secondes avec ton email. Aucune carte bancaire demandée pour démarrer ton essai gratuit.</p></div>
+        <div class="lp-step"><h3 data-i18n="lp_step2_h3">Enregistre tes trades</h3><p data-i18n="lp_step2_p">Saisis paire, ordre, risque, R/R, captures et émotions. Marque même tes trades « en attente » ou « en cours ».</p></div>
+        <div class="lp-step"><h3 data-i18n="lp_step3_h3">Analyse & progresse</h3><p data-i18n="lp_step3_p">Laisse les statistiques, le calendrier et les insights révéler tes patterns gagnants et tes fuites de capital.</p></div>
       </div>
     </section>
 
     <!-- TRIAL HIGHLIGHT -->
     <section class="lp-section">
       <div class="lp-trial">
-        <div class="lp-trial-badge">✦ ESSAI GRATUIT</div>
-        <h2>Teste tout, gratuitement.</h2>
-        <p>Profite de l'intégralité de OneRtrade pendant ta période d'essai : toutes les fonctionnalités, sans limite et sans carte bancaire. Tu ne paies que si le journal te fait vraiment progresser.</p>
+        <div class="lp-trial-badge" data-i18n="lp_trial_badge">✦ ESSAI GRATUIT</div>
+        <h2 data-i18n="lp_trial_h2">Teste tout, gratuitement.</h2>
+        <p data-i18n="lp_trial_p">Profite de l'intégralité de OneRtrade pendant ta période d'essai : toutes les fonctionnalités, sans limite et sans carte bancaire. Tu ne paies que si le journal te fait vraiment progresser.</p>
         <div class="lp-trial-points">
-          <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Accès complet</span>
-          <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Aucune carte requise</span>
-          <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Résiliable à tout moment</span>
+          <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_trial_pt1">Accès complet</span></span>
+          <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_trial_pt2">Aucune carte requise</span></span>
+          <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_trial_pt3">Résiliable à tout moment</span></span>
         </div>
-        <button class="lp-btn lp-btn-primary lp-btn-lg" onclick="openAuth('signup')">Démarrer mon essai gratuit →</button>
+        <button class="lp-btn lp-btn-primary lp-btn-lg" onclick="openAuth('signup')" data-i18n="lp_trial_btn">Démarrer mon essai gratuit →</button>
       </div>
     </section>
 
     <!-- PRICING -->
     <section class="lp-section" id="lp-pricing">
-      <div class="lp-eyebrow">Tarifs</div>
-      <h2 class="lp-h2">Un prix simple, sans surprise</h2>
-      <p class="lp-lead">Commence gratuitement. Passe en Premium quand tu es convaincu — pas avant.</p>
+      <div class="lp-eyebrow" data-i18n="lp_pricing_eyebrow">Tarifs</div>
+      <h2 class="lp-h2" data-i18n="lp_pricing_h2">Un prix simple, sans surprise</h2>
+      <p class="lp-lead" data-i18n="lp_pricing_lead">Commence gratuitement. Passe en Premium quand tu es convaincu — pas avant.</p>
       <div class="lp-price-grid">
         <div class="lp-price">
-          <div class="lp-price-name">Mensuel</div>
+          <div class="lp-price-name" data-i18n="lp_price_monthly_name">Mensuel</div>
           <div class="lp-price-amt" id="lp-price-monthly">12 €<span>/mois</span></div>
-          <div class="lp-price-note">Sans engagement, résilie quand tu veux.</div>
+          <div class="lp-price-note" data-i18n="lp_price_monthly_note">Sans engagement, résilie quand tu veux.</div>
           <ul>
-            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Trades & statistiques illimités</li>
-            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Calendrier, insights & discipline</li>
-            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Captures & notes par étape</li>
-            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Sauvegarde cloud sécurisée</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_price_m_f1">Trades & statistiques illimités</span></li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_price_m_f2">Calendrier, insights & discipline</span></li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_price_m_f3">Captures & notes par étape</span></li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_price_m_f4">Sauvegarde cloud sécurisée</span></li>
           </ul>
-          <button class="lp-btn lp-btn-ghost lp-btn-lg" style="width:100%" onclick="openAuth('signup')">Commencer l'essai</button>
+          <button class="lp-btn lp-btn-ghost lp-btn-lg" style="width:100%" onclick="openAuth('signup')" data-i18n="lp_price_btn">Commencer l'essai</button>
         </div>
         <div class="lp-price feat">
-          <div class="lp-price-tag">★ 2 mois offerts</div>
-          <div class="lp-price-name">Annuel</div>
+          <div class="lp-price-tag" data-i18n="lp_price_tag">★ 2 mois offerts</div>
+          <div class="lp-price-name" data-i18n="lp_price_yearly_name">Annuel</div>
           <div class="lp-price-amt" id="lp-price-yearly">120 €<span>/an</span></div>
-          <div class="lp-price-note">Soit <span id="lp-yearly-equiv">10 €/mois</span> — économise 17 %.</div>
+          <div class="lp-price-note" data-i18n-html="lp_price_yearly_note">Soit <span id="lp-yearly-equiv">10 €/mois</span> — économise 17 %.</div>
           <ul>
-            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Tout le plan Mensuel inclus</li>
-            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> 2 mois gratuits chaque année</li>
-            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Priorité sur les nouveautés</li>
-            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> Le meilleur rapport qualité/prix</li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_price_y_f1">Tout le plan Mensuel inclus</span></li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_price_y_f2">2 mois gratuits chaque année</span></li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_price_y_f3">Priorité sur les nouveautés</span></li>
+            <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 6L8 14l-4-4"/></svg> <span data-i18n="lp_price_y_f4">Le meilleur rapport qualité/prix</span></li>
           </ul>
-          <button class="lp-btn lp-btn-primary lp-btn-lg" style="width:100%" onclick="openAuth('signup')">Commencer l'essai</button>
+          <button class="lp-btn lp-btn-primary lp-btn-lg" style="width:100%" onclick="openAuth('signup')" data-i18n="lp_price_btn">Commencer l'essai</button>
         </div>
       </div>
     </section>
 
     <!-- FAQ -->
     <section class="lp-section" id="lp-faq">
-      <div class="lp-eyebrow">FAQ</div>
-      <h2 class="lp-h2">Questions fréquentes</h2>
+      <div class="lp-eyebrow" data-i18n="lp_faq_eyebrow">FAQ</div>
+      <h2 class="lp-h2" data-i18n="lp_faq_h2">Questions fréquentes</h2>
       <div class="lp-faq">
-        <details class="lp-q"><summary>L'essai gratuit est-il vraiment gratuit ?</summary><p>Oui. Tu accèdes à l'intégralité de OneRtrade pendant ta période d'essai, sans saisir de carte bancaire. Tu décides ensuite si tu veux continuer en Premium.</p></details>
-        <details class="lp-q"><summary>Dois-je entrer ma carte pour m'inscrire ?</summary><p>Non. La création de compte et l'essai se font uniquement avec un email et un mot de passe. Aucune information de paiement n'est requise pour démarrer.</p></details>
-        <details class="lp-q"><summary>Mes données de trading sont-elles en sécurité ?</summary><p>Absolument. Tes trades sont chiffrés et stockés de façon sécurisée. Toi seul y as accès, et tu peux exporter l'ensemble de ton journal en un clic à tout moment.</p></details>
-        <details class="lp-q"><summary>Puis-je résilier quand je veux ?</summary><p>Oui, l'abonnement est sans engagement. Tu peux annuler à tout moment et conserver l'accès jusqu'à la fin de la période déjà payée.</p></details>
-        <details class="lp-q"><summary>Sur quels marchés puis-je l'utiliser ?</summary><p>OneRtrade est agnostique : forex, indices, crypto, actions… Tout trade avec un risque et un R/R peut être journalisé et analysé.</p></details>
+        <details class="lp-q"><summary data-i18n="lp_faq_q1">L'essai gratuit est-il vraiment gratuit ?</summary><p data-i18n="lp_faq_a1">Oui. Tu accèdes à l'intégralité de OneRtrade pendant ta période d'essai, sans saisir de carte bancaire. Tu décides ensuite si tu veux continuer en Premium.</p></details>
+        <details class="lp-q"><summary data-i18n="lp_faq_q2">Dois-je entrer ma carte pour m'inscrire ?</summary><p data-i18n="lp_faq_a2">Non. La création de compte et l'essai se font uniquement avec un email et un mot de passe. Aucune information de paiement n'est requise pour démarrer.</p></details>
+        <details class="lp-q"><summary data-i18n="lp_faq_q3">Mes données de trading sont-elles en sécurité ?</summary><p data-i18n="lp_faq_a3">Absolument. Tes trades sont chiffrés et stockés de façon sécurisée. Toi seul y as accès, et tu peux exporter l'ensemble de ton journal en un clic à tout moment.</p></details>
+        <details class="lp-q"><summary data-i18n="lp_faq_q4">Puis-je résilier quand je veux ?</summary><p data-i18n="lp_faq_a4">Oui, l'abonnement est sans engagement. Tu peux annuler à tout moment et conserver l'accès jusqu'à la fin de la période déjà payée.</p></details>
+        <details class="lp-q"><summary data-i18n="lp_faq_q5">Sur quels marchés puis-je l'utiliser ?</summary><p data-i18n="lp_faq_a5">OneRtrade est agnostique : forex, indices, crypto, actions… Tout trade avec un risque et un R/R peut être journalisé et analysé.</p></details>
       </div>
     </section>
 
     <!-- FINAL CTA -->
     <section class="lp-final">
-      <h2>Ton meilleur trade ? Commencer à <span class="grad" style="background:linear-gradient(120deg,#ffb340,#ff7a00);-webkit-background-clip:text;background-clip:text;color:transparent">journaliser.</span></h2>
-      <p>Rejoins les traders qui ont arrêté de répéter les mêmes erreurs. Crée ton compte gratuitement dès maintenant.</p>
-      <button class="lp-btn lp-btn-primary lp-btn-lg" onclick="openAuth('signup')">Créer mon compte gratuit →</button>
+      <h2 data-i18n-html="lp_final_h2">Ton meilleur trade ? Commencer à <span class="grad" style="background:linear-gradient(120deg,#ffb340,#ff7a00);-webkit-background-clip:text;background-clip:text;color:transparent">journaliser.</span></h2>
+      <p data-i18n="lp_final_p">Rejoins les traders qui ont arrêté de répéter les mêmes erreurs. Crée ton compte gratuitement dès maintenant.</p>
+      <button class="lp-btn lp-btn-primary lp-btn-lg" onclick="openAuth('signup')" data-i18n="lp_final_btn">Créer mon compte gratuit →</button>
     </section>
 
     <!-- FOOTER -->
@@ -2133,32 +2133,32 @@ body.no-scroll { overflow: hidden; }
         <path d="M7 28 L14 18 L21 23 L30 11 L35 14" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       </svg>
     </div>
-    <div class="auth-title">Ton essai gratuit est terminé</div>
-    <div class="auth-sub" style="margin-bottom:28px">
+    <div class="auth-title" data-i18n="pay_title">Ton essai gratuit est terminé</div>
+    <div class="auth-sub" style="margin-bottom:28px" data-i18n="pay_sub">
       Continue à analyser tes trades, garder ton historique en sécurité et débloquer toutes les fonctionnalités du journal en passant à un abonnement.
     </div>
 
     <div class="pay-plans">
       <button class="pay-plan" onclick="startCheckout('monthly')">
-        <div class="pay-plan-name">Mensuel</div>
+        <div class="pay-plan-name" data-i18n="pay_monthly_name">Mensuel</div>
         <div class="pay-plan-price" id="pay-price-monthly">12 €<span>/mois</span></div>
-        <div class="pay-plan-hint">Sans engagement, résilie quand tu veux</div>
+        <div class="pay-plan-hint" data-i18n="pay_monthly_hint">Sans engagement, résilie quand tu veux</div>
       </button>
       <button class="pay-plan featured" onclick="startCheckout('yearly')">
         <div class="pay-plan-badge">−17 %</div>
-        <div class="pay-plan-name">Annuel</div>
+        <div class="pay-plan-name" data-i18n="pay_yearly_name">Annuel</div>
         <div class="pay-plan-price" id="pay-price-yearly">120 €<span>/an</span></div>
-        <div class="pay-plan-hint">Équivaut à <span id="pay-yearly-equiv">10 €/mois</span> · 2 mois offerts</div>
+        <div class="pay-plan-hint" data-i18n-html="pay_yearly_hint">Équivaut à <span id="pay-yearly-equiv">10 €/mois</span> · 2 mois offerts</div>
       </button>
     </div>
 
     <button class="logout-btn" onclick="logoutUser()" style="margin-top:18px;width:100%;justify-content:center">
       <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h3a1 1 0 011 1v10a1 1 0 01-1 1h-3M9 14l-4-4 4-4M5 10h11"/></svg>
-      Déconnexion
+      <span data-i18n="pay_logout">Déconnexion</span>
     </button>
 
-    <div class="auth-footer">🔒 Paiement sécurisé · Tes données restent intactes</div>
-    <div class="auth-help-line">Besoin d'aide ? <a href="mailto:onertrade@outlook.com">onertrade@outlook.com</a></div>
+    <div class="auth-footer" data-i18n="pay_footer">🔒 Paiement sécurisé · Tes données restent intactes</div>
+    <div class="auth-help-line"><span data-i18n="pay_help">Besoin d'aide ?</span> <a href="mailto:onertrade@outlook.com">onertrade@outlook.com</a></div>
   </div>
 </div>
 
@@ -2336,7 +2336,9 @@ body.no-scroll { overflow: hidden; }
 // ───────────────────────────────────────────
 //  I18N — LANGUE & DEVISE
 // ───────────────────────────────────────────
-let currentLang = (()=>{ try{ return localStorage.getItem('app_lang')||'fr'; }catch(e){ return 'fr'; } })();
+// Par défaut (1re visite, aucun choix mémorisé) : anglais. Le choix de l'utilisateur
+// (sélecteur, préférences de compte) écrase ensuite cette valeur.
+let currentLang = (()=>{ try{ return localStorage.getItem('app_lang')||'en'; }catch(e){ return 'en'; } })();
 let currentCurrency = (()=>{ try{ return localStorage.getItem('app_currency')||'eur'; }catch(e){ return 'eur'; } })();
 
 const CURRENCY = {
@@ -2417,6 +2419,56 @@ const STRINGS = {
     set_currency_label:"Devise",
     set_save:"💾 Enregistrer",
     set_saved:"✓ Préférences enregistrées",
+    // ─── Landing page ───
+    lp_nav_features:"Fonctionnalités", lp_nav_how:"Comment ça marche", lp_nav_pricing:"Tarifs",
+    lp_nav_faq:"FAQ", lp_nav_login:"Se connecter", lp_nav_trial:"Essai gratuit",
+    lp_hero_pill:"Le journal de trading qui te fait progresser",
+    lp_hero_h1:'Arrête de trader à l\'aveugle.<br><span class="grad">Analyse, comprends, progresse.</span>',
+    lp_hero_sub:"OneRtrade transforme chaque trade en données exploitables : R cumulé, win rate, calendrier, captures par étape, émotions et score de discipline. Tout ce qu'il te faut pour devenir constamment rentable.",
+    lp_hero_cta1:"Commencer gratuitement →", lp_hero_cta2:"J'ai déjà un compte",
+    lp_hero_re1:"Sans carte bancaire", lp_hero_re2:"Essai gratuit complet", lp_hero_re3:"Données chiffrées",
+    lp_mock_url:"onertrade · mon journal",
+    lp_feat_eyebrow:"Fonctionnalités", lp_feat_h2:"Tout ton trading, enfin sous contrôle",
+    lp_feat_lead:"Un journal pensé par et pour les traders. Chaque détail compte pour transformer tes statistiques en décisions.",
+    lp_feat1_h3:"R cumulé & statistiques", lp_feat1_p:"Total R, win rate, profit factor, espérance, séries et drawdown calculés automatiquement à partir de tes trades.",
+    lp_feat2_h3:"Calendrier de performance", lp_feat2_p:"Visualise tes journées gagnantes et perdantes d'un coup d'œil, et ouvre chaque jour pour revoir tous ses trades.",
+    lp_feat3_h3:"Captures par étape", lp_feat3_p:"Glisse tes screenshots d'exécution, management, clôture et après-clôture — avec une zone de notes pour chaque phase.",
+    lp_feat4_h3:"Score de discipline", lp_feat4_p:"Une note objective basée sur ta checklist, tes erreurs évitées et la maîtrise de tes émotions, trade après trade.",
+    lp_feat5_h3:"Insights & recommandations", lp_feat5_p:"Le site repère tes meilleurs jours, paires et setups — et te dit quoi corriger pour gagner plus.",
+    lp_feat6_h3:"Sécurisé & synchronisé", lp_feat6_p:"Tes trades sont chiffrés et sauvegardés dans le cloud. Accède à ton journal depuis n'importe quel appareil.",
+    lp_how_eyebrow:"Comment ça marche", lp_how_h2:"Opérationnel en 2 minutes",
+    lp_how_lead:"Pas de configuration compliquée. Crée ton compte et commence à journaliser dès maintenant.",
+    lp_step1_h3:"Crée ton compte", lp_step1_p:"Inscription en 10 secondes avec ton email. Aucune carte bancaire demandée pour démarrer ton essai gratuit.",
+    lp_step2_h3:"Enregistre tes trades", lp_step2_p:"Saisis paire, ordre, risque, R/R, captures et émotions. Marque même tes trades « en attente » ou « en cours ».",
+    lp_step3_h3:"Analyse & progresse", lp_step3_p:"Laisse les statistiques, le calendrier et les insights révéler tes patterns gagnants et tes fuites de capital.",
+    lp_trial_badge:"✦ ESSAI GRATUIT", lp_trial_h2:"Teste tout, gratuitement.",
+    lp_trial_p:"Profite de l'intégralité de OneRtrade pendant ta période d'essai : toutes les fonctionnalités, sans limite et sans carte bancaire. Tu ne paies que si le journal te fait vraiment progresser.",
+    lp_trial_pt1:"Accès complet", lp_trial_pt2:"Aucune carte requise", lp_trial_pt3:"Résiliable à tout moment",
+    lp_trial_btn:"Démarrer mon essai gratuit →",
+    lp_pricing_eyebrow:"Tarifs", lp_pricing_h2:"Un prix simple, sans surprise",
+    lp_pricing_lead:"Commence gratuitement. Passe en Premium quand tu es convaincu — pas avant.",
+    lp_price_monthly_name:"Mensuel", lp_price_monthly_note:"Sans engagement, résilie quand tu veux.",
+    lp_price_m_f1:"Trades & statistiques illimités", lp_price_m_f2:"Calendrier, insights & discipline",
+    lp_price_m_f3:"Captures & notes par étape", lp_price_m_f4:"Sauvegarde cloud sécurisée",
+    lp_price_btn:"Commencer l'essai", lp_price_tag:"★ 2 mois offerts", lp_price_yearly_name:"Annuel",
+    lp_price_yearly_note:'Soit <span id="lp-yearly-equiv">10 €/mois</span> — économise 17 %.',
+    lp_price_y_f1:"Tout le plan Mensuel inclus", lp_price_y_f2:"2 mois gratuits chaque année",
+    lp_price_y_f3:"Priorité sur les nouveautés", lp_price_y_f4:"Le meilleur rapport qualité/prix",
+    lp_faq_eyebrow:"FAQ", lp_faq_h2:"Questions fréquentes",
+    lp_faq_q1:"L'essai gratuit est-il vraiment gratuit ?", lp_faq_a1:"Oui. Tu accèdes à l'intégralité de OneRtrade pendant ta période d'essai, sans saisir de carte bancaire. Tu décides ensuite si tu veux continuer en Premium.",
+    lp_faq_q2:"Dois-je entrer ma carte pour m'inscrire ?", lp_faq_a2:"Non. La création de compte et l'essai se font uniquement avec un email et un mot de passe. Aucune information de paiement n'est requise pour démarrer.",
+    lp_faq_q3:"Mes données de trading sont-elles en sécurité ?", lp_faq_a3:"Absolument. Tes trades sont chiffrés et stockés de façon sécurisée. Toi seul y as accès, et tu peux exporter l'ensemble de ton journal en un clic à tout moment.",
+    lp_faq_q4:"Puis-je résilier quand je veux ?", lp_faq_a4:"Oui, l'abonnement est sans engagement. Tu peux annuler à tout moment et conserver l'accès jusqu'à la fin de la période déjà payée.",
+    lp_faq_q5:"Sur quels marchés puis-je l'utiliser ?", lp_faq_a5:"OneRtrade est agnostique : forex, indices, crypto, actions… Tout trade avec un risque et un R/R peut être journalisé et analysé.",
+    lp_final_h2:'Ton meilleur trade ? Commencer à <span class="grad" style="background:linear-gradient(120deg,#ffb340,#ff7a00);-webkit-background-clip:text;background-clip:text;color:transparent">journaliser.</span>',
+    lp_final_p:"Rejoins les traders qui ont arrêté de répéter les mêmes erreurs. Crée ton compte gratuitement dès maintenant.",
+    lp_final_btn:"Créer mon compte gratuit →",
+    // ─── Paywall ───
+    pay_title:"Ton essai gratuit est terminé",
+    pay_sub:"Continue à analyser tes trades, garder ton historique en sécurité et débloquer toutes les fonctionnalités du journal en passant à un abonnement.",
+    pay_monthly_name:"Mensuel", pay_monthly_hint:"Sans engagement, résilie quand tu veux",
+    pay_yearly_name:"Annuel", pay_yearly_hint:'Équivaut à <span id="pay-yearly-equiv">10 €/mois</span> · 2 mois offerts',
+    pay_logout:"Déconnexion", pay_footer:"🔒 Paiement sécurisé · Tes données restent intactes", pay_help:"Besoin d'aide ?",
   },
   en: {
     nav_overview:"Overview", nav_trades:"Trades", nav_setups:"Setups",
@@ -2466,6 +2518,56 @@ const STRINGS = {
     set_currency_label:"Currency",
     set_save:"💾 Save",
     set_saved:"✓ Preferences saved",
+    // ─── Landing page ───
+    lp_nav_features:"Features", lp_nav_how:"How it works", lp_nav_pricing:"Pricing",
+    lp_nav_faq:"FAQ", lp_nav_login:"Sign in", lp_nav_trial:"Free trial",
+    lp_hero_pill:"The trading journal that helps you improve",
+    lp_hero_h1:'Stop trading blind.<br><span class="grad">Analyze, understand, improve.</span>',
+    lp_hero_sub:"OneRtrade turns every trade into actionable data: cumulative R, win rate, calendar, step-by-step screenshots, emotions and a discipline score. Everything you need to become consistently profitable.",
+    lp_hero_cta1:"Start for free →", lp_hero_cta2:"I already have an account",
+    lp_hero_re1:"No credit card", lp_hero_re2:"Full free trial", lp_hero_re3:"Encrypted data",
+    lp_mock_url:"onertrade · my journal",
+    lp_feat_eyebrow:"Features", lp_feat_h2:"All your trading, finally under control",
+    lp_feat_lead:"A journal built by and for traders. Every detail matters to turn your stats into decisions.",
+    lp_feat1_h3:"Cumulative R & stats", lp_feat1_p:"Total R, win rate, profit factor, expectancy, streaks and drawdown computed automatically from your trades.",
+    lp_feat2_h3:"Performance calendar", lp_feat2_p:"See your winning and losing days at a glance, and open any day to review all its trades.",
+    lp_feat3_h3:"Step-by-step screenshots", lp_feat3_p:"Drop in your execution, management, close and post-close screenshots — with a notes area for each phase.",
+    lp_feat4_h3:"Discipline score", lp_feat4_p:"An objective score based on your checklist, the mistakes you avoided and your emotional control, trade after trade.",
+    lp_feat5_h3:"Insights & recommendations", lp_feat5_p:"The app spots your best days, pairs and setups — and tells you what to fix to win more.",
+    lp_feat6_h3:"Secure & synced", lp_feat6_p:"Your trades are encrypted and backed up in the cloud. Access your journal from any device.",
+    lp_how_eyebrow:"How it works", lp_how_h2:"Up and running in 2 minutes",
+    lp_how_lead:"No complicated setup. Create your account and start journaling right now.",
+    lp_step1_h3:"Create your account", lp_step1_p:"Sign up in 10 seconds with your email. No credit card required to start your free trial.",
+    lp_step2_h3:"Log your trades", lp_step2_p:"Enter pair, order, risk, R/R, screenshots and emotions. You can even mark trades as “pending” or “open”.",
+    lp_step3_h3:"Analyze & improve", lp_step3_p:"Let the stats, calendar and insights reveal your winning patterns and your capital leaks.",
+    lp_trial_badge:"✦ FREE TRIAL", lp_trial_h2:"Try everything, for free.",
+    lp_trial_p:"Enjoy the whole of OneRtrade during your trial: every feature, with no limits and no credit card. You only pay if the journal truly helps you improve.",
+    lp_trial_pt1:"Full access", lp_trial_pt2:"No card required", lp_trial_pt3:"Cancel anytime",
+    lp_trial_btn:"Start my free trial →",
+    lp_pricing_eyebrow:"Pricing", lp_pricing_h2:"Simple pricing, no surprises",
+    lp_pricing_lead:"Start for free. Go Premium once you're convinced — not before.",
+    lp_price_monthly_name:"Monthly", lp_price_monthly_note:"No commitment, cancel anytime.",
+    lp_price_m_f1:"Unlimited trades & stats", lp_price_m_f2:"Calendar, insights & discipline",
+    lp_price_m_f3:"Step-by-step screenshots & notes", lp_price_m_f4:"Secure cloud backup",
+    lp_price_btn:"Start trial", lp_price_tag:"★ 2 months free", lp_price_yearly_name:"Annual",
+    lp_price_yearly_note:'That\'s <span id="lp-yearly-equiv">10 €/mois</span> — save 17%.',
+    lp_price_y_f1:"Everything in Monthly included", lp_price_y_f2:"2 free months every year",
+    lp_price_y_f3:"Priority on new features", lp_price_y_f4:"The best value for money",
+    lp_faq_eyebrow:"FAQ", lp_faq_h2:"Frequently asked questions",
+    lp_faq_q1:"Is the free trial really free?", lp_faq_a1:"Yes. You get full access to OneRtrade during your trial, without entering a credit card. You then decide whether to continue with Premium.",
+    lp_faq_q2:"Do I need to enter my card to sign up?", lp_faq_a2:"No. Account creation and the trial only require an email and a password. No payment information is needed to start.",
+    lp_faq_q3:"Is my trading data safe?", lp_faq_a3:"Absolutely. Your trades are encrypted and stored securely. Only you can access them, and you can export your entire journal in one click anytime.",
+    lp_faq_q4:"Can I cancel whenever I want?", lp_faq_a4:"Yes, the subscription has no commitment. You can cancel anytime and keep access until the end of the period you already paid for.",
+    lp_faq_q5:"Which markets can I use it on?", lp_faq_a5:"OneRtrade is market-agnostic: forex, indices, crypto, stocks… Any trade with a risk and an R/R can be journaled and analyzed.",
+    lp_final_h2:'Your best trade? Starting to <span class="grad" style="background:linear-gradient(120deg,#ffb340,#ff7a00);-webkit-background-clip:text;background-clip:text;color:transparent">journal.</span>',
+    lp_final_p:"Join the traders who stopped repeating the same mistakes. Create your free account right now.",
+    lp_final_btn:"Create my free account →",
+    // ─── Paywall ───
+    pay_title:"Your free trial has ended",
+    pay_sub:"Keep analyzing your trades, keep your history safe and unlock all the journal's features by subscribing.",
+    pay_monthly_name:"Monthly", pay_monthly_hint:"No commitment, cancel anytime",
+    pay_yearly_name:"Annual", pay_yearly_hint:'Equivalent to <span id="pay-yearly-equiv">10 €/mois</span> · 2 months free',
+    pay_logout:"Sign out", pay_footer:"🔒 Secure payment · Your data stays intact", pay_help:"Need help?",
   },
 };
 
@@ -2485,6 +2587,8 @@ function applyTranslations(root){
   scope.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph'))); });
   scope.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.setAttribute('title', t(el.getAttribute('data-i18n-title'))); });
   try{ document.documentElement.setAttribute('lang', currentLang); }catch(e){}
+  // Les notes annuelles (data-i18n-html) recréent les <span> de prix : on réapplique la devise
+  if(typeof applyCurrencyPrices==='function') applyCurrencyPrices();
 }
 
 function setLang(lang, opts){
