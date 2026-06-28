@@ -1301,7 +1301,7 @@ body.no-scroll { overflow: hidden; }
     </div>
     <button class="btn-add" onclick="openAddModal()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
-      Nouveau Trade
+      <span data-i18n="btn_new_trade">Nouveau Trade</span>
     </button>
   </div>
 </nav>
@@ -1312,11 +1312,11 @@ body.no-scroll { overflow: hidden; }
 <div id="page-overview" class="page active">
   <div id="welcome-card" class="welcome-card" style="display:none">
     <div class="welcome-emoji">📈</div>
-    <div class="welcome-title">Bienvenue sur ton Journal</div>
-    <div class="welcome-sub">Commence par enregistrer ton premier trade pour suivre ta performance, ton R cumulé, et tes patterns gagnants.</div>
-    <button class="btn-orange" onclick="openAddModal()" style="margin-top:14px">＋ Mon premier trade</button>
+    <div class="welcome-title" data-i18n="welcome_title">Bienvenue sur ton Journal</div>
+    <div class="welcome-sub" data-i18n="welcome_sub">Commence par enregistrer ton premier trade pour suivre ta performance, ton R cumulé, et tes patterns gagnants.</div>
+    <button class="btn-orange" onclick="openAddModal()" style="margin-top:14px" data-i18n="welcome_btn">＋ Mon premier trade</button>
     <div class="welcome-tips">
-      <div><b>N</b> Nouveau trade</div><div><b>Esc</b> Fermer</div><div><b>← →</b> Naviguer le mois</div>
+      <div><b>N</b> <span data-i18n="tip_new">Nouveau trade</span></div><div><b>Esc</b> <span data-i18n="tip_close">Fermer</span></div><div><b>← →</b> <span data-i18n="tip_nav">Naviguer le mois</span></div>
     </div>
   </div>
   <div id="pris-counter" class="pris-counter"></div>
@@ -1324,29 +1324,29 @@ body.no-scroll { overflow: hidden; }
   <div class="gauge-row" id="gauge-row"></div>
   <div class="charts-row">
     <div class="chart-card chart-card-lg">
-      <div class="chart-card-title">Courbe de Capital</div>
+      <div class="chart-card-title" data-i18n="ov_eq">Courbe de Capital</div>
       <canvas id="eqChart" height="150"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-card-title">P&L par Trade (30 derniers)</div>
+      <div class="chart-card-title" data-i18n="ov_pnl30">P&L par Trade (30 derniers)</div>
       <canvas id="pnlBars" height="150"></canvas>
     </div>
   </div>
   <div class="charts-row">
     <div class="chart-card">
-      <div class="chart-card-title">Performance par Paire</div>
+      <div class="chart-card-title" data-i18n="ov_bypair">Performance par Paire</div>
       <canvas id="pairChart" height="180"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-card-title">Wins par Jour de la Semaine</div>
+      <div class="chart-card-title" data-i18n="ov_byday">Wins par Jour de la Semaine</div>
       <canvas id="weekChart" height="180"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-card-title">Distribution R Final</div>
+      <div class="chart-card-title" data-i18n="ov_rdist">Distribution R Final</div>
       <canvas id="rDistChart" height="180"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-card-title">Performance par Type de Trade</div>
+      <div class="chart-card-title" data-i18n="ov_bytype">Performance par Type de Trade</div>
       <canvas id="typeChart" height="180"></canvas>
     </div>
   </div>
@@ -1360,39 +1360,39 @@ body.no-scroll { overflow: hidden; }
   </div>
   <div class="table-card">
     <div class="table-toolbar">
-      <input class="filter-select" id="t-search" type="search" placeholder="🔎 Rechercher…" oninput="renderTradesTable()" title="Cherche dans paire, résultat, ordre, tendance, confluences, notes…" style="min-width:170px;border:1px solid var(--sep);background:var(--bg3);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.78rem">
-      <input class="filter-select" id="t-pair" list="pair-list" placeholder="Toutes les devises" oninput="this.value=this.value.toUpperCase();renderTradesTable()" style="min-width:150px;border:1px solid var(--sep);background:var(--bg3);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.78rem">
+      <input class="filter-select" id="t-search" type="search" placeholder="🔎 Rechercher…" data-i18n-ph="ph_search" oninput="renderTradesTable()" title="Cherche dans paire, résultat, ordre, tendance, confluences, notes…" data-i18n-title="title_search" style="min-width:170px;border:1px solid var(--sep);background:var(--bg3);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.78rem">
+      <input class="filter-select" id="t-pair" list="pair-list" placeholder="Toutes les devises" data-i18n-ph="ph_allpairs" oninput="this.value=this.value.toUpperCase();renderTradesTable()" style="min-width:150px;border:1px solid var(--sep);background:var(--bg3);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.78rem">
       <datalist id="pair-list"></datalist>
       <select class="filter-select" id="t-tf" onchange="renderTradesTable()">
-        <option value="">Time-Frame</option>
+        <option value="" data-i18n="opt_tf">Time-Frame</option>
         <option>Weekly</option><option>Daily</option><option>12h</option><option>8h</option>
         <option>4h</option><option>2h</option><option>1h</option><option>30mins</option>
         <option>15mins</option><option>10mins</option><option>5mins</option><option>1min</option>
       </select>
       <select class="filter-select" id="t-result" onchange="renderTradesTable()">
-        <option value="">Résultat</option>
-        <option>TP Total</option><option>Profit Partiel</option><option>SL Total</option><option>Perte Partiel</option><option>BE</option><option>Save</option><option>En cours</option><option>En attente</option><option>Non Pris</option>
+        <option value="" data-i18n="opt_result">Résultat</option>
+        <option data-i18n-val="TP Total">TP Total</option><option data-i18n-val="Profit Partiel">Profit Partiel</option><option data-i18n-val="SL Total">SL Total</option><option data-i18n-val="Perte Partiel">Perte Partiel</option><option data-i18n-val="BE">BE</option><option data-i18n-val="Save">Save</option><option data-i18n-val="En cours">En cours</option><option data-i18n-val="En attente">En attente</option><option data-i18n-val="Non Pris">Non Pris</option>
       </select>
       <select class="filter-select" id="t-type" onchange="renderTradesTable()">
-        <option value="">Type d'Ordre</option>
+        <option value="" data-i18n="opt_ordertype">Type d'Ordre</option>
         <option>MARKET BUY</option><option>MARKET SELL</option>
         <option>BUY LIMIT</option><option>SELL LIMIT</option>
         <option>BUY STOP</option><option>SELL STOP</option>
       </select>
       <select class="filter-select" id="t-jour" onchange="renderTradesTable()">
-        <option value="">Jour</option>
-        <option>Lundi</option><option>Mardi</option><option>Mercredi</option><option>Jeudi</option><option>Vendredi</option>
+        <option value="" data-i18n="opt_day">Jour</option>
+        <option data-i18n-val="Lundi">Lundi</option><option data-i18n-val="Mardi">Mardi</option><option data-i18n-val="Mercredi">Mercredi</option><option data-i18n-val="Jeudi">Jeudi</option><option data-i18n-val="Vendredi">Vendredi</option>
       </select>
       <select class="filter-select" id="t-month" onchange="renderTradesTable()">
-        <option value="">Tous les mois</option>
-        <option value="0">Janvier</option><option value="1">Février</option><option value="2">Mars</option>
-        <option value="3">Avril</option><option value="4">Mai</option><option value="5">Juin</option>
-        <option value="6">Juillet</option><option value="7">Août</option><option value="8">Septembre</option>
-        <option value="9">Octobre</option><option value="10">Novembre</option><option value="11">Décembre</option>
+        <option value="" data-i18n="opt_allmonths">Tous les mois</option>
+        <option value="0" data-i18n="mon_0">Janvier</option><option value="1" data-i18n="mon_1">Février</option><option value="2" data-i18n="mon_2">Mars</option>
+        <option value="3" data-i18n="mon_3">Avril</option><option value="4" data-i18n="mon_4">Mai</option><option value="5" data-i18n="mon_5">Juin</option>
+        <option value="6" data-i18n="mon_6">Juillet</option><option value="7" data-i18n="mon_7">Août</option><option value="8" data-i18n="mon_8">Septembre</option>
+        <option value="9" data-i18n="mon_9">Octobre</option><option value="10" data-i18n="mon_10">Novembre</option><option value="11" data-i18n="mon_11">Décembre</option>
       </select>
       <select class="filter-select" id="t-sort" onchange="tableSort={col:'date',dir:this.value};renderTradesTable()">
-        <option value="desc">Date ↓ (récent)</option>
-        <option value="asc">Date ↑ (ancien)</option>
+        <option value="desc" data-i18n="sort_recent">Date ↓ (récent)</option>
+        <option value="asc" data-i18n="sort_old">Date ↑ (ancien)</option>
       </select>
       <span class="count-badge" id="t-count">0 trades</span>
       <span id="t-focus-chip"></span>
@@ -1401,17 +1401,17 @@ body.no-scroll { overflow: hidden; }
       <table>
         <thead>
           <tr>
-            <th class="th-sort" onclick="setTableSort('pair')">Actif<span class="th-arrow" data-col="pair"></span></th>
-            <th class="th-sort" onclick="setTableSort('date')">Date<span class="th-arrow" data-col="date"></span></th>
-            <th>Prise</th>
-            <th class="th-sort" onclick="setTableSort('tf')">TF<span class="th-arrow" data-col="tf"></span></th>
-            <th class="th-sort" onclick="setTableSort('ordre')">Ordre<span class="th-arrow" data-col="ordre"></span></th>
-            <th class="th-sort" onclick="setTableSort('risk')">Risk<span class="th-arrow" data-col="risk"></span></th>
-            <th class="th-sort" onclick="setTableSort('result')">Résultat<span class="th-arrow" data-col="result"></span></th>
-            <th>R/R init</th>
-            <th class="th-sort" onclick="setTableSort('rrf')">R/R final<span class="th-arrow" data-col="rrf"></span></th>
-            <th class="th-sort" onclick="setTableSort('jour')">Jour<span class="th-arrow" data-col="jour"></span></th>
-            <th>Holding</th><th>Type Trade</th><th>Bon Trade</th><th></th>
+            <th class="th-sort" onclick="setTableSort('pair')"><span data-i18n="th_asset">Actif</span><span class="th-arrow" data-col="pair"></span></th>
+            <th class="th-sort" onclick="setTableSort('date')"><span data-i18n="th_date">Date</span><span class="th-arrow" data-col="date"></span></th>
+            <th data-i18n="th_taken">Prise</th>
+            <th class="th-sort" onclick="setTableSort('tf')"><span data-i18n="th_tf">TF</span><span class="th-arrow" data-col="tf"></span></th>
+            <th class="th-sort" onclick="setTableSort('ordre')"><span data-i18n="th_order">Ordre</span><span class="th-arrow" data-col="ordre"></span></th>
+            <th class="th-sort" onclick="setTableSort('risk')"><span data-i18n="th_risk">Risk</span><span class="th-arrow" data-col="risk"></span></th>
+            <th class="th-sort" onclick="setTableSort('result')"><span data-i18n="th_result">Résultat</span><span class="th-arrow" data-col="result"></span></th>
+            <th data-i18n="th_rri">R/R init</th>
+            <th class="th-sort" onclick="setTableSort('rrf')"><span data-i18n="th_rrf">R/R final</span><span class="th-arrow" data-col="rrf"></span></th>
+            <th class="th-sort" onclick="setTableSort('jour')"><span data-i18n="th_day">Jour</span><span class="th-arrow" data-col="jour"></span></th>
+            <th data-i18n="th_holding">Holding</th><th data-i18n="th_tradetype">Type Trade</th><th data-i18n="th_goodtrade">Bon Trade</th><th></th>
           </tr>
         </thead>
         <tbody id="t-tbody"></tbody>
@@ -1423,76 +1423,76 @@ body.no-scroll { overflow: hidden; }
 <!-- ══════════ SETUPS ══════════ -->
 <div id="page-setups" class="page">
   <div class="setups-intro">
-    <div class="setups-intro-title">🎯 Qu'est-ce qui marche pour toi ?</div>
-    <div class="setups-intro-sub">Cette page croise tes données pour révéler tes <b>combinaisons gagnantes</b> (Tendance × Time-Frame × Type d'ordre) et celles que tu devrais éviter. Minimum <b>3 trades</b> par combo pour être pertinent.</div>
+    <div class="setups-intro-title" data-i18n="su_intro_title">🎯 Qu'est-ce qui marche pour toi ?</div>
+    <div class="setups-intro-sub" data-i18n-html="su_intro_sub">Cette page croise tes données pour révéler tes <b>combinaisons gagnantes</b> (Tendance × Time-Frame × Type d'ordre) et celles que tu devrais éviter. Minimum <b>3 trades</b> par combo pour être pertinent.</div>
   </div>
 
   <!-- BEST / WORST SETUP HERO -->
   <div class="best-worst-row" id="best-worst-row"></div>
 
   <!-- INSIGHTS GRID -->
-  <div class="sec-title" style="margin:24px 0 12px">📊 Tes points forts</div>
+  <div class="sec-title" style="margin:24px 0 12px" data-i18n="su_strengths">📊 Tes points forts</div>
   <div class="insights-grid" id="insights-grid"></div>
 
   <!-- RANKED SETUPS TABLE -->
-  <div class="sec-title" style="margin:24px 0 12px">🏆 Classement de tes setups</div>
+  <div class="sec-title" style="margin:24px 0 12px" data-i18n="su_ranking">🏆 Classement de tes setups</div>
   <div class="setup-rank-card">
     <div class="setup-rank-toolbar">
-      <span class="rank-hint">Classés par Expectancy (R moyen × WR). Min. <select id="rank-min" onchange="renderSetups()"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option><option value="10">10</option></select> trades par combo.</span>
+      <span class="rank-hint"><span data-i18n="su_rank_hint1">Classés par Expectancy (R moyen × WR). Min.</span> <select id="rank-min" onchange="renderSetups()"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option><option value="10">10</option></select> <span data-i18n="su_rank_hint2">trades par combo.</span></span>
       <select id="rank-sort" onchange="renderSetups()" class="rank-sort">
-        <option value="exp">Trier : Expectancy</option>
+        <option value="exp" data-i18n="su_sort_exp">Trier : Expectancy</option>
         <option value="wr">Win Rate</option>
         <option value="totalR">Total R</option>
-        <option value="count">Nb Trades</option>
+        <option value="count" data-i18n="su_sort_count">Nb Trades</option>
       </select>
     </div>
     <div style="overflow-x:auto"><table class="setup-rank-table"><thead><tr>
-      <th>#</th><th>Tendance</th><th>Time-Frame</th><th>Type d'Ordre</th>
+      <th>#</th><th data-i18n="su_th_trend">Tendance</th><th>Time-Frame</th><th data-i18n="su_th_ordertype">Type d'Ordre</th>
       <th class="ar">Trades</th><th class="ar">Win Rate</th><th class="ar">Total R</th><th class="ar">Avg R</th><th class="ar">Profit Factor</th>
     </tr></thead><tbody id="setup-rank-body"></tbody></table></div>
   </div>
 
   <!-- DISCIPLINE -->
-  <div class="sec-title" style="margin:24px 0 12px">🧘 Discipline & exécution</div>
+  <div class="sec-title" style="margin:24px 0 12px" data-i18n="su_discipline">🧘 Discipline & exécution</div>
   <div class="discipline-grid" id="discipline-grid"></div>
 
   <!-- PERFORMANCE PAR DIMENSION (générique : n'importe quel champ cœur ou extra_data) -->
-  <div class="sec-title" style="margin:24px 0 12px">🧩 Performance par dimension</div>
+  <div class="sec-title" style="margin:24px 0 12px" data-i18n="su_bydim">🧩 Performance par dimension</div>
   <div class="setup-rank-card">
     <div class="setup-rank-toolbar">
-      <span class="rank-hint">Analyse n'importe quel champ (cœur ou importé). Calculé sur tes <b>trades pris</b> uniquement.</span>
+      <span class="rank-hint" data-i18n-html="su_dim_hint">Analyse n'importe quel champ (cœur ou importé). Calculé sur tes <b>trades pris</b> uniquement.</span>
       <select id="dim-field" class="rank-sort" onchange="onDimFieldChange(this.value)"></select>
     </div>
     <div id="dim-meta" class="rank-hint" style="margin:-4px 0 10px"></div>
     <div id="dim-empty" class="setup-rank-empty" style="display:none"></div>
     <div id="dim-body" style="display:none">
       <div style="overflow-x:auto"><table class="setup-rank-table"><thead><tr>
-        <th>Valeur</th><th class="ar">Trades</th><th class="ar">Win Rate</th><th class="ar">R moyen</th><th class="ar">R cumulé</th>
+        <th data-i18n="su_th_value">Valeur</th><th class="ar">Trades</th><th class="ar">Win Rate</th><th class="ar" data-i18n="su_th_avgr">R moyen</th><th class="ar" data-i18n="su_th_cumr">R cumulé</th>
       </tr></thead><tbody id="dim-table-body"></tbody></table></div>
       <div class="chart-card" style="margin-top:16px">
-        <div class="chart-card-title">R moyen par valeur</div>
-        <div class="chart-card-sub">R moyen par trade pour chaque valeur du champ choisi (trié par R cumulé décroissant). Vert = positif, rouge = négatif.</div>
+        <div class="chart-card-title" data-i18n="su_dimchart_title">R moyen par valeur</div>
+        <div class="chart-card-sub" data-i18n="su_dimchart_sub">R moyen par trade pour chaque valeur du champ choisi (trié par R cumulé décroissant). Vert = positif, rouge = négatif.</div>
         <canvas id="dimChart" height="200"></canvas>
       </div>
     </div>
   </div>
 
   <!-- CHARTS -->
-  <div class="sec-title" style="margin:24px 0 12px">📈 Vues détaillées</div>
+  <div class="sec-title" style="margin:24px 0 12px" data-i18n="su_detailed">📈 Vues détaillées</div>
   <div class="charts-row">
     <div class="chart-card">
-      <div class="chart-card-title">Win Rate par Tendance</div>
-      <div class="chart-card-sub">% de trades gagnants selon le contexte du marché (In Trend, Range, Counter Trend, Reversal). <b>Plus la barre est haute, mieux tu réussis dans ce type de marché.</b> Une barre &lt; 50% = tu perds plus que tu gagnes dans ce contexte.</div>
+      <div class="chart-card-title" data-i18n="su_wr_trend">Win Rate par Tendance</div>
+      <div class="chart-card-sub" data-i18n-html="su_wr_trend_sub">% de trades gagnants selon le contexte du marché (In Trend, Range, Counter Trend, Reversal). <b>Plus la barre est haute, mieux tu réussis dans ce type de marché.</b> Une barre &lt; 50% = tu perds plus que tu gagnes dans ce contexte.</div>
       <canvas id="tendChart" height="200"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-card-title">R Final par Type d'Ordre</div>
-      <div class="chart-card-sub">Somme des R gagnés/perdus selon le type d'entrée utilisé (Market, Limit, Stop). Vert = ce type d'ordre est rentable pour toi, rouge = il te coûte de l'argent.</div>
+      <div class="chart-card-title" data-i18n="su_rfinal_order">R Final par Type d'Ordre</div>
+      <div class="chart-card-sub" data-i18n="su_rfinal_order_sub">Somme des R gagnés/perdus selon le type d'entrée utilisé (Market, Limit, Stop). Vert = ce type d'ordre est rentable pour toi, rouge = il te coûte de l'argent.</div>
       <canvas id="ordreChart" height="200"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-card-title">Courbe de Drawdown</div>
-      <div class="chart-card-sub">Distance entre ton <b>pic de capital</b> et ta valeur actuelle, trade après trade. À 0 = tu es sur un nouveau plus haut. Plus la courbe descend, plus tu es éloigné de ton meilleur résultat. <b>Sert à voir tes périodes de baisse</b> et combien de R il te faut pour t'en remettre.</div>
+      <div class="chart-card-title" data-i18n="su_dd">Courbe de Drawdown</div>
+      <div class="chart-card-sub" data-i18n-html="su_dd_sub">Distance entre ton <b>pic de capital</b> et ta valeur actuelle, trade après trade. À 0 = tu es sur un nouveau plus haut. Plus la courbe descend, plus tu es éloigné de ton meilleur résultat. <b>Sert à voir tes périodes de baisse</b> et combien de R il te faut pour t'en remettre.</div>
       <canvas id="ddChart" height="200"></canvas>
     </div>
   </div>
@@ -2371,6 +2371,43 @@ const STRINGS = {
     nav_overview:"Vue d'ensemble", nav_trades:"Trades", nav_setups:"Setups",
     nav_calendar:"Calendrier", nav_performance:"Performance", nav_monthly:"Mensuel",
     nav_quarterly:"Trimestriel", nav_insights:"Insights", nav_settings:"Réglages",
+    // Overview + chrome (FR)
+    btn_new_trade:"Nouveau Trade",
+    welcome_title:"Bienvenue sur ton Journal",
+    welcome_sub:"Commence par enregistrer ton premier trade pour suivre ta performance, ton R cumulé, et tes patterns gagnants.",
+    welcome_btn:"＋ Mon premier trade",
+    tip_new:"Nouveau trade", tip_close:"Fermer", tip_nav:"Naviguer le mois",
+    ov_eq:"Courbe de Capital", ov_pnl30:"P&L par Trade (30 derniers)",
+    ov_bypair:"Performance par Paire", ov_byday:"Wins par Jour de la Semaine",
+    ov_rdist:"Distribution R Final", ov_bytype:"Performance par Type de Trade",
+    // Trades page (FR)
+    ph_search:"🔎 Rechercher…", title_search:"Cherche dans paire, résultat, ordre, tendance, confluences, notes…",
+    ph_allpairs:"Toutes les devises", opt_tf:"Time-Frame", opt_result:"Résultat",
+    opt_ordertype:"Type d'Ordre", opt_day:"Jour", opt_allmonths:"Tous les mois",
+    mon_0:"Janvier", mon_1:"Février", mon_2:"Mars", mon_3:"Avril", mon_4:"Mai", mon_5:"Juin",
+    mon_6:"Juillet", mon_7:"Août", mon_8:"Septembre", mon_9:"Octobre", mon_10:"Novembre", mon_11:"Décembre",
+    sort_recent:"Date ↓ (récent)", sort_old:"Date ↑ (ancien)",
+    th_asset:"Actif", th_date:"Date", th_taken:"Prise", th_tf:"TF", th_order:"Ordre", th_risk:"Risk",
+    th_result:"Résultat", th_rri:"R/R init", th_rrf:"R/R final", th_day:"Jour",
+    th_holding:"Holding", th_tradetype:"Type Trade", th_goodtrade:"Bon Trade",
+    // Setups page (FR)
+    su_intro_title:"🎯 Qu'est-ce qui marche pour toi ?",
+    su_intro_sub:"Cette page croise tes données pour révéler tes <b>combinaisons gagnantes</b> (Tendance × Time-Frame × Type d'ordre) et celles que tu devrais éviter. Minimum <b>3 trades</b> par combo pour être pertinent.",
+    su_strengths:"📊 Tes points forts", su_ranking:"🏆 Classement de tes setups",
+    su_rank_hint1:"Classés par Expectancy (R moyen × WR). Min.", su_rank_hint2:"trades par combo.",
+    su_sort_exp:"Trier : Expectancy", su_sort_count:"Nb Trades",
+    su_th_trend:"Tendance", su_th_ordertype:"Type d'Ordre",
+    su_discipline:"🧘 Discipline & exécution", su_bydim:"🧩 Performance par dimension",
+    su_dim_hint:"Analyse n'importe quel champ (cœur ou importé). Calculé sur tes <b>trades pris</b> uniquement.",
+    su_th_value:"Valeur", su_th_avgr:"R moyen", su_th_cumr:"R cumulé",
+    su_dimchart_title:"R moyen par valeur",
+    su_dimchart_sub:"R moyen par trade pour chaque valeur du champ choisi (trié par R cumulé décroissant). Vert = positif, rouge = négatif.",
+    su_detailed:"📈 Vues détaillées", su_wr_trend:"Win Rate par Tendance",
+    su_wr_trend_sub:"% de trades gagnants selon le contexte du marché (In Trend, Range, Counter Trend, Reversal). <b>Plus la barre est haute, mieux tu réussis dans ce type de marché.</b> Une barre &lt; 50% = tu perds plus que tu gagnes dans ce contexte.",
+    su_rfinal_order:"R Final par Type d'Ordre",
+    su_rfinal_order_sub:"Somme des R gagnés/perdus selon le type d'entrée utilisé (Market, Limit, Stop). Vert = ce type d'ordre est rentable pour toi, rouge = il te coûte de l'argent.",
+    su_dd:"Courbe de Drawdown",
+    su_dd_sub:"Distance entre ton <b>pic de capital</b> et ta valeur actuelle, trade après trade. À 0 = tu es sur un nouveau plus haut. Plus la courbe descend, plus tu es éloigné de ton meilleur résultat. <b>Sert à voir tes périodes de baisse</b> et combien de R il te faut pour t'en remettre.",
     // Page intros
     intro_trades_title:"📋 Tous tes trades, un seul endroit",
     intro_trades_sub:"Filtre par <b>paire</b>, <b>time-frame</b>, <b>résultat</b>, <b>type d'ordre</b> ou <b>jour</b> pour retrouver instantanément n'importe quel trade. Clique sur une ligne pour voir le détail complet (screenshots, management, confluences, état psy…) et le modifier. Trie par date pour suivre ta progression chronologique.",
@@ -2474,6 +2511,43 @@ const STRINGS = {
     nav_overview:"Overview", nav_trades:"Trades", nav_setups:"Setups",
     nav_calendar:"Calendar", nav_performance:"Performance", nav_monthly:"Monthly",
     nav_quarterly:"Quarterly", nav_insights:"Insights", nav_settings:"Settings",
+    // Overview + chrome (EN)
+    btn_new_trade:"New Trade",
+    welcome_title:"Welcome to your Journal",
+    welcome_sub:"Start by logging your first trade to track your performance, your cumulative R, and your winning patterns.",
+    welcome_btn:"＋ My first trade",
+    tip_new:"New trade", tip_close:"Close", tip_nav:"Navigate the month",
+    ov_eq:"Equity Curve", ov_pnl30:"P&L per Trade (last 30)",
+    ov_bypair:"Performance by Pair", ov_byday:"Wins by Day of Week",
+    ov_rdist:"Final R Distribution", ov_bytype:"Performance by Trade Type",
+    // Trades page (EN)
+    ph_search:"🔎 Search…", title_search:"Search pair, result, order, trend, confluences, notes…",
+    ph_allpairs:"All pairs", opt_tf:"Time-Frame", opt_result:"Result",
+    opt_ordertype:"Order Type", opt_day:"Day", opt_allmonths:"All months",
+    mon_0:"January", mon_1:"February", mon_2:"March", mon_3:"April", mon_4:"May", mon_5:"June",
+    mon_6:"July", mon_7:"August", mon_8:"September", mon_9:"October", mon_10:"November", mon_11:"December",
+    sort_recent:"Date ↓ (recent)", sort_old:"Date ↑ (oldest)",
+    th_asset:"Asset", th_date:"Date", th_taken:"Taken", th_tf:"TF", th_order:"Order", th_risk:"Risk",
+    th_result:"Result", th_rri:"R/R init", th_rrf:"R/R final", th_day:"Day",
+    th_holding:"Holding", th_tradetype:"Trade Type", th_goodtrade:"Good Trade",
+    // Setups page (EN)
+    su_intro_title:"🎯 What works for you?",
+    su_intro_sub:"This page cross-references your data to reveal your <b>winning combinations</b> (Trend × Time-Frame × Order type) and the ones you should avoid. At least <b>3 trades</b> per combo to be meaningful.",
+    su_strengths:"📊 Your strengths", su_ranking:"🏆 Your setups ranking",
+    su_rank_hint1:"Ranked by Expectancy (avg R × WR). Min.", su_rank_hint2:"trades per combo.",
+    su_sort_exp:"Sort: Expectancy", su_sort_count:"Trade count",
+    su_th_trend:"Trend", su_th_ordertype:"Order Type",
+    su_discipline:"🧘 Discipline & execution", su_bydim:"🧩 Performance by dimension",
+    su_dim_hint:"Analyze any field (core or imported). Computed on your <b>taken trades</b> only.",
+    su_th_value:"Value", su_th_avgr:"Avg R", su_th_cumr:"Cumulative R",
+    su_dimchart_title:"Avg R per value",
+    su_dimchart_sub:"Average R per trade for each value of the chosen field (sorted by descending cumulative R). Green = positive, red = negative.",
+    su_detailed:"📈 Detailed views", su_wr_trend:"Win Rate by Trend",
+    su_wr_trend_sub:"% of winning trades depending on market context (In Trend, Range, Counter Trend, Reversal). <b>The taller the bar, the better you do in that market type.</b> A bar &lt; 50% = you lose more than you win in that context.",
+    su_rfinal_order:"Final R by Order Type",
+    su_rfinal_order_sub:"Sum of R won/lost depending on the entry type used (Market, Limit, Stop). Green = this order type is profitable for you, red = it costs you money.",
+    su_dd:"Drawdown Curve",
+    su_dd_sub:"Distance between your <b>equity peak</b> and your current value, trade after trade. At 0 = you're at a new high. The deeper the curve, the further you are from your best result. <b>Useful to see your drawdown periods</b> and how many R it takes to recover.",
     intro_trades_title:"📋 All your trades, in one place",
     intro_trades_sub:"Filter by <b>pair</b>, <b>time-frame</b>, <b>result</b>, <b>order type</b> or <b>day</b> to instantly find any trade. Click a row to see the full detail (screenshots, management, confluences, psychology…) and edit it. Sort by date to follow your progress over time.",
     intro_calendar_title:"📅 Calendar view of your activity",
@@ -2586,6 +2660,8 @@ function applyTranslations(root){
   scope.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.getAttribute('data-i18n-html')); });
   scope.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph'))); });
   scope.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.setAttribute('title', t(el.getAttribute('data-i18n-title'))); });
+  // Options dont le texte est une VALEUR de donnée (FR) : garde la value FR, traduit l'affichage
+  scope.querySelectorAll('[data-i18n-val]').forEach(el=>{ const v=el.getAttribute('data-i18n-val'); el.value=v; el.textContent=tVal(v); });
   try{ document.documentElement.setAttribute('lang', currentLang); }catch(e){}
   // Les notes annuelles (data-i18n-html) recréent les <span> de prix : on réapplique la devise
   if(typeof applyCurrencyPrices==='function') applyCurrencyPrices();
@@ -2607,6 +2683,48 @@ function setCurrency(cur){
   currentCurrency = cur;
   try{ localStorage.setItem('app_currency', cur); }catch(e){}
   if(typeof applyCurrencyPrices==='function') applyCurrencyPrices();
+}
+
+// ───────────────────────────────────────────
+//  i18n pour le contenu rendu en JS
+//  L(fr,en)  → choisit la chaîne selon currentLang
+//  tVal(v)   → traduit une VALEUR de donnée (stockée en FR) pour l'affichage
+//              uniquement ; la valeur stockée en base reste inchangée.
+// ───────────────────────────────────────────
+function L(fr, en){ return currentLang==='en' ? (en!==undefined?en:fr) : fr; }
+
+const VALUE_LABELS_EN = {
+  // Résultats de trade
+  'En attente':'Pending', 'En cours':'Open', 'TP Total':'Full TP',
+  'Profit Partiel':'Partial profit', 'SL Total':'Full SL', 'Perte Partiel':'Partial loss',
+  'BE':'BE', 'Save':'Save', 'Non Pris':'Not taken',
+  // Retails
+  '—':'—', 'Avec les Retails':'With retail', 'Contre les Retails':'Against retail',
+  // Type d'analyse
+  '50% Technique 50% Fondamental':'50% Technical 50% Fundamental',
+  '75% Technique 25% Fondamental':'75% Technical 25% Fundamental',
+  '75% Fondamental 25% Technique':'75% Fundamental 25% Technical',
+  '100% Technique':'100% Technical', '100% Fondamental':'100% Fundamental',
+  // Tendances par défaut
+  'In Trend':'In Trend', 'Range Trade':'Range Trade', 'Counter Trend':'Counter Trend', 'Reversal':'Reversal',
+  // Jours
+  'Dimanche':'Sunday','Lundi':'Monday','Mardi':'Tuesday','Mercredi':'Wednesday',
+  'Jeudi':'Thursday','Vendredi':'Friday','Samedi':'Saturday',
+  // Émotions
+  'Discipliné':'Disciplined','Patient':'Patient','Confiant':'Confident','Calme':'Calm',
+  'Concentré':'Focused','FOMO':'FOMO','Stressé':'Stressed','Impatient':'Impatient',
+  'Avide':'Greedy','Peur':'Fear','Vengeance':'Revenge','Hésitant':'Hesitant',
+  'Euphorique':'Euphoric','Ennui':'Boredom',
+  // Erreurs par défaut
+  'Avarice':'Greed','Mauvaise analyse':'Bad analysis','Mauvais Stop Initial':'Bad initial stop',
+  'Mauvais Trailed Stop':'Bad trailed stop','Fermeture prématurée':'Premature close',
+  'Pas de Retrait avant':'No pullback before','Hors de mon Plan':'Off my plan',
+  'Mauvais timing':'Bad timing','Raisons Perso':'Personal reasons',
+};
+function tVal(v){
+  if(v==null) return v;
+  if(currentLang!=='en') return v;
+  return (VALUE_LABELS_EN[v]!==undefined) ? VALUE_LABELS_EN[v] : v;
 }
 
 // ───────────────────────────────────────────
@@ -3124,7 +3242,7 @@ const chartDefaults = (extra={}) => ({
 function resultChip(r){
   if(!r) return '';
   const cls = r==='TP Total'||r==='Profit Partiel'?'chip-tp':r==='SL Total'||r==='Perte Partiel'?'chip-sl':r==='BE'||r==='Save'?'chip-be':'chip-enc';
-  return `<span class="chip ${cls}">${RESULT_EMOJI[r]||''} ${r}</span>`;
+  return `<span class="chip ${cls}">${RESULT_EMOJI[r]||''} ${tVal(r)}</span>`;
 }
 function ordreChip(o){
   const isBuy = o&&(o.includes('BUY'));
@@ -3332,18 +3450,18 @@ function renderOverview(){
   const pc = document.getElementById('pris-counter');
   if (pc){
     pc.innerHTML = (all.length === 0) ? '' : `
-      <span class="pc-pill pc-pris"><span class="pc-dot"></span><span class="pc-num">${nPris}</span> trade${nPris>1?'s':''} pris</span>
-      <span class="pc-pill pc-missed"><span class="pc-dot"></span><span class="pc-num">${nMissed}</span> trade${nMissed>1?'s':''} manqué${nMissed>1?'s':''}</span>`;
+      <span class="pc-pill pc-pris"><span class="pc-dot"></span><span class="pc-num">${nPris}</span> ${L('trade'+(nPris>1?'s':'')+' pris','trade'+(nPris>1?'s':'')+' taken')}</span>
+      <span class="pc-pill pc-missed"><span class="pc-dot"></span><span class="pc-num">${nMissed}</span> ${L('trade'+(nMissed>1?'s':'')+' manqué'+(nMissed>1?'s':''),'trade'+(nMissed>1?'s':'')+' missed')}</span>`;
   }
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi"><div class="kpi-label">Total Trades</div><div class="kpi-value">${s.total}</div><div class="kpi-sub">${s.wins}W · ${s.losses}L</div></div>
     <div class="kpi"><div class="kpi-label">Win Rate</div><div class="kpi-value ora">${s.winRate.toFixed(1)}%</div></div>
     <div class="kpi"><div class="kpi-label">Total R</div><div class="kpi-value ${s.totalR>=0?'pos':'neg'}">${s.totalR>0?'+':''}${s.totalR}R</div></div>
-    <div class="kpi"><div class="kpi-label">R moyen/trade</div><div class="kpi-value ${s.avgR>=0?'pos':'neg'}">${s.avgR>0?'+':''}${s.avgR}R</div></div>
+    <div class="kpi"><div class="kpi-label">${L('R moyen/trade','Avg R/trade')}</div><div class="kpi-value ${s.avgR>=0?'pos':'neg'}">${s.avgR>0?'+':''}${s.avgR}R</div></div>
     <div class="kpi"><div class="kpi-label">Profit Factor</div><div class="kpi-value ora">${s.pf}</div></div>
     <div class="kpi"><div class="kpi-label">Avg Win</div><div class="kpi-value pos">+${s.avgWin}R</div></div>
     <div class="kpi"><div class="kpi-label">Avg Loss</div><div class="kpi-value neg">-${s.avgLoss}R</div></div>
-    <div class="kpi"><div class="kpi-label">Drawdown Max</div><div class="kpi-value ${s.maxDD>0?'neg':''}">${s.maxDD>0?'-':''}${s.maxDD}R</div><div class="kpi-sub">plus forte baisse depuis un sommet</div></div>
+    <div class="kpi"><div class="kpi-label">${L('Drawdown Max','Max Drawdown')}</div><div class="kpi-value ${s.maxDD>0?'neg':''}">${s.maxDD>0?'-':''}${s.maxDD}R</div><div class="kpi-sub">${L('plus forte baisse depuis un sommet','largest drop from a peak')}</div></div>
   `;
 
   // Gauges
@@ -3355,13 +3473,13 @@ function renderOverview(){
       </div>
     </div>
     <div class="gauge-card">
-      <div class="gauge-label">Trades Pris</div>
+      <div class="gauge-label">${L('Trades Pris','Trades Taken')}</div>
       <div class="gauge-ring-wrap"><canvas id="gTP"></canvas>
         <div class="gauge-center"><div class="gauge-val">${s.total}</div><div class="gauge-sub">trades</div></div>
       </div>
     </div>
     <div class="gauge-card">
-      <div class="gauge-label">Bon Trade</div>
+      <div class="gauge-label">${L('Bon Trade','Good Trade')}</div>
       <div class="gauge-ring-wrap"><canvas id="gBT"></canvas>
         <div class="gauge-center"><div class="gauge-val">${ts.length?Math.round(ts.filter(t=>t.bonTrade).length/ts.length*100):0}%</div></div>
       </div>
@@ -3391,14 +3509,14 @@ function renderOverview(){
         tooltip:{
           backgroundColor:'#1c1c1e', titleColor:'#fff', bodyColor:'#aeaeb2', borderColor:'#2c2c2e', borderWidth:1,
           callbacks:{
-            title:(items)=>`Trade n°${items[0].label}`,
-            label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R cumulés`
+            title:(items)=>`${L('Trade n°','Trade #')}${items[0].label}`,
+            label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}`
           }
         }
       },
       scales:{
-        x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}}, title:{display:true,text:'N° de trade',color:'#636366',font:{size:10}} },
-        y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>(v>0?'+':'')+v+'R'}, title:{display:true,text:'R cumulés',color:'#636366',font:{size:10}} }
+        x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}}, title:{display:true,text:L('N° de trade','Trade #'),color:'#636366',font:{size:10}} },
+        y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>(v>0?'+':'')+v+'R'}, title:{display:true,text:L('R cumulés','Cumulative R'),color:'#636366',font:{size:10}} }
       }
     })
   });
@@ -3424,7 +3542,7 @@ function renderOverview(){
   });
 
   // Wins by weekday
-  const wdNames = ['Lun','Mar','Mer','Jeu','Ven'];
+  const wdNames = currentLang==='en' ? ['Mon','Tue','Wed','Thu','Fri'] : ['Lun','Mar','Mer','Jeu','Ven'];
   const wdWins = wdNames.map((_,i)=>ts.filter(t=>new Date(getTradeDate(t)).getDay()===(i+1)&&isWin(t)).length);
   const wdTotal= wdNames.map((_,i)=>ts.filter(t=>new Date(getTradeDate(t)).getDay()===(i+1)).length);
   dc('weekChart');
@@ -3487,9 +3605,10 @@ function renderFocusChip(){
   const el = document.getElementById('t-focus-chip');
   if(!el) return;
   if(!tradeFocusFilter){ el.innerHTML=''; return; }
-  const def = TRADE_FOCUS[tradeFocusFilter.key];
-  el.innerHTML = `<span class="focus-chip">⭐ ${def?def.label:''} : ${escapeHtml(tradeFocusFilter.value)}
-    <button onclick="clearTradeFocus()" title="Retirer le filtre">✕</button></span>`;
+  const FOCUS_LABELS = { tf:L('Time-Frame','Time-Frame'), tend:L('Tendance','Trend'), pair:L('Paire','Pair'), jour:L('Jour','Day'), ordre:L("Type d'Ordre",'Order Type'), hold:L('Durée','Duration') };
+  const label = FOCUS_LABELS[tradeFocusFilter.key] || (TRADE_FOCUS[tradeFocusFilter.key]?TRADE_FOCUS[tradeFocusFilter.key].label:'');
+  el.innerHTML = `<span class="focus-chip">⭐ ${label} : ${escapeHtml(tVal(tradeFocusFilter.value))}
+    <button onclick="clearTradeFocus()" title="${L('Retirer le filtre','Remove filter')}">✕</button></span>`;
 }
 // État de tri de la table (par défaut : date décroissante)
 let tableSort = { col:'date', dir:'desc' };
@@ -3569,9 +3688,9 @@ function renderTradesTable(){
       <td>${resultChip(t.result)}</td>
       <td style="color:var(--text2)">${t.rri}</td>
       <td class="${rClass(t.rrf)}">${rStr(t.rrf)}</td>
-      <td><span class="chip chip-jour">${getTradeJour(t)}</span></td>
+      <td><span class="chip chip-jour">${tVal(getTradeJour(t))}</span></td>
       <td style="color:var(--text3);font-size:.75rem">${t.hold}</td>
-      <td style="color:var(--text2);font-size:.73rem;max-width:180px;overflow:hidden;text-overflow:ellipsis">${t.type}</td>
+      <td style="color:var(--text2);font-size:.73rem;max-width:180px;overflow:hidden;text-overflow:ellipsis">${tVal(t.type)}</td>
       <td style="font-size:1rem;text-align:center">${t.bonTrade?'✅':'❌'}</td>
       <td onclick="event.stopPropagation()">
         <button onclick="deleteTrade(${t.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:.85rem;transition:color .15s,background .15s" onmouseenter="this.style.color='var(--red)';this.style.background='rgba(255,69,58,.1)'" onmouseleave="this.style.color='var(--text3)';this.style.background='none'">✕</button>
@@ -3674,12 +3793,12 @@ function renderDimensionAnalysis(){
   const fields = getDimensionFields(ts);
 
   if (fields.length === 0){
-    sel.innerHTML = '<option value="">— aucun champ analysable —</option>';
+    sel.innerHTML = `<option value="">${L('— aucun champ analysable —','— no analyzable field —')}</option>`;
     sel.disabled = true;
     metaEl.textContent = '';
     bodyEl.style.display = 'none';
     emptyEl.style.display = 'block';
-    emptyEl.textContent = "Pas encore assez de données : il faut au moins un champ (cœur ou importé) ayant 2 valeurs distinctes parmi tes trades pris.";
+    emptyEl.textContent = L("Pas encore assez de données : il faut au moins un champ (cœur ou importé) ayant 2 valeurs distinctes parmi tes trades pris.","Not enough data yet: you need at least one field (core or imported) with 2 distinct values among your taken trades.");
     dc('dimChart');
     return;
   }
@@ -3689,7 +3808,7 @@ function renderDimensionAnalysis(){
   const chosen = (_dimSelected && fields.some(f => f.id === _dimSelected)) ? _dimSelected : fields[0].id;
   _dimSelected = chosen;
   sel.innerHTML = fields.map(f =>
-    `<option value="${escapeHtml(f.id)}" ${f.id===chosen?'selected':''}>${escapeHtml(f.label)}${f.source==='extra'?' · importé':''}</option>`
+    `<option value="${escapeHtml(f.id)}" ${f.id===chosen?'selected':''}>${escapeHtml(tVal(f.label))}${f.source==='extra'?L(' · importé',' · imported'):''}</option>`
   ).join('');
 
   const field = fields.find(f => f.id === chosen);
@@ -3712,13 +3831,13 @@ function renderDimensionAnalysis(){
     return { value, count: arr.length, wr, totalR, avgR };
   }).sort((a, b) => b.totalR - a.totalR); // tri par R cumulé décroissant
 
-  metaEl.innerHTML = `<b>${rows.length}</b> valeur${rows.length>1?'s':''} distincte${rows.length>1?'s':''} · calculé sur <b>${ts.length}</b> trade${ts.length>1?'s':''} pris`;
+  metaEl.innerHTML = L(`<b>${rows.length}</b> valeur${rows.length>1?'s':''} distincte${rows.length>1?'s':''} · calculé sur <b>${ts.length}</b> trade${ts.length>1?'s':''} pris`, `<b>${rows.length}</b> distinct value${rows.length>1?'s':''} · computed on <b>${ts.length}</b> taken trade${ts.length>1?'s':''}`);
   emptyEl.style.display = 'none';
   bodyEl.style.display = 'block';
 
   document.getElementById('dim-table-body').innerHTML = rows.map(r => `
     <tr>
-      <td>${r.value===DIM_EMPTY?`<span style="color:var(--text3);font-style:italic">${r.value}</span>`:escapeHtml(r.value)}</td>
+      <td>${r.value===DIM_EMPTY?`<span style="color:var(--text3);font-style:italic">${L('(non renseigné)','(not set)')}</span>`:escapeHtml(tVal(r.value))}</td>
       <td class="ar">${r.count}</td>
       <td class="ar ${r.wr>=50?'pos':'neg'}">${r.wr.toFixed(0)}%</td>
       <td class="ar ${r.avgR>=0?'pos':'neg'}">${r.avgR>0?'+':''}${r.avgR.toFixed(2)}R</td>
@@ -3775,24 +3894,24 @@ function renderSetups(){
   const bw = document.getElementById('best-worst-row');
   if(comboList.length===0){
     bw.innerHTML = `<div class="bw-card empty" style="grid-column:span 2;text-align:center;padding:40px">
-      <div class="bw-tag">Pas encore assez de données</div>
-      <div class="bw-name">Enregistre au moins ${minTrades} trades par combinaison Tendance × TF × Ordre</div>
-      <div style="color:var(--text3);font-size:.85rem">Les meilleurs et pires setups apparaîtront ici.</div>
+      <div class="bw-tag">${L('Pas encore assez de données','Not enough data yet')}</div>
+      <div class="bw-name">${L(`Enregistre au moins ${minTrades} trades par combinaison Tendance × TF × Ordre`,`Log at least ${minTrades} trades per Trend × TF × Order combination`)}</div>
+      <div style="color:var(--text3);font-size:.85rem">${L('Les meilleurs et pires setups apparaîtront ici.','Your best and worst setups will appear here.')}</div>
     </div>`;
   } else {
     const sorted = [...comboList].sort((a,b)=>b.exp-a.exp);
     const best = sorted[0], worst = sorted[sorted.length-1];
     const bwHtml = (c, type)=>`
       <div class="bw-card ${type}">
-        <div class="bw-tag">${type==='best'?'🏆 Meilleur Setup':'⚠️ Setup à éviter'}</div>
-        <div class="bw-name">${c.tend} · ${c.tf} · ${c.ordre}</div>
+        <div class="bw-tag">${type==='best'?L('🏆 Meilleur Setup','🏆 Best Setup'):L('⚠️ Setup à éviter','⚠️ Setup to avoid')}</div>
+        <div class="bw-name">${tVal(c.tend)} · ${c.tf} · ${c.ordre}</div>
         <div class="bw-stats">
           <div><div class="bw-stat-l">Win Rate</div><div class="bw-stat-v ${c.wr>=50?'pos':'neg'}">${c.wr.toFixed(0)}%</div></div>
           <div><div class="bw-stat-l">Total R</div><div class="bw-stat-v ${c.totalR>=0?'pos':'neg'}">${c.totalR>0?'+':''}${c.totalR.toFixed(2)}R</div></div>
-          <div><div class="bw-stat-l">${c.n} trades</div><div class="bw-stat-v ora">${c.avgR>0?'+':''}${c.avgR.toFixed(2)}R<span style="font-size:.65rem;color:var(--text3);font-weight:400"> /trade</span></div></div>
+          <div><div class="bw-stat-l">${c.n} trades</div><div class="bw-stat-v ora">${c.avgR>0?'+':''}${c.avgR.toFixed(2)}R<span style="font-size:.65rem;color:var(--text3);font-weight:400"> ${L('/trade','/trade')}</span></div></div>
         </div>
       </div>`;
-    bw.innerHTML = bwHtml(best,'best') + (worst===best ? `<div class="bw-card empty"><div class="bw-tag">À venir</div><div class="bw-name">Plus de trades = plus d'insights</div><div style="color:var(--text3);font-size:.85rem">Continue d'enregistrer pour révéler ton setup le plus faible.</div></div>` : bwHtml(worst,'worst'));
+    bw.innerHTML = bwHtml(best,'best') + (worst===best ? `<div class="bw-card empty"><div class="bw-tag">${L('À venir','Coming soon')}</div><div class="bw-name">${L("Plus de trades = plus d'insights","More trades = more insights")}</div><div style="color:var(--text3);font-size:.85rem">${L("Continue d'enregistrer pour révéler ton setup le plus faible.","Keep logging to reveal your weakest setup.")}</div></div>` : bwHtml(worst,'worst'));
   }
 
   // ─── INSIGHTS (best TF, best Tendance, best Pair, best Day, best Holding, best Order) ───
@@ -3800,22 +3919,22 @@ function renderSetups(){
     const groups = {};
     ts.forEach(t=>{ const k=getKey(t); if(!k || t.rrf===null) return; (groups[k]||(groups[k]=[])).push(t); });
     const arr = Object.entries(groups).map(([k,a])=>({k, ...statsOf(a)})).filter(x=>x.n>=Math.max(2, Math.floor(minTrades/2)));
-    if(arr.length===0) return `<div class="insight-card"><div class="insight-icon">${icon}</div><div class="insight-label">${label}</div><div class="insight-val" style="color:var(--text3)">—</div><div class="insight-sub">Pas assez de données</div></div>`;
+    if(arr.length===0) return `<div class="insight-card"><div class="insight-icon">${icon}</div><div class="insight-label">${label}</div><div class="insight-val" style="color:var(--text3)">—</div><div class="insight-sub">${L('Pas assez de données','Not enough data')}</div></div>`;
     arr.sort((a,b)=>b.exp-a.exp);
     const top = arr[0];
     const clickable = focusKey ? ` clickable" data-fv="${escapeHtml(top.k)}" onclick="focusTradesBy('${focusKey}', this.dataset.fv)` : '';
-    const goLine = focusKey ? `<div class="insight-go">Voir ces trades →</div>` : '';
+    const goLine = focusKey ? `<div class="insight-go">${L('Voir ces trades →','See these trades →')}</div>` : '';
     return `<div class="insight-card${clickable}"><div class="insight-icon">${icon}</div><div class="insight-label">${label}</div>
-      <div class="insight-val ora">${escapeHtml(top.k)}</div>
-      <div class="insight-sub">${top.wr.toFixed(0)}% WR · ${top.totalR>0?'+':''}${top.totalR.toFixed(2)}R sur ${top.n} trades</div>${goLine}</div>`;
+      <div class="insight-val ora">${escapeHtml(tVal(top.k))}</div>
+      <div class="insight-sub">${top.wr.toFixed(0)}% WR · ${top.totalR>0?'+':''}${top.totalR.toFixed(2)}R ${L('sur','on')} ${top.n} trades</div>${goLine}</div>`;
   };
   document.getElementById('insights-grid').innerHTML =
-    bestBy(t=>t.tf, 'Meilleur Time-Frame', '⏱', null, 'tf')
-    + bestBy(t=>t.tend, 'Meilleure Tendance', '📈', null, 'tend')
-    + bestBy(t=>t.pair, 'Meilleure Paire', '💱', null, 'pair')
-    + bestBy(t=>getTradeJour(t), 'Meilleur Jour', '📅', null, 'jour')
-    + bestBy(t=>t.ordre, 'Meilleur Type d\'Ordre', '🎯', null, 'ordre')
-    + bestBy(t=>t.hold, 'Meilleure Durée', '⏳', null, 'hold');
+    bestBy(t=>t.tf, L('Meilleur Time-Frame','Best Time-Frame'), '⏱', null, 'tf')
+    + bestBy(t=>t.tend, L('Meilleure Tendance','Best Trend'), '📈', null, 'tend')
+    + bestBy(t=>t.pair, L('Meilleure Paire','Best Pair'), '💱', null, 'pair')
+    + bestBy(t=>getTradeJour(t), L('Meilleur Jour','Best Day'), '📅', null, 'jour')
+    + bestBy(t=>t.ordre, L("Meilleur Type d'Ordre",'Best Order Type'), '🎯', null, 'ordre')
+    + bestBy(t=>t.hold, L('Meilleure Durée','Best Duration'), '⏳', null, 'hold');
 
   // ─── RANKING TABLE ───
   const sortFns = {
@@ -3827,13 +3946,13 @@ function renderSetups(){
   comboList.sort(sortFns[sortKey]);
   const tbody = document.getElementById('setup-rank-body');
   if(comboList.length===0){
-    tbody.innerHTML = `<tr><td colspan="9" class="setup-rank-empty">Aucun combo avec au moins ${minTrades} trades. Diminue le seuil ou enregistre plus de trades.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="setup-rank-empty">${L(`Aucun combo avec au moins ${minTrades} trades. Diminue le seuil ou enregistre plus de trades.`,`No combo with at least ${minTrades} trades. Lower the threshold or log more trades.`)}</td></tr>`;
   } else {
     const medal = i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
     tbody.innerHTML = comboList.map((c,i)=>`
       <tr>
         <td class="rank-pos">${medal(i)||(i+1)}</td>
-        <td>${c.tend}</td><td>${c.tf}</td><td>${c.ordre}</td>
+        <td>${tVal(c.tend)}</td><td>${c.tf}</td><td>${c.ordre}</td>
         <td class="ar">${c.n}</td>
         <td class="ar ${c.wr>=50?'pos':'neg'}">${c.wr.toFixed(0)}%</td>
         <td class="ar ${c.totalR>=0?'pos':'neg'}">${c.totalR>0?'+':''}${c.totalR.toFixed(2)}R</td>
@@ -3855,34 +3974,34 @@ function renderSetups(){
 
   document.getElementById('discipline-grid').innerHTML = `
     <div class="disc-card">
-      <div class="disc-head"><div class="disc-label">Bon Trade</div><div class="disc-val ${bonPct>=70?'pos':bonPct>=50?'ora':'neg'}">${bonPct.toFixed(0)}%</div></div>
+      <div class="disc-head"><div class="disc-label">${L('Bon Trade','Good Trade')}</div><div class="disc-val ${bonPct>=70?'pos':bonPct>=50?'ora':'neg'}">${bonPct.toFixed(0)}%</div></div>
       <div class="disc-bar"><div class="disc-bar-fill" style="width:${bonPct}%;background:${bonPct>=70?'#30d158':bonPct>=50?'#ff9f0a':'#ff453a'}"></div></div>
-      <div class="disc-hint">${bonCount}/${bonTotal} trades respectent ton plan</div>
+      <div class="disc-hint">${L(`${bonCount}/${bonTotal} trades respectent ton plan`,`${bonCount}/${bonTotal} trades follow your plan`)}</div>
     </div>
     <div class="disc-card">
-      <div class="disc-head"><div class="disc-label">Trades sans erreur</div><div class="disc-val ${(100-errPct)>=70?'pos':'ora'}">${(100-errPct).toFixed(0)}%</div></div>
+      <div class="disc-head"><div class="disc-label">${L('Trades sans erreur','Error-free trades')}</div><div class="disc-val ${(100-errPct)>=70?'pos':'ora'}">${(100-errPct).toFixed(0)}%</div></div>
       <div class="disc-bar"><div class="disc-bar-fill" style="width:${100-errPct}%;background:${(100-errPct)>=70?'#30d158':'#ff9f0a'}"></div></div>
-      <div class="disc-hint">${ts.length-errCount}/${ts.length} trades exécutés proprement</div>
+      <div class="disc-hint">${L(`${ts.length-errCount}/${ts.length} trades exécutés proprement`,`${ts.length-errCount}/${ts.length} trades executed cleanly`)}</div>
     </div>
     <div class="disc-card">
-      <div class="disc-head"><div class="disc-label">Meilleure série</div><div class="disc-val pos">+${bestStreak} 🔥</div></div>
+      <div class="disc-head"><div class="disc-label">${L('Meilleure série','Best streak')}</div><div class="disc-val pos">+${bestStreak} 🔥</div></div>
       <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,bestStreak*10)}%;background:#30d158"></div></div>
-      <div class="disc-hint">Wins consécutifs (TP Total)</div>
+      <div class="disc-hint">${L('Wins consécutifs (TP Total)','Consecutive wins (Full TP)')}</div>
     </div>
     <div class="disc-card">
-      <div class="disc-head"><div class="disc-label">Pire série</div><div class="disc-val neg">-${worstStreak}</div></div>
+      <div class="disc-head"><div class="disc-label">${L('Pire série','Worst streak')}</div><div class="disc-val neg">-${worstStreak}</div></div>
       <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,worstStreak*10)}%;background:#ff453a"></div></div>
-      <div class="disc-hint">SL consécutifs — attention au tilt</div>
+      <div class="disc-hint">${L('SL consécutifs — attention au tilt','Consecutive SL — watch out for tilt')}</div>
     </div>
     <div class="disc-card">
       <div class="disc-head"><div class="disc-label">Profit Factor</div><div class="disc-val ${sGlobal.pf>=1.5?'pos':sGlobal.pf>=1?'ora':'neg'}">${isFinite(sGlobal.pf)?sGlobal.pf.toFixed(2):'∞'}</div></div>
       <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,sGlobal.pf*40)}%;background:${sGlobal.pf>=1.5?'#30d158':sGlobal.pf>=1?'#ff9f0a':'#ff453a'}"></div></div>
-      <div class="disc-hint">> 1.5 = très bon · > 1 = profitable</div>
+      <div class="disc-hint">${L('> 1.5 = très bon · > 1 = profitable','> 1.5 = very good · > 1 = profitable')}</div>
     </div>
     <div class="disc-card">
       <div class="disc-head"><div class="disc-label">Expectancy</div><div class="disc-val ${sGlobal.exp>=0.3?'pos':sGlobal.exp>=0?'ora':'neg'}">${sGlobal.exp>0?'+':''}${sGlobal.exp.toFixed(2)}R</div></div>
       <div class="disc-bar"><div class="disc-bar-fill" style="width:${Math.min(100,Math.max(0,sGlobal.exp*80))}%;background:${sGlobal.exp>=0.3?'#30d158':sGlobal.exp>=0?'#ff9f0a':'#ff453a'}"></div></div>
-      <div class="disc-hint">R moyen attendu par trade</div>
+      <div class="disc-hint">${L('R moyen attendu par trade','Expected average R per trade')}</div>
     </div>`;
 
   // Tendance chart
