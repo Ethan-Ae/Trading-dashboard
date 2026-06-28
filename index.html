@@ -1371,7 +1371,7 @@ body.no-scroll { overflow: hidden; }
       </select>
       <select class="filter-select" id="t-result" onchange="renderTradesTable()">
         <option value="">Résultat</option>
-        <option>TP Total</option><option>Profit Partiel</option><option>SL Total</option><option>Perte Partiel</option><option>BE</option><option>En cours</option><option>En attente</option><option>Non Pris</option>
+        <option>TP Total</option><option>Profit Partiel</option><option>SL Total</option><option>Perte Partiel</option><option>BE</option><option>Save</option><option>En cours</option><option>En attente</option><option>Non Pris</option>
       </select>
       <select class="filter-select" id="t-type" onchange="renderTradesTable()">
         <option value="">Type d'Ordre</option>
@@ -2184,7 +2184,7 @@ body.no-scroll { overflow: hidden; }
       <div class="form-group"><label>Résultat</label>
         <select id="m-result">
           <option>En attente</option><option>En cours</option><option>TP Total</option><option>Profit Partiel</option>
-          <option>SL Total</option><option>Perte Partiel</option><option>BE</option><option>Non Pris</option>
+          <option>SL Total</option><option>Perte Partiel</option><option>BE</option><option>Save</option><option>Non Pris</option>
         </select>
       </div>
       <div class="form-group"><label>Position vs Retails</label>
@@ -2293,8 +2293,8 @@ body.no-scroll { overflow: hidden; }
 //  DATA MODEL
 // ───────────────────────────────────────────
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-const RESULT_EMOJI = { 'TP Total':'✅', 'Profit Partiel':'👍', 'SL Total':'❌', 'Perte Partiel':'🟠', 'BE':'⚖️', 'En cours':'🔵', 'En attente':'⏳', 'Non Pris':'🚫' };
-const RESULT_OPTIONS = ['En attente','En cours','TP Total','Profit Partiel','SL Total','Perte Partiel','BE','Non Pris'];
+const RESULT_EMOJI = { 'TP Total':'✅', 'Profit Partiel':'👍', 'SL Total':'❌', 'Perte Partiel':'🟠', 'BE':'⚖️', 'Save':'🛟', 'En cours':'🔵', 'En attente':'⏳', 'Non Pris':'🚫' };
+const RESULT_OPTIONS = ['En attente','En cours','TP Total','Profit Partiel','SL Total','Perte Partiel','BE','Save','Non Pris'];
 const RETAILS_OPTIONS = ['—','Avec les Retails','Contre les Retails'];
 const TYPE_OPTIONS = [
   '50% Technique 50% Fondamental',
@@ -2788,7 +2788,7 @@ const chartDefaults = (extra={}) => ({
 
 function resultChip(r){
   if(!r) return '';
-  const cls = r==='TP Total'||r==='Profit Partiel'?'chip-tp':r==='SL Total'||r==='Perte Partiel'?'chip-sl':r==='BE'?'chip-be':'chip-enc';
+  const cls = r==='TP Total'||r==='Profit Partiel'?'chip-tp':r==='SL Total'||r==='Perte Partiel'?'chip-sl':r==='BE'||r==='Save'?'chip-be':'chip-enc';
   return `<span class="chip ${cls}">${RESULT_EMOJI[r]||''} ${r}</span>`;
 }
 function ordreChip(o){
