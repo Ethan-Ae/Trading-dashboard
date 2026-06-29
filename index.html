@@ -1756,8 +1756,8 @@ body.no-scroll { overflow: hidden; }
     <div class="settings-card" style="grid-column:span 2">
       <div class="settings-card-head">
         <div>
-          <div class="settings-card-title" data-i18n="set_langcur_title">🌍 Langue & Devise</div>
-          <div class="settings-card-sub" data-i18n="set_langcur_sub">Choisis la langue de l'interface et la devise de ton abonnement.</div>
+          <div class="settings-card-title" data-i18n="set_langcur_title">🌍 Langue</div>
+          <div class="settings-card-sub" data-i18n="set_langcur_sub">Choisis la langue de l'interface.</div>
         </div>
       </div>
       <div class="langcur-row" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end">
@@ -1766,13 +1766,6 @@ body.no-scroll { overflow: hidden; }
           <select class="year-select" id="set-lang-select" style="width:100%">
             <option value="fr">🇫🇷 Français</option>
             <option value="en">🇬🇧 English</option>
-          </select>
-        </div>
-        <div style="flex:1;min-width:200px">
-          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px" data-i18n="set_currency_label">Devise</label>
-          <select class="year-select" id="set-currency-select" style="width:100%">
-            <option value="eur">€ EUR — 12€/mois</option>
-            <option value="usd">$ USD — $15/mo</option>
           </select>
         </div>
         <button class="btn-orange" id="set-langcur-save" onclick="saveLangCurrency()" data-i18n="set_save" style="white-space:nowrap">💾 Enregistrer</button>
@@ -2105,13 +2098,6 @@ body.no-scroll { overflow: hidden; }
             <option value="en">🇬🇧 English</option>
           </select>
         </div>
-        <div class="auth-field">
-          <label data-i18n="auth_label_currency">Devise</label>
-          <select id="signup-currency" class="year-select" style="width:100%">
-            <option value="eur">€ EUR — 12€/mois</option>
-            <option value="usd">$ USD — $15/mo</option>
-          </select>
-        </div>
       </div>
       <div class="auth-error" id="auth-error" style="display:none"></div>
       <div class="auth-success" id="auth-success" style="display:none"></div>
@@ -2339,7 +2325,10 @@ body.no-scroll { overflow: hidden; }
 // Par défaut (1re visite, aucun choix mémorisé) : anglais. Le choix de l'utilisateur
 // (sélecteur, préférences de compte) écrase ensuite cette valeur.
 let currentLang = (()=>{ try{ return localStorage.getItem('app_lang')||'en'; }catch(e){ return 'en'; } })();
-let currentCurrency = (()=>{ try{ return localStorage.getItem('app_currency')||'eur'; }catch(e){ return 'eur'; } })();
+// La devise est TOUJOURS liée à la langue : français → EUR, anglais → USD.
+// Plus de choix de devise indépendant.
+function currencyForLang(lang){ return lang === 'en' ? 'usd' : 'eur'; }
+let currentCurrency = currencyForLang(currentLang);
 
 const CURRENCY = {
   eur: { code:'EUR', symbol:'€',
@@ -2481,8 +2470,8 @@ const STRINGS = {
     set_danger_sub:"Actions irréversibles — réfléchis bien avant de cliquer.",
     set_reset:"↺ Reset",
     // Langue & Devise (settings)
-    set_langcur_title:"🌍 Langue & Devise",
-    set_langcur_sub:"Choisis la langue de l'interface et la devise de ton abonnement.",
+    set_langcur_title:"🌍 Langue",
+    set_langcur_sub:"Choisis la langue de l'interface.",
     set_lang_label:"Langue de l'interface",
     set_currency_label:"Devise",
     set_save:"💾 Enregistrer",
@@ -2648,8 +2637,8 @@ const STRINGS = {
     set_danger_title:"⚠️ Danger zone",
     set_danger_sub:"Irreversible actions — think carefully before clicking.",
     set_reset:"↺ Reset",
-    set_langcur_title:"🌍 Language & Currency",
-    set_langcur_sub:"Choose the interface language and your subscription currency.",
+    set_langcur_title:"🌍 Language",
+    set_langcur_sub:"Choose the interface language.",
     set_lang_label:"Interface language",
     set_currency_label:"Currency",
     set_save:"💾 Save",
@@ -2733,6 +2722,8 @@ function setLang(lang, opts){
   if(!STRINGS[lang]) lang='fr';
   currentLang = lang;
   try{ localStorage.setItem('app_lang', lang); }catch(e){}
+  // Devise liée à la langue : FR → EUR, EN → USD
+  setCurrency(currencyForLang(lang));
   applyTranslations();
   // Met à jour les libellés dynamiques de l'auth si la modale est ouverte
   if(typeof authMode!=='undefined' && typeof refreshAuthLabels==='function') refreshAuthLabels();
@@ -2954,27 +2945,25 @@ async function loadUserPreferences(){
       if (Array.isArray(data.tendances) && data.tendances.length) {
         TEND_OPTIONS = data.tendances.slice();
       }
-      // ─── Langue & devise ───
+      // ─── Langue (la devise suit la langue : FR→EUR, EN→USD) ───
       if (data.language && STRINGS[data.language]) { setLang(data.language, {silent:true}); }
-      if (data.currency && CURRENCY[data.currency]) { setCurrency(data.currency); }
       applyTranslations();
       console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs,', TEND_OPTIONS.length, 'tendances · lang=', currentLang, '· devise=', currentCurrency);
     } else {
       // Pas de ligne → on crée avec les valeurs par défaut (ou le choix fait à l'inscription)
       console.log('[Prefs] première fois — création avec valeurs par défaut');
-      let signupLang = currentLang, signupCur = currentCurrency;
+      let signupLang = currentLang;
       try {
         const sl = localStorage.getItem('signup_pref_lang'); if(sl && STRINGS[sl]) signupLang = sl;
-        const sc = localStorage.getItem('signup_pref_currency'); if(sc && CURRENCY[sc]) signupCur = sc;
       } catch(e){}
-      setLang(signupLang, {silent:true}); setCurrency(signupCur); applyTranslations();
+      setLang(signupLang, {silent:true}); applyTranslations();  // setLang fixe la devise selon la langue
       await sb.from('user_preferences').insert({
         user_id:   currentUser.id,
         checklist: CHECKLIST,
         errors:    ERRORS,
         tendances: TEND_OPTIONS,
         language:  signupLang,
-        currency:  signupCur,
+        currency:  currentCurrency,
       });
       try { localStorage.removeItem('signup_pref_lang'); localStorage.removeItem('signup_pref_currency'); } catch(e){}
     }
@@ -5369,11 +5358,9 @@ function renderSettings(){
       </div>`).join('');
   };
 
-  // Sélecteurs Langue & Devise
+  // Sélecteur de langue (la devise suit automatiquement la langue)
   const lsel = document.getElementById('set-lang-select');
-  const csel = document.getElementById('set-currency-select');
   if(lsel) lsel.value = currentLang;
-  if(csel) csel.value = currentCurrency;
 
   clEl.innerHTML = buildList(CHECKLIST,   'editChecklistItem', 'delChecklistItem', L('Aucun élément. Clique sur « + Ajouter un élément » pour commencer.','No items. Click "+ Add an item" to get started.'));
   erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         L('Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.','No errors. Click "+ Add an error" to get started.'));
@@ -5385,14 +5372,11 @@ function renderSettings(){
   if (cnt) cnt.textContent = trades.length;
 }
 
-// ─── Enregistre Langue & Devise depuis les Réglages ───
+// ─── Enregistre la langue depuis les Réglages (la devise suit la langue) ───
 function saveLangCurrency(){
   const lsel = document.getElementById('set-lang-select');
-  const csel = document.getElementById('set-currency-select');
   const lang = lsel ? lsel.value : currentLang;
-  const cur  = csel ? csel.value : currentCurrency;
-  setLang(lang);       // applique la traduction en direct + re-render
-  setCurrency(cur);
+  setLang(lang);       // applique la traduction + la devise (FR→EUR, EN→USD) + re-render
   if(typeof saveUserPreferences==='function') saveUserPreferences();
   if(typeof showToast==='function') showToast(t('set_saved'));
 }
@@ -5451,9 +5435,8 @@ function switchAuthTab(mode){
   document.getElementById('tab-signup').classList.toggle('on', mode==='signup');
   const sp = document.getElementById('signup-prefs');
   if(sp) sp.style.display = mode==='signup' ? '' : 'none';
-  // Pré-remplit les sélecteurs d'inscription sur la langue/devise courantes
+  // Pré-remplit le sélecteur de langue d'inscription (la devise suit la langue)
   const sl = document.getElementById('signup-lang'); if(sl) sl.value = currentLang;
-  const sc = document.getElementById('signup-currency'); if(sc) sc.value = currentCurrency;
   refreshAuthLabels();
   document.getElementById('auth-forgot').style.display = mode==='login' ? '' : 'none';
   document.getElementById('auth-password').setAttribute('autocomplete', mode==='login' ? 'current-password' : 'new-password');
@@ -5497,17 +5480,15 @@ async function submitAuth(){
       if(error) throw error;
       // onAuthStateChange prendra le relais
     } else {
-      // Mémorise le choix langue/devise fait à l'inscription : il sera appliqué
+      // Mémorise le choix de langue fait à l'inscription : il sera appliqué
       // et sauvegardé dans user_preferences à la 1re connexion (RLS exige une session).
+      // La devise suit la langue (FR→EUR, EN→USD).
       const slEl = document.getElementById('signup-lang');
-      const scEl = document.getElementById('signup-currency');
       const chosenLang = slEl ? slEl.value : currentLang;
-      const chosenCur  = scEl ? scEl.value : currentCurrency;
       try {
         localStorage.setItem('signup_pref_lang', chosenLang);
-        localStorage.setItem('signup_pref_currency', chosenCur);
       } catch(e){}
-      setLang(chosenLang); setCurrency(chosenCur);
+      setLang(chosenLang);
       const { data, error } = await sb.auth.signUp({ email, password });
       if(error) throw error;
       if(data.user && !data.session){
