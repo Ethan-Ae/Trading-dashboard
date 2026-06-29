@@ -1847,10 +1847,17 @@ body.no-scroll { overflow: hidden; }
       </div>
       <div class="danger-action">
         <div>
-          <div style="font-weight:600;margin-bottom:2px">Supprimer tous mes trades</div>
-          <div style="color:var(--text3);font-size:.75rem">Efface définitivement <b id="danger-count">—</b> trades de la base de données. <b>Conseil :</b> fais d'abord un export JSON (↑ dans la barre) pour sauvegarder.</div>
+          <div style="font-weight:600;margin-bottom:2px" data-i18n="set_deltrades_title">Supprimer tous mes trades</div>
+          <div style="color:var(--text3);font-size:.75rem"><span data-i18n="set_deltrades_desc1">Efface définitivement</span> <b id="danger-count">—</b> <span data-i18n="set_deltrades_desc2">trades de la base de données.</span> <b data-i18n="set_deltrades_tip">Conseil :</b> <span data-i18n="set_deltrades_desc3">fais d'abord un export JSON (↑ dans la barre) pour sauvegarder.</span></div>
         </div>
-        <button class="btn-danger" onclick="deleteAllTrades()">🗑 Tout supprimer</button>
+        <button class="btn-danger" id="btn-delete-trades" onclick="deleteAllTrades()" data-i18n="set_deltrades_btn">🗑 Tout supprimer</button>
+      </div>
+      <div class="danger-action">
+        <div>
+          <div style="font-weight:600;margin-bottom:2px" data-i18n="set_delaccount_title">Supprimer mon compte</div>
+          <div style="color:var(--text3);font-size:.75rem" data-i18n="set_delaccount_desc">Efface définitivement ton compte et toutes tes données (trades, réglages, abonnement). Cette action est irréversible.</div>
+        </div>
+        <button class="btn-danger" id="btn-delete-account" onclick="deleteAccount()" data-i18n="set_delaccount_btn">🗑 Supprimer mon compte</button>
       </div>
     </div>
   </div>
@@ -2471,6 +2478,15 @@ const STRINGS = {
     set_contact_sub:"Une question, une suggestion, un bug ? Écris-nous.",
     set_danger_title:"⚠️ Zone dangereuse",
     set_danger_sub:"Actions irréversibles — réfléchis bien avant de cliquer.",
+    set_deltrades_title:"Supprimer tous mes trades",
+    set_deltrades_desc1:"Efface définitivement",
+    set_deltrades_desc2:"trades de la base de données.",
+    set_deltrades_tip:"Conseil :",
+    set_deltrades_desc3:"fais d'abord un export JSON (↑ dans la barre) pour sauvegarder.",
+    set_deltrades_btn:"🗑 Tout supprimer",
+    set_delaccount_title:"Supprimer mon compte",
+    set_delaccount_desc:"Efface définitivement ton compte et toutes tes données (trades, réglages, abonnement). Cette action est irréversible.",
+    set_delaccount_btn:"🗑 Supprimer mon compte",
     set_reset:"↺ Reset",
     // Langue & Devise (settings)
     set_langcur_title:"🌍 Langue",
@@ -2639,6 +2655,15 @@ const STRINGS = {
     set_contact_sub:"A question, a suggestion, a bug? Write to us.",
     set_danger_title:"⚠️ Danger zone",
     set_danger_sub:"Irreversible actions — think carefully before clicking.",
+    set_deltrades_title:"Delete all my trades",
+    set_deltrades_desc1:"Permanently erases",
+    set_deltrades_desc2:"trades from the database.",
+    set_deltrades_tip:"Tip:",
+    set_deltrades_desc3:"export a JSON backup first (↑ in the bar) to be safe.",
+    set_deltrades_btn:"🗑 Delete all",
+    set_delaccount_title:"Delete my account",
+    set_delaccount_desc:"Permanently deletes your account and all your data (trades, settings, subscription). This cannot be undone.",
+    set_delaccount_btn:"🗑 Delete my account",
     set_reset:"↺ Reset",
     set_langcur_title:"🌍 Language",
     set_langcur_sub:"Choose the interface language.",
@@ -3116,7 +3141,7 @@ async function deleteAllTrades(){
 
   if(!confirm(L(`Supprimer tes ${count} trades ?`,`Delete your ${count} trades?`))) return;
 
-  const btn = document.querySelector('.btn-danger');
+  const btn = document.getElementById('btn-delete-trades');
   if(btn){ btn.disabled = true; btn.textContent = L('⏳ Suppression…','⏳ Deleting…'); }
 
   console.log('[Delete All] suppression de', count, 'trades pour user', currentUser.id);
@@ -3137,6 +3162,55 @@ async function deleteAllTrades(){
     if(currentPage==='settings') renderSettings();
   }
 }
+
+// ─── Supprime DÉFINITIVEMENT le compte de l'utilisateur ───
+async function deleteAccount(){
+  if(!currentUser){ alert(L('Tu dois être connecté.','You must be logged in.')); return; }
+
+  // Double confirmation forte : 1) avertissement clair, 2) saisie d'un mot
+  if(!confirm(L(
+    '⚠️ Supprimer définitivement ton compte ?\n\nToutes tes données (trades, réglages, abonnement) seront effacées et ton abonnement annulé. Cette action est IRRÉVERSIBLE.',
+    '⚠️ Permanently delete your account?\n\nAll your data (trades, settings, subscription) will be erased and your subscription canceled. This action is IRREVERSIBLE.'
+  ))) return;
+
+  const word  = L('SUPPRIMER','DELETE');
+  const typed = prompt(L(`Pour confirmer, tape « ${word} » :`, `To confirm, type "${word}":`));
+  if(typed === null) return;
+  if(typed.trim().toUpperCase() !== word){
+    showToast(L('Confirmation incorrecte — compte non supprimé','Wrong confirmation — account not deleted'), true);
+    return;
+  }
+
+  const btn = document.getElementById('btn-delete-account');
+  if(btn){ btn.disabled = true; btn.textContent = L('⏳ Suppression…','⏳ Deleting…'); }
+
+  try {
+    const { data: { session }, error: sessErr } = await sb.auth.getSession();
+    if(sessErr || !session) throw new Error(L('Session expirée — reconnecte-toi puis réessaie.','Session expired — please log in again and retry.'));
+
+    const res = await fetch('/api/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: session.access_token }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok || !data.ok){
+      throw new Error(data.error || L(`Erreur serveur (HTTP ${res.status})`,`Server error (HTTP ${res.status})`));
+    }
+
+    alert(L('Ton compte a été supprimé. À bientôt 👋','Your account has been deleted. Goodbye 👋'));
+
+    // Déconnexion + nettoyage local, puis retour à l'accueil public
+    try { await sb.auth.signOut(); } catch(_){}
+    try { Object.keys(localStorage).forEach(k => { if(k.startsWith('sb-') && k.endsWith('-auth-token')) localStorage.removeItem(k); }); } catch(_){}
+    location.reload();
+  } catch(err) {
+    console.error('[Delete Account] échec', err);
+    showToast('❌ ' + (err.message || L('Erreur inconnue','Unknown error')), true);
+    if(btn){ btn.disabled = false; btn.textContent = L('🗑 Supprimer mon compte','🗑 Delete my account'); }
+  }
+}
+
 function toggleCheck(id, i){
   const t = trades.find(x=>x.id===id); if(!t) return;
   if(!t.checklist) t.checklist = CHECKLIST.map(()=>false);
