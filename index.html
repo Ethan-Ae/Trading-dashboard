@@ -2322,9 +2322,12 @@ body.no-scroll { overflow: hidden; }
 // ───────────────────────────────────────────
 //  I18N — LANGUE & DEVISE
 // ───────────────────────────────────────────
-// Par défaut (1re visite, aucun choix mémorisé) : anglais. Le choix de l'utilisateur
-// (sélecteur, préférences de compte) écrase ensuite cette valeur.
-let currentLang = (()=>{ try{ return localStorage.getItem('app_lang')||'en'; }catch(e){ return 'en'; } })();
+// Le site PUBLIC (non connecté) est TOUJOURS en anglais — on n'utilise PAS le
+// localStorage au démarrage. La langue française ne s'applique qu'APRÈS connexion,
+// depuis la préférence du compte (loadUserPreferences → setLang), ou via le
+// sélecteur de langue à l'inscription. Ainsi un visiteur non connecté voit l'anglais,
+// quel que soit ce que son navigateur a pu mémoriser lors d'une session précédente.
+let currentLang = 'en';
 // La devise est TOUJOURS liée à la langue : français → EUR, anglais → USD.
 // Plus de choix de devise indépendant.
 function currencyForLang(lang){ return lang === 'en' ? 'usd' : 'eur'; }
