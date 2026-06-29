@@ -1010,6 +1010,9 @@ body.no-scroll { overflow: hidden; }
 .month-hero-value { font-size: 3rem; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
 .month-hero-value.pos { color: var(--green); }
 .month-hero-value.neg { color: var(--red); }
+.month-hero-pct { font-size: 1.5rem; font-weight: 700; letter-spacing: -.5px; line-height: 1.1; margin-top: 2px; }
+.month-hero-pct.pos { color: var(--green); }
+.month-hero-pct.neg { color: var(--red); }
 .month-hero-sub { font-size: .85rem; color: var(--text2); margin-top: 2px; }
 
 .month-hero-side {
@@ -1539,6 +1542,7 @@ body.no-scroll { overflow: hidden; }
     <div class="month-hero-main">
       <div class="month-hero-label" data-i18n="mh_totalr">Total R du mois</div>
       <div class="month-hero-value" id="mh-totalR">—</div>
+      <div class="month-hero-pct" id="mh-totalPct">—</div>
       <div class="month-hero-sub" id="mh-sub">—</div>
     </div>
     <div class="month-hero-side">
@@ -1622,6 +1626,7 @@ body.no-scroll { overflow: hidden; }
     <div class="month-hero-main">
       <div class="month-hero-label" data-i18n="qh_totalr">Total R du trimestre</div>
       <div class="month-hero-value" id="qh-totalR">—</div>
+      <div class="month-hero-pct" id="qh-totalPct">—</div>
       <div class="month-hero-sub" id="qh-sub">—</div>
     </div>
     <div class="month-hero-side">
@@ -5052,6 +5057,7 @@ function renderPeriodBody(ts, P, C, emptyId){
   const emptyEl = $(emptyId);
   if(ts.length===0){
     if($(P+'totalR')){ $(P+'totalR').textContent = '0R'; $(P+'totalR').className = 'month-hero-value'; }
+    if($(P+'totalPct')){ $(P+'totalPct').innerHTML = '0%'; $(P+'totalPct').className = 'month-hero-pct'; }
     if($(P+'sub')) $(P+'sub').textContent = '—';
     ['total','wr','pf','exp','wins','losses','profits','loss','bestw','bestl','best','worst','hr','net'].forEach(sfx=>{
       const el=$(P+sfx); if(!el) return;
@@ -5069,6 +5075,9 @@ function renderPeriodBody(ts, P, C, emptyId){
   const wins = closed.filter(isWin);
   const losses = closed.filter(isLoss);
   const totalR = +closed.reduce((s,t)=>s+(rrfNum(t)||0),0).toFixed(2);
+  // Rendement % du capital = Σ (R/R final × risque %) — le risque par trade est stocké (ex. "1.00%")
+  const riskPctOf = t => { const v = parseFloat(String(t.risk||'').replace('%','').replace(',','.')); return isNaN(v)?0:v; };
+  const totalPct = +closed.reduce((s,t)=>s+(rrfNum(t)||0)*riskPctOf(t),0).toFixed(2);
   const wr = (wins.length+losses.length) ? (wins.length/(wins.length+losses.length)*100) : 0;
   const profits = +wins.reduce((s,t)=>s+rrfNum(t),0).toFixed(2);
   const lossR  = +losses.reduce((s,t)=>s+rrfNum(t),0).toFixed(2);
@@ -5079,6 +5088,11 @@ function renderPeriodBody(ts, P, C, emptyId){
   const totalEl = $(P+'totalR');
   totalEl.textContent = (totalR>=0?'+':'') + totalR + 'R';
   totalEl.className = 'month-hero-value ' + (totalR>=0?'pos':'neg');
+  const pctEl = $(P+'totalPct');
+  if(pctEl){
+    pctEl.innerHTML = `${totalPct>=0?'+':''}${totalPct}<span style="font-size:.7em;opacity:.7">% ${L('du capital','of capital')}</span>`;
+    pctEl.className = 'month-hero-pct ' + (totalPct>=0?'pos':'neg');
+  }
   $(P+'sub').textContent = L(`${closed.length} trade${closed.length>1?'s':''} clôturé${closed.length>1?'s':''} · ${ts.length - closed.length} en cours`, `${closed.length} closed trade${closed.length>1?'s':''} · ${ts.length - closed.length} open`);
   $(P+'total').textContent = ts.length;
   $(P+'wr').textContent = wr.toFixed(0) + '%';
