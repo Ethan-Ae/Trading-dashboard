@@ -1828,6 +1828,19 @@ body.no-scroll { overflow: hidden; }
       <button class="settings-add" onclick="addConfluence()">＋ Ajouter une confluence</button>
     </div>
 
+    <!-- ─── Risque par trade ─── -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title" data-i18n="set_risk_title">🎚️ % de risque par trade</div>
+          <div class="settings-card-sub" data-i18n="set_risk_sub">Les paliers proposés dans le champ « Risk » (1R). Ajoute les tiens si tu risques plus de 2%.</div>
+        </div>
+        <button class="settings-reset" onclick="resetRiskOptions()" data-i18n="set_reset" title="Restaurer les valeurs par défaut">↺ Reset</button>
+      </div>
+      <div class="settings-list" id="settings-risk"></div>
+      <button class="settings-add" onclick="addRiskOption()" data-i18n="set_risk_add">＋ Ajouter un palier de risque</button>
+    </div>
+
     <!-- ─── Contact / About ─── -->
     <div class="settings-card" style="grid-column:span 2">
       <div class="settings-card-head">
@@ -2479,6 +2492,9 @@ const STRINGS = {
     set_tend_sub:"Contextes dans lesquels tu trades (In Trend, Range, etc.)",
     set_conf_title:"🎯 Confluences",
     set_conf_sub:"Tes confluences récurrentes — insérables en 1 clic dans chaque trade",
+    set_risk_title:"🎚️ % de risque par trade",
+    set_risk_sub:"Les paliers proposés dans le champ « Risk » (1R). Ajoute les tiens si tu risques plus de 2%.",
+    set_risk_add:"＋ Ajouter un palier de risque",
     set_contact_title:"📬 Contact & À propos",
     set_contact_sub:"Une question, une suggestion, un bug ? Écris-nous.",
     set_danger_title:"⚠️ Zone dangereuse",
@@ -2656,6 +2672,9 @@ const STRINGS = {
     set_tend_sub:"Contexts you trade in (In Trend, Range, etc.)",
     set_conf_title:"🎯 Confluences",
     set_conf_sub:"Your recurring confluences — insertable in 1 click in each trade",
+    set_risk_title:"🎚️ Risk % per trade",
+    set_risk_sub:"The levels offered in the \"Risk\" field (1R). Add your own if you risk more than 2%.",
+    set_risk_add:"＋ Add a risk level",
     set_contact_title:"📬 Contact & About",
     set_contact_sub:"A question, a suggestion, a bug? Write to us.",
     set_danger_title:"⚠️ Danger zone",
@@ -2832,6 +2851,25 @@ const TF_OPTIONS = ['Weekly','Daily','12h','8h','4h','2h','1h','30mins','15mins'
 const HOLD_OPTIONS = ['< 1H','< 5H','< 24H','< 3J','< 5J','< 10J','< 15J','> 15J'];
 const TEND_OPTIONS_DEFAULT = ['In Trend','Range Trade','Counter Trend','Reversal'];
 let TEND_OPTIONS = TEND_OPTIONS_DEFAULT.slice();
+
+// ─── Options de risque par trade (% du capital risqué = 1R) ───
+// Persistées en localStorage (indépendantes de la DB, comme les confluences),
+// donc AUCUNE modification de schéma ni de données utilisateur.
+// La valeur stockée sur un trade reste une string type "1.00%" (ex. utilisée
+// par le calcul « % du capital »). Les traders qui risquent > 2% peuvent
+// ajouter leurs propres paliers (ex. "3.00%", "5.00%").
+const RISK_OPTIONS_DEFAULT = ['0.25%','0.33%','0.50%','0.66%','0.75%','1.00%','1.50%','2.00%','2.50%'];
+let RISK_OPTIONS = (()=>{ try{ const v=JSON.parse(localStorage.getItem('risk_options')||'null'); return (Array.isArray(v)&&v.length)?v:RISK_OPTIONS_DEFAULT.slice(); }catch(e){ return RISK_OPTIONS_DEFAULT.slice(); } })();
+function saveRiskOptions(){ localStorage.setItem('risk_options', JSON.stringify(RISK_OPTIONS)); }
+// Normalise une saisie utilisateur en palier "X.XX%" (accepte "2", "2%", "2,5", "0.75%").
+function normalizeRisk(raw){
+  if(raw==null) return null;
+  let s = String(raw).trim().replace('%','').replace(',', '.');
+  if(s==='') return null;
+  const n = parseFloat(s);
+  if(isNaN(n) || n<=0) return null;
+  return n.toFixed(2) + '%';
+}
 const FOREX_PAIRS = {
   'Majeures':   ['EURUSD','GBPUSD','USDJPY','USDCHF','USDCAD','AUDUSD','NZDUSD'],
   'EUR Croisés':['EURGBP','EURJPY','EURCHF','EURCAD','EURAUD','EURNZD'],
@@ -3111,6 +3149,58 @@ function resetConfluences(){
   CONFLUENCES = CONFLUENCES_DEFAULT.slice(); saveConfluences();
   if(currentPage==='settings') renderSettings();
   if(activeTrade) openPanel(activeTrade.id);
+}
+
+// ─── OPTIONS DE RISQUE (% par trade = 1R) ───
+// Édite les paliers proposés dans le sélecteur « Risk » (ajout de trade + panneau).
+// Les valeurs déjà enregistrées sur les trades ne sont JAMAIS touchées : le
+// sélecteur tolère toujours une valeur historique hors liste (voir helper sel()).
+function addRiskOption(){
+  const raw = prompt(L('Nouveau % de risque (ex. 3 pour 3%) :','New risk % (e.g. 3 for 3%):'));
+  const val = normalizeRisk(raw);
+  if(!val){ if(raw!==null && raw.trim()!=='') alert(L('Valeur invalide','Invalid value')); return; }
+  if(RISK_OPTIONS.includes(val)) { alert(L('Ce palier existe déjà','This level already exists')); return; }
+  RISK_OPTIONS.push(val);
+  RISK_OPTIONS.sort((a,b)=>parseFloat(a)-parseFloat(b));
+  saveRiskOptions();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+  const ms=document.getElementById('m-risk'); if(ms) renderRiskModalSelect();
+}
+function editRiskOption(i){
+  const raw = prompt(L('Modifier le % de risque :','Edit risk %:'), RISK_OPTIONS[i]);
+  if(raw===null) return;
+  if(raw.trim()===''){ delRiskOption(i); return; }
+  const val = normalizeRisk(raw);
+  if(!val){ alert(L('Valeur invalide','Invalid value')); return; }
+  if(RISK_OPTIONS.includes(val) && RISK_OPTIONS[i]!==val){ alert(L('Ce palier existe déjà','This level already exists')); return; }
+  RISK_OPTIONS[i] = val;
+  RISK_OPTIONS.sort((a,b)=>parseFloat(a)-parseFloat(b));
+  saveRiskOptions();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+  const ms=document.getElementById('m-risk'); if(ms) renderRiskModalSelect();
+}
+function delRiskOption(i){
+  if(!confirm(L('Supprimer ce palier de risque ?\n\nLes trades qui l\'utilisaient gardent leur valeur historique.','Delete this risk level?\n\nTrades that used it keep their historical value.'))) return;
+  RISK_OPTIONS.splice(i,1); saveRiskOptions();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+  const ms=document.getElementById('m-risk'); if(ms) renderRiskModalSelect();
+}
+function resetRiskOptions(){
+  if(!confirm(L('Réinitialiser les paliers de risque aux valeurs par défaut ?','Reset risk levels to default values?'))) return;
+  RISK_OPTIONS = RISK_OPTIONS_DEFAULT.slice(); saveRiskOptions();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+  const ms=document.getElementById('m-risk'); if(ms) renderRiskModalSelect();
+}
+// Remplit le <select id="m-risk"> du modal d'ajout à partir de RISK_OPTIONS
+function renderRiskModalSelect(){
+  const sel = document.getElementById('m-risk');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = RISK_OPTIONS.map(o=>`<option${o===prev?' selected':''}>${o}</option>`).join('');
 }
 
 // ─── Insertion rapide d'une confluence dans le champ texte ───
@@ -4368,7 +4458,7 @@ function buildPanelHTML(t){
     ${field(icoCalendar,L('Prise de Position','Position taken'),`<button class="toggle ${t.prise?'on':''}" onclick="togglePrise(${t.id},this)"></button>`)}
     ${field(icoTF,'Time-Frame',tfChips(t))}
     ${field(icoOrdre,L("Type d'Ordre",'Order Type'),sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
-    ${field(icoRisk,'Risk',sel(['0.25%','0.33%','0.50%','0.66%','1.00%','1.50%','2.00%','2.50%'],t.risk,'risk'))}
+    ${field(icoRisk,'Risk',sel(RISK_OPTIONS,t.risk,'risk'))}
     ${field(icoRisk,L('R/R Initial','Initial R/R'),`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="${L('ex: 3.2','e.g. 3.2')}" onchange="updateField(${t.id},'rri',+this.value)">`)}
     ${field(icoRisk,L('Résultat','Result'),sel(RESULT_OPTIONS,t.result,'result'))}
     ${field(icoRisk,L('R/R Final','Final R/R'),`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="${L('ex: -1 ou 3.2','e.g. -1 or 3.2')}" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
@@ -4775,6 +4865,7 @@ function openAddModal(){
   document.getElementById('m-rrf').value='';
   document.getElementById('m-hold').value='';
   document.getElementById('m-result').value='En cours';
+  renderRiskModalSelect(); // paliers de risque personnalisés (RISK_OPTIONS)
   document.getElementById('m-confluences').value='';
   document.getElementById('m-psy').value='';
   document.getElementById('m-retails').value='';
@@ -5457,6 +5548,8 @@ function renderSettings(){
   erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         L('Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.','No errors. Click "+ Add an error" to get started.'));
   tdEl.innerHTML = buildList(TEND_OPTIONS,'editTendance',      'delTendance',      L('Aucune tendance. Clique sur « + Ajouter une tendance » pour commencer.','No trends. Click "+ Add a trend" to get started.'));
   if(cfEl) cfEl.innerHTML = buildList(CONFLUENCES,'editConfluence','delConfluence',L('Aucune confluence. Clique sur « + Ajouter une confluence » pour commencer.','No confluences. Click "+ Add a confluence" to get started.'));
+  const rkEl = document.getElementById('settings-risk');
+  if(rkEl) rkEl.innerHTML = buildList(RISK_OPTIONS,'editRiskOption','delRiskOption',L('Aucun palier. Clique sur « + Ajouter un palier de risque » pour commencer.','No levels. Click "+ Add a risk level" to get started.'));
 
   // Compteur de trades pour la zone dangereuse
   const cnt = document.getElementById('danger-count');
@@ -5723,6 +5816,18 @@ async function loadTradesFromDb() {
       return;
     }
     console.log('[Supabase] SELECT OK :', (data||[]).length, 'trades reçus');
+
+    // ─── GARDE ANTI-EFFACEMENT (bug « 0 trade qui apparaît/disparaît ») ───
+    // Un SELECT qui revient VIDE alors qu'on avait déjà des trades en mémoire
+    // est presque toujours une course de token (refresh) et non un vrai compte
+    // vide. On refuse alors d'écraser les données déjà chargées : mieux vaut
+    // garder l'affichage courant que de faire « disparaître » les trades.
+    // (Un vrai vidage passe par deleteAllTrades() qui met trades=[] localement.)
+    if ((data||[]).length === 0 && Array.isArray(trades) && trades.length > 0) {
+      console.warn('[Supabase] SELECT vide mais', trades.length, 'trades déjà en mémoire → on NE clobber PAS (probable course de token). Données conservées.');
+      return;
+    }
+
     trades = (data||[]).map(dbToLocal);
     if((data||[]).length === 0){
       console.warn('[Supabase] Aucun trade trouvé. Causes possibles : (1) RLS bloque la lecture, (2) les trades existants ont user_id NULL, (3) le compte est vraiment vide.');
@@ -5981,6 +6086,7 @@ if(typeof refreshAuthLabels==='function') refreshAuthLabels();
 // On ne fait AUCUN appel async/await à des méthodes Supabase à l'intérieur du listener
 // onAuthStateChange (ni auth.*, ni from().*), sinon deadlock silencieux.
 // → on défère TOUT travail data avec setTimeout(...,0) pour le sortir du callback.
+let _dataLoadedForUser = null; // id du user dont les données (prefs+trades) sont déjà chargées
 sb.auth.onAuthStateChange((event, session) => {
   console.log('[Auth] event=', event, '· session?', !!session, '· email=', session?.user?.email);
 
@@ -5988,11 +6094,25 @@ sb.auth.onAuthStateChange((event, session) => {
     hidePaywall();
     hideTrialBanner();
     setSignedOutUI();
+    _dataLoadedForUser = null;
     return;
   }
 
   // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED → tous avec session
   setSignedInUI(session.user);
+
+  // ⚠️ FIX bug « 0 trade intermittent » :
+  // TOKEN_REFRESHED / USER_UPDATED se déclenchent périodiquement en arrière-plan
+  // (rafraîchissement du token toutes les ~heures, ou après un focus d'onglet).
+  // Recharger les trades à ce moment-là provoquait un 2e SELECT concurrent qui,
+  // en cas de course de token, revenait vide et écrasait les données affichées.
+  // → On ne (re)charge les données QUE pour un vrai changement d'utilisateur /
+  //   une vraie connexion, pas pour un simple refresh de token.
+  const isRefreshOnly = (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED');
+  if (isRefreshOnly && _dataLoadedForUser === session.user.id) {
+    console.log('[Auth] refresh de token — données déjà chargées, pas de rechargement');
+    return;
+  }
 
   // Défère HORS du callback pour éviter le deadlock supabase-js v2
   setTimeout(async () => {
@@ -6014,7 +6134,8 @@ sb.auth.onAuthStateChange((event, session) => {
     // Charge les préférences (checklist + erreurs) AVANT les trades
     // pour que le rendu utilise déjà les valeurs personnalisées
     await loadUserPreferences();
-    loadTradesFromDb();
+    await loadTradesFromDb();
+    _dataLoadedForUser = session.user.id;
   }, 0);
 });
 
