@@ -415,6 +415,8 @@ body.has-trial-banner .main { padding-top: 92px; }
 .settings-row:hover { border-color: rgba(255,159,10,.25); }
 .settings-row-text { flex: 1; font-size: .85rem; color: var(--text); }
 .settings-row-actions { display: flex; gap: 4px; }
+.settings-row-input { flex: 1; font-size: .85rem; color: var(--text); background: var(--bg); border: 1px solid var(--sep); border-radius: 8px; padding: 6px 10px; font-family: inherit; }
+.settings-row-input:focus { outline: none; border-color: var(--orange); }
 .settings-row-actions button { background: transparent; border: none; color: var(--text3); cursor: pointer; padding: 4px 8px; border-radius: 6px; font-size: .82rem; transition: all .15s; }
 .settings-row-actions button:hover { background: var(--bg3); color: var(--orange); }
 .settings-row-actions .del:hover { color: #ff453a; }
@@ -3167,6 +3169,26 @@ function addRiskOption(){
   if(activeTrade) openPanel(activeTrade.id);
   const ms=document.getElementById('m-risk'); if(ms) renderRiskModalSelect();
 }
+// Édition inline : valide la valeur tapée à la main dans le champ des Réglages.
+// Vide → on garde l'ancienne valeur (pas de suppression accidentelle). Invalide /
+// doublon → alerte + on ré-affiche la valeur d'origine. Aucune donnée de trade touchée.
+function commitRiskOption(i, raw){
+  if(i<0 || i>=RISK_OPTIONS.length) return;
+  const val = normalizeRisk(raw);
+  if(!val){
+    if(String(raw).trim()!=='' && String(raw).trim()!==RISK_OPTIONS[i]) alert(L('Valeur invalide','Invalid value'));
+    if(currentPage==='settings') renderSettings();
+    return;
+  }
+  if(val===RISK_OPTIONS[i]){ if(currentPage==='settings') renderSettings(); return; }
+  if(RISK_OPTIONS.includes(val)){ alert(L('Ce palier existe déjà','This level already exists')); if(currentPage==='settings') renderSettings(); return; }
+  RISK_OPTIONS[i] = val;
+  RISK_OPTIONS.sort((a,b)=>parseFloat(a)-parseFloat(b));
+  saveRiskOptions();
+  if(currentPage==='settings') renderSettings();
+  if(activeTrade) openPanel(activeTrade.id);
+  const ms=document.getElementById('m-risk'); if(ms) renderRiskModalSelect();
+}
 function editRiskOption(i){
   const raw = prompt(L('Modifier le % de risque :','Edit risk %:'), RISK_OPTIONS[i]);
   if(raw===null) return;
@@ -5549,7 +5571,25 @@ function renderSettings(){
   tdEl.innerHTML = buildList(TEND_OPTIONS,'editTendance',      'delTendance',      L('Aucune tendance. Clique sur « + Ajouter une tendance » pour commencer.','No trends. Click "+ Add a trend" to get started.'));
   if(cfEl) cfEl.innerHTML = buildList(CONFLUENCES,'editConfluence','delConfluence',L('Aucune confluence. Clique sur « + Ajouter une confluence » pour commencer.','No confluences. Click "+ Add a confluence" to get started.'));
   const rkEl = document.getElementById('settings-risk');
-  if(rkEl) rkEl.innerHTML = buildList(RISK_OPTIONS,'editRiskOption','delRiskOption',L('Aucun palier. Clique sur « + Ajouter un palier de risque » pour commencer.','No levels. Click "+ Add a risk level" to get started.'));
+  if(rkEl){
+    if(RISK_OPTIONS.length === 0){
+      rkEl.innerHTML = `<div class="settings-empty">${L('Aucun palier. Clique sur « + Ajouter un palier de risque » pour commencer.','No levels. Click "+ Add a risk level" to get started.')}</div>`;
+    } else {
+      // Champ éditable à la main : on tape directement le %. La saisie est
+      // normalisée ("2" → "2.00%") au blur / Entrée par commitRiskOption().
+      rkEl.innerHTML = RISK_OPTIONS.map((item, i) => `
+        <div class="settings-row">
+          <input class="settings-row-input" type="text" inputmode="decimal"
+                 value="${escapeHtml(item)}"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+                 onblur="commitRiskOption(${i}, this.value)"
+                 aria-label="${L('% de risque','Risk %')}">
+          <div class="settings-row-actions">
+            <button class="del" onclick="delRiskOption(${i})" title="${L('Supprimer','Delete')}">✕</button>
+          </div>
+        </div>`).join('');
+    }
+  }
 
   // Compteur de trades pour la zone dangereuse
   const cnt = document.getElementById('danger-count');
