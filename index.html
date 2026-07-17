@@ -3924,18 +3924,18 @@ function renderTradesTable(){
   if(!tb) return;
   tb.innerHTML=ts.map(t=>`
     <tr onclick="openPanel(${t.id})">
-      <td class="pair-cell">${t.pair}</td>
-      <td style="color:var(--text2)">${getTradeDate(t)}</td>
+      <td class="pair-cell">${t.pair||'—'}</td>
+      <td style="color:var(--text2)">${getTradeDate(t)||'—'}</td>
       <td><button class="toggle ${t.prise?'on':''}" onclick="event.stopPropagation();togglePrise(${t.id},this)" style="pointer-events:auto"></button></td>
       <td>${tfChip(t.tf)}</td>
       <td>${ordreChip(t.ordre)}</td>
-      <td><span class="chip chip-risk">${t.risk}</span></td>
+      <td><span class="chip chip-risk">${t.risk||'—'}</span></td>
       <td>${resultChip(t.result)}</td>
-      <td style="color:var(--text2)">${t.rri}</td>
+      <td style="color:var(--text2)">${t.rri||'—'}</td>
       <td class="${rClass(t.rrf)}">${rStr(t.rrf)}</td>
-      <td><span class="chip chip-jour">${tVal(getTradeJour(t))}</span></td>
-      <td style="color:var(--text3);font-size:.75rem">${t.hold}</td>
-      <td style="color:var(--text2);font-size:.73rem;max-width:180px;overflow:hidden;text-overflow:ellipsis">${tVal(t.type)}</td>
+      <td><span class="chip chip-jour">${tVal(getTradeJour(t))||'—'}</span></td>
+      <td style="color:var(--text3);font-size:.75rem">${t.hold||'—'}</td>
+      <td style="color:var(--text2);font-size:.73rem;max-width:180px;overflow:hidden;text-overflow:ellipsis">${tVal(t.type)||'—'}</td>
       <td style="font-size:1rem;text-align:center">${t.bonTrade?'✅':'❌'}</td>
       <td onclick="event.stopPropagation()">
         <button onclick="deleteTrade(${t.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:.85rem;transition:color .15s,background .15s" onmouseenter="this.style.color='var(--red)';this.style.background='rgba(255,69,58,.1)'" onmouseleave="this.style.color='var(--text3)';this.style.background='none'">✕</button>
@@ -4428,11 +4428,6 @@ function buildPanelHTML(t){
   const icoNote=`<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h12v9l-4 4H4V4z"/><path d="M12 13v4M12 13h4"/></svg>`;
   const icoCheck=`<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 10l4 4 8-8"/></svg>`;
   const icoImg=`<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M3 13l4-3 3 3 2.5-2 4.5 4"/><circle cx="7.5" cy="8.5" r="1.5"/></svg>`;
-
-  // Type de trade chip color
-  const typeColor=t.type.includes('Fondamental')&&t.type.startsWith('75')
-    ?'var(--purple)':t.type.includes('Technique')&&t.type.startsWith('75')
-    ?'var(--blue)':'var(--orange)';
 
   const checkItems = CHECKLIST.length === 0
     ? `<div style="color:var(--text3);font-size:.78rem;font-style:italic;padding:10px 0">${L('Aucun élément de checklist.','No checklist items.')} <a href="#" onclick="event.preventDefault();closePanel();showPage('settings',document.querySelector('[onclick*=\\'settings\\']'))" style="color:var(--orange);text-decoration:underline">${L('Configure-la dans Réglages','Set it up in Settings')}</a>.</div>`
