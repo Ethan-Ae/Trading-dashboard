@@ -2269,13 +2269,6 @@ body.no-scroll { overflow: hidden; }
           <button type="button" class="emoji-btn" data-val="👎" onclick="pickModalEmoji(this,'m-manage-group')">👎</button>
         </div>
       </div>
-      <div class="form-group"><label><span data-i18n="am_goodtrade">Bon Trade ?</span> <span style="color:var(--text3);font-size:.65rem" data-i18n="am_ifclosed">(si clôturé)</span></label>
-        <div class="emoji-btn-group" id="m-bon-group">
-          <button type="button" class="emoji-btn" data-val="" onclick="pickModalEmoji(this,'m-bon-group')">—</button>
-          <button type="button" class="emoji-btn" data-val="true" onclick="pickModalEmoji(this,'m-bon-group')">✅</button>
-          <button type="button" class="emoji-btn" data-val="false" onclick="pickModalEmoji(this,'m-bon-group')">❌</button>
-        </div>
-      </div>
       <div class="form-group" style="grid-column:span 2">
         <label><span data-i18n="am_errors">Erreurs</span> <span style="color:var(--text3);font-size:.65rem" data-i18n="am_multi">(plusieurs possibles)</span></label>
         <div class="emoji-btn-group" id="m-errs-group" style="flex-wrap:wrap;gap:6px"></div>
@@ -2408,7 +2401,7 @@ const STRINGS = {
     sort_recent:"Date ↓ (récent)", sort_old:"Date ↑ (ancien)",
     th_asset:"Actif", th_date:"Date", th_taken:"Prise", th_tf:"TF", th_order:"Ordre", th_risk:"Risk",
     th_result:"Résultat", th_rri:"R/R init", th_rrf:"R/R final", th_day:"Jour",
-    th_holding:"Holding", th_tradetype:"Type Trade", th_goodtrade:"Bon Trade",
+    th_holding:"Holding", th_tradetype:"Type Trade", th_goodtrade:"Perte évitable",
     // Add-trade modal (FR)
     am_title:"Nouveau Trade", am_asset:"Actif", am_asset_ph:"ex: eurusd ou EURUSD…",
     am_created:"Date de création", am_entrydate:"Date prise de position", am_entrydate_hint:"(base des stats)",
@@ -2591,7 +2584,7 @@ const STRINGS = {
     sort_recent:"Date ↓ (recent)", sort_old:"Date ↑ (oldest)",
     th_asset:"Asset", th_date:"Date", th_taken:"Taken", th_tf:"TF", th_order:"Order", th_risk:"Risk",
     th_result:"Result", th_rri:"R/R init", th_rrf:"R/R final", th_day:"Day",
-    th_holding:"Holding", th_tradetype:"Trade Type", th_goodtrade:"Good Trade",
+    th_holding:"Holding", th_tradetype:"Trade Type", th_goodtrade:"Avoidable loss",
     // Add-trade modal (EN)
     am_title:"New Trade", am_asset:"Asset", am_asset_ph:"e.g. eurusd or EURUSD…",
     am_created:"Creation date", am_entrydate:"Entry date", am_entrydate_hint:"(basis for stats)",
@@ -3510,6 +3503,8 @@ function rrfNum(t){
 }
 function isWin(t){ const v = rrfNum(t); return v !== null && v > 0; }   // R/R final > 0
 function isLoss(t){ const v = rrfNum(t); return v !== null && v < 0; }  // R/R final < 0
+// Perte évitable : stockée dans extra_data.perteEvitable = 'oui' (évitable) | 'non' (inévitable)
+function perteEvitable(t){ const v = t && t.extra_data && t.extra_data.perteEvitable; return (v==='oui'||v==='non') ? v : null; }
 
 function calcStats(ts){
   const wins   = ts.filter(isWin);                  // R/R final > 0
@@ -3724,16 +3719,17 @@ function renderOverview(){
       </div>
     </div>
     <div class="gauge-card">
-      <div class="gauge-label">${L('Bon Trade','Good Trade')}</div>
+      <div class="gauge-label">${L('Pertes évitables','Avoidable losses')}</div>
       <div class="gauge-ring-wrap"><canvas id="gBT"></canvas>
-        <div class="gauge-center"><div class="gauge-val">${ts.length?Math.round(ts.filter(t=>t.bonTrade).length/ts.length*100):0}%</div></div>
+        <div class="gauge-center"><div class="gauge-val">${(()=>{const l=ts.filter(isLoss);return l.length?Math.round(l.filter(t=>perteEvitable(t)==='oui').length/l.length*100):0;})()}%</div></div>
       </div>
     </div>
   `;
   dc('gWR'); ch['gWR'] = new Chart(document.getElementById('gWR'),{ type:'doughnut', data:{datasets:[{data:[s.winRate,100-s.winRate],backgroundColor:['#ff9f0a','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
   dc('gTP'); ch['gTP'] = new Chart(document.getElementById('gTP'),{ type:'doughnut', data:{datasets:[{data:[s.wins,s.losses,s.total-s.wins-s.losses],backgroundColor:['#30d158','#ff453a','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
-  const btCount = ts.filter(t=>t.bonTrade).length;
-  dc('gBT'); ch['gBT'] = new Chart(document.getElementById('gBT'),{ type:'doughnut', data:{datasets:[{data:[btCount,ts.length-btCount],backgroundColor:['#0a84ff','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
+  const lossesArr = ts.filter(isLoss);
+  const evitCount = lossesArr.filter(t=>perteEvitable(t)==='oui').length;
+  dc('gBT'); ch['gBT'] = new Chart(document.getElementById('gBT'),{ type:'doughnut', data:{datasets:[{data:[evitCount,Math.max(0,lossesArr.length-evitCount)],backgroundColor:['#ff453a','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
 
   // Ordre chronologique basé sur la date EFFECTIVE (prise de position, repli sur création)
   const tsChrono = ts.slice().sort((a,b)=> (getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
@@ -3936,7 +3932,7 @@ function renderTradesTable(){
       <td><span class="chip chip-jour">${tVal(getTradeJour(t))||'—'}</span></td>
       <td style="color:var(--text3);font-size:.75rem">${t.hold||'—'}</td>
       <td style="color:var(--text2);font-size:.73rem;max-width:180px;overflow:hidden;text-overflow:ellipsis">${tVal(t.type)||'—'}</td>
-      <td style="font-size:1rem;text-align:center">${t.bonTrade?'✅':'❌'}</td>
+      <td style="font-size:1rem;text-align:center">${isLoss(t)?(perteEvitable(t)==='oui'?'⚠️':perteEvitable(t)==='non'?'🛡️':'—'):'—'}</td>
       <td onclick="event.stopPropagation()">
         <button onclick="deleteTrade(${t.id})" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:.85rem;transition:color .15s,background .15s" onmouseenter="this.style.color='var(--red)';this.style.background='rgba(255,69,58,.1)'" onmouseleave="this.style.color='var(--text3)';this.style.background='none'">✕</button>
       </td>
@@ -4208,8 +4204,8 @@ function renderSetups(){
 
   // ─── DISCIPLINE ───
   const tsClosed = ts.filter(t=>t.rrf!==null && t.rrf!==undefined);
-  const bonCount = ts.filter(t=>t.bonTrade===true).length;
-  const bonTotal = ts.filter(t=>t.bonTrade===true||t.bonTrade===false).length;
+  const bonTotal = ts.filter(isLoss).length;
+  const bonCount = ts.filter(t=>isLoss(t)&&perteEvitable(t)==='oui').length;
   const bonPct = bonTotal? (bonCount/bonTotal*100):0;
   const errCount = ts.filter(t=>(t.errors||[]).filter(e=>e&&e!=='Aucune').length>0).length;
   const errPct = ts.length? (errCount/ts.length*100):0;
@@ -4219,9 +4215,9 @@ function renderSetups(){
 
   document.getElementById('discipline-grid').innerHTML = `
     <div class="disc-card">
-      <div class="disc-head"><div class="disc-label">${L('Bon Trade','Good Trade')}</div><div class="disc-val ${bonPct>=70?'pos':bonPct>=50?'ora':'neg'}">${bonPct.toFixed(0)}%</div></div>
-      <div class="disc-bar"><div class="disc-bar-fill" style="width:${bonPct}%;background:${bonPct>=70?'#30d158':bonPct>=50?'#ff9f0a':'#ff453a'}"></div></div>
-      <div class="disc-hint">${L(`${bonCount}/${bonTotal} trades respectent ton plan`,`${bonCount}/${bonTotal} trades follow your plan`)}</div>
+      <div class="disc-head"><div class="disc-label">${L('Pertes évitables','Avoidable losses')}</div><div class="disc-val ${bonPct<=30?'pos':bonPct<=50?'ora':'neg'}">${bonPct.toFixed(0)}%</div></div>
+      <div class="disc-bar"><div class="disc-bar-fill" style="width:${bonPct}%;background:${bonPct<=30?'#30d158':bonPct<=50?'#ff9f0a':'#ff453a'}"></div></div>
+      <div class="disc-hint">${L(`${bonCount}/${bonTotal} pertes étaient évitables`,`${bonCount}/${bonTotal} losses were avoidable`)}</div>
     </div>
     <div class="disc-card">
       <div class="disc-head"><div class="disc-label">${L('Trades sans erreur','Error-free trades')}</div><div class="disc-val ${(100-errPct)>=70?'pos':'ora'}">${(100-errPct).toFixed(0)}%</div></div>
@@ -4409,6 +4405,18 @@ const field_=(icon,label,content)=>`
       <div class="field-value">${content}</div>
     </div>`;
 
+// Section « Perte évitable ? » — n'apparaît que sur un trade en perte (R/R final < 0)
+function avoidableSectionHTML(t){
+  const ico='⚠️', lbl=L('Perte évitable ?','Avoidable loss?');
+  if(!isLoss(t)) return field_(ico,lbl,`<div style="color:var(--text3);font-size:.78rem;font-style:italic">${L('Disponible sur un trade en perte','Available on a losing trade')}</div>`);
+  const pe=perteEvitable(t);
+  return field_(ico,lbl,`
+    <div class="emoji-btn-group">
+      <button class="emoji-btn ${pe==='oui'?'selected':''}" onclick="setEvitable(${t.id},'oui',this)">${L('Oui, évitable','Yes, avoidable')}</button>
+      <button class="emoji-btn ${pe==='non'?'selected':''}" onclick="setEvitable(${t.id},'non',this)">${L('Non, inévitable','No, unavoidable')}</button>
+    </div>`);
+}
+
 function buildPanelHTML(t){
   const field=(icon,label,content)=>`
     <div class="field-row">
@@ -4494,13 +4502,7 @@ function buildPanelHTML(t){
         <button class="emoji-btn ${t.manageTrade==='👍'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👍',this)">👍</button>
         <button class="emoji-btn ${t.manageTrade==='👎'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👎',this)">👎</button>
       </div>`)}</div>
-    <div id="panel-bontrade-section">${t.result==='En cours'
-      ? field('✅',L('Bon Trade?','Good Trade?'),`<div style="color:var(--text3);font-size:.78rem;font-style:italic">${L('Disponible une fois le trade clôturé','Available once the trade is closed')}</div>`)
-      : field('✅',L('Bon Trade?','Good Trade?'),`
-      <div class="emoji-btn-group">
-        <button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',true,this)">✅</button>
-        <button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${t.id},'bonTrade',false,this)">❌</button>
-      </div>`)}</div>
+    <div id="panel-evitable-section">${avoidableSectionHTML(t)}</div>
     <div class="panel-section-title">${L('Raisons & Confluences','Reasons & Confluences')}</div>
     ${confluenceChipsHTML(t.id)}
     <textarea id="panel-confluences" class="field-textarea" placeholder="${L('Décris tes confluences, la raison du trade…','Describe your confluences, the reason for the trade…')}" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
@@ -4542,14 +4544,14 @@ function updateField(id,field,val){
   t[field]=val; dbUpsert(t);
   if(field==='result'){
     const ms=document.getElementById('panel-manage-section');
-    const bs=document.getElementById('panel-bontrade-section');
     if(ms) ms.innerHTML = val==='En cours'
       ? field_('🎯','Trade Management',`<div style="color:var(--text3);font-size:.78rem;font-style:italic">${L('Disponible une fois le trade clôturé','Available once the trade is closed')}</div>`)
       : field_('🎯','Trade Management',`<div class="emoji-btn-group"><button class="emoji-btn ${t.manageTrade==='👍'?'selected':''}" onclick="setEmoji(${id},'manageTrade','👍',this)">👍</button><button class="emoji-btn ${t.manageTrade==='👎'?'selected':''}" onclick="setEmoji(${id},'manageTrade','👎',this)">👎</button></div>`);
-    if(bs) bs.innerHTML = val==='En cours'
-      ? field_('✅',L('Bon Trade?','Good Trade?'),`<div style="color:var(--text3);font-size:.78rem;font-style:italic">${L('Disponible une fois le trade clôturé','Available once the trade is closed')}</div>`)
-      : field_('✅',L('Bon Trade?','Good Trade?'),`<div class="emoji-btn-group"><button class="emoji-btn ${t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',true,this)">✅</button><button class="emoji-btn ${!t.bonTrade?'selected':''}" onclick="setBool(${id},'bonTrade',false,this)">❌</button></div>`);
     document.getElementById('p-result-chip').innerHTML=resultChip(val);
+  }
+  if(field==='result'||field==='rrf'){
+    const es=document.getElementById('panel-evitable-section');
+    if(es) es.innerHTML = avoidableSectionHTML(t);
   }
 }
 // ── Time-Frame multi-sélection (chips) ──
@@ -4569,6 +4571,7 @@ function toggleTradeTF(id,btn){
 }
 function setEmoji(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
 function setBool(id,field,val,btn){ const t=trades.find(x=>x.id===id); if(t){ t[field]=val; dbUpsert(t); } btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); }
+function setEvitable(id,val,btn){ const t=trades.find(x=>x.id===id); if(t){ if(!t.extra_data||typeof t.extra_data!=='object') t.extra_data={}; t.extra_data.perteEvitable=val; dbUpsert(t); } if(btn){ btn.parentElement.querySelectorAll('.emoji-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); } }
 function handleScreenshot(id,key,input){
   const t=trades.find(x=>x.id===id);
   if(!t||!input.files[0]) return;
@@ -4887,7 +4890,7 @@ function openAddModal(){
   document.getElementById('m-psy').value='';
   document.getElementById('m-retails').value='';
   // Reset emoji groups
-  ['m-manage-group','m-bon-group'].forEach(g=>{
+  ['m-manage-group'].forEach(g=>{
     document.querySelectorAll('#'+g+' .emoji-btn').forEach(b=>b.classList.remove('selected'));
     const def = document.querySelector('#'+g+' .emoji-btn[data-val=""]');
     if(def) def.classList.add('selected');
@@ -4975,9 +4978,6 @@ function saveTrade(){
   const rrf = rrfRaw==='' ? null : +rrfRaw;
   const hold=document.getElementById('m-hold').value || null;
   const errs=[...document.querySelectorAll('#m-errs-group .emoji-btn.selected')].map(b=>b.dataset.val);
-  const bonSel=document.querySelector('#m-bon-group .emoji-btn.selected');
-  const bonVal = bonSel ? bonSel.dataset.val : '';
-  const bonTrade = bonVal==='true' ? true : bonVal==='false' ? false : null;
   const mgmtSel=document.querySelector('#m-manage-group .emoji-btn.selected');
   const manageTrade = mgmtSel && mgmtSel.dataset.val ? mgmtSel.dataset.val : null;
   const confluences=document.getElementById('m-confluences').value||'';
@@ -4995,8 +4995,8 @@ function saveTrade(){
   if(emotions.length) extra_data.emotions=emotions;
   const newTrade = {
     id:Date.now(), pair, date, prise:true, tf, ordre, risk, rri, result, rrf,
-    jour, hold, type, tend, retails, errs, bonTrade: bonTrade===null ? false : bonTrade,
-    manageTrade: manageTrade || (bonTrade ? '👍' : bonTrade===false ? '👎' : null),
+    jour, hold, type, tend, retails, errs, bonTrade: null,
+    manageTrade: manageTrade || null,
     confluences, psy, checklist: CHECKLIST.map(()=>false), extra_data,
     screenshots:{exec:modalExecScreenshot,mgmt:[],close:null}
   };
