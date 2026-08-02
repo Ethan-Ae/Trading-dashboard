@@ -5392,6 +5392,45 @@ function renderPerf(){
     </div>`;
   })();
 
+  // Étude des pertes évitables (perteEvitable stocké dans extra_data)
+  const evitBreak=(() => {
+    const losses=ts.filter(isLoss);
+    if(!losses.length) return '';
+    const evit=losses.filter(t=>perteEvitable(t)==='oui');
+    const inev=losses.filter(t=>perteEvitable(t)==='non');
+    const none=losses.filter(t=>perteEvitable(t)===null);
+    const sumR=arr=>+arr.reduce((s,t)=>s+(rrfNum(t)||0),0).toFixed(2);
+    const pct=arr=>losses.length?Math.round(arr.length/losses.length*100):0;
+    const marked=evit.length+inev.length;
+    const evitPctMarked=marked?Math.round(evit.length/marked*100):0;
+    const row=(label,arr,color)=>`<tr>
+      <td style="font-weight:600;color:${color}">${label}</td>
+      <td>${arr.length}</td>
+      <td style="color:${color};font-weight:600">${pct(arr)}%</td>
+      <td class="${rClass(sumR(arr))}">${sumR(arr)>0?'+':''}${sumR(arr)}R</td>
+    </tr>`;
+    const savedR=sumR(evit);
+    return `<div class="breakdown-card" style="margin-bottom:16px">
+      <div class="breakdown-header">
+        <span class="breakdown-title">${L('🩹 Pertes évitables','🩹 Avoidable losses')}</span>
+        <span class="breakdown-count">${marked?L(`${evitPctMarked}% de tes pertes notées étaient évitables`,`${evitPctMarked}% of your marked losses were avoidable`):L('aucune perte encore notée','no loss marked yet')}</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="bd-table">
+          <thead><tr><th>${L('Catégorie','Category')}</th><th>${L('Pertes','Losses')}</th><th>${L('Part des pertes','Share of losses')}</th><th>${L('R cumulé','Total R')}</th></tr></thead>
+          <tbody>
+            ${row(L('❌ Évitables','❌ Avoidable'),evit,'var(--red)')}
+            ${row(L('🛡️ Inévitables','🛡️ Unavoidable'),inev,'var(--green)')}
+            ${none.length?row(L('— Non renseigné','— Unmarked'),none,'var(--text3)'):''}
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:10px 14px;color:var(--text2);font-size:.82rem">
+        ${L(`R perdu sur des pertes évitables : <b style="color:var(--red)">${savedR}R</b> — le R que tu aurais pu économiser en ne prenant pas ces trades.`,`R lost on avoidable losses: <b style="color:var(--red)">${savedR}R</b> — the R you could have saved by skipping these trades.`)}
+      </div>
+    </div>`;
+  })();
+
   const SHOW_DIMS=[
     {key:'tf',label:'Time-Frame'},
     {key:'pair',label:L('Devise / Actif','Pair / Asset')},
@@ -5402,7 +5441,7 @@ function renderPerf(){
     {key:'risk',label:'Risk %'},
   ];
 
-  bdEl.innerHTML=errBreak+SHOW_DIMS.map(({key,label})=>{
+  bdEl.innerHTML=evitBreak+errBreak+SHOW_DIMS.map(({key,label})=>{
     const dim=PERF_DIMS.find(d=>d.key===key);
     if(!dim) return '';
     const vals=dim.vals ? dim.vals : [...new Set(ts.flatMap(t=>perfDimVals(dim,t)))].sort();
