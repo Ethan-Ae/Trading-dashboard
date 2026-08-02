@@ -5393,6 +5393,8 @@ function renderPerf(){
   })();
 
   // Étude des pertes évitables (perteEvitable stocké dans extra_data)
+  const _evitLosses=ts.filter(isLoss);
+  const _evitAvoid=_evitLosses.filter(t=>perteEvitable(t)==='oui').length;
   const evitBreak=(() => {
     const losses=ts.filter(isLoss);
     if(!losses.length) return '';
@@ -5403,6 +5405,7 @@ function renderPerf(){
     const pct=arr=>losses.length?Math.round(arr.length/losses.length*100):0;
     const marked=evit.length+inev.length;
     const evitPctMarked=marked?Math.round(evit.length/marked*100):0;
+    const pctAll=losses.length?Math.round(evit.length/losses.length*100):0;
     const row=(label,arr,color)=>`<tr>
       <td style="font-weight:600;color:${color}">${label}</td>
       <td>${arr.length}</td>
@@ -5414,6 +5417,16 @@ function renderPerf(){
       <div class="breakdown-header">
         <span class="breakdown-title">${L('🩹 Pertes évitables','🩹 Avoidable losses')}</span>
         <span class="breakdown-count">${marked?L(`${evitPctMarked}% de tes pertes notées étaient évitables`,`${evitPctMarked}% of your marked losses were avoidable`):L('aucune perte encore notée','no loss marked yet')}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:22px;padding:16px 14px;flex-wrap:wrap">
+        <div class="gauge-ring-wrap" style="flex:0 0 auto"><canvas id="gEvitLoss"></canvas>
+          <div class="gauge-center"><div class="gauge-val" style="color:var(--red)">${pctAll}%</div></div>
+        </div>
+        <div style="flex:1;min-width:180px;font-size:.86rem;line-height:1.9">
+          <div><span style="color:var(--red)">●</span> <b>${evit.length}</b> ${L('évitables','avoidable')}</div>
+          <div><span style="color:var(--green)">●</span> <b>${inev.length}</b> ${L('inévitables','unavoidable')}</div>
+          ${none.length?`<div><span style="color:var(--text3)">●</span> <b>${none.length}</b> ${L('non notées','unmarked')}</div>`:''}
+        </div>
       </div>
       <div style="overflow-x:auto">
         <table class="bd-table">
@@ -5471,6 +5484,16 @@ function renderPerf(){
         </div>
       </div>`;
   }).join('');
+
+  // Anneau « Pertes évitables » (rouge = évitables)
+  if(document.getElementById('gEvitLoss')){
+    dc('gEvitLoss');
+    ch['gEvitLoss']=new Chart(document.getElementById('gEvitLoss'),{
+      type:'doughnut',
+      data:{ datasets:[{ data:[_evitAvoid, Math.max(0,_evitLosses.length-_evitAvoid)], backgroundColor:['#ff453a','#2c2c2e'], borderWidth:0, cutout:'76%' }] },
+      options:{ responsive:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, animation:{duration:500} }
+    });
+  }
 }
 
 // ───────────────────────────────────────────
