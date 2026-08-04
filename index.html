@@ -1324,6 +1324,12 @@ body.no-scroll { overflow: hidden; }
       <div><b>N</b> <span data-i18n="tip_new">Nouveau trade</span></div><div><b>Esc</b> <span data-i18n="tip_close">Fermer</span></div><div><b>← →</b> <span data-i18n="tip_nav">Naviguer le mois</span></div>
     </div>
   </div>
+  <div id="load-error-card" class="welcome-card" style="display:none">
+    <div class="welcome-emoji">⚠️</div>
+    <div class="welcome-title" data-i18n="load_err_title">Erreur de chargement</div>
+    <div class="welcome-sub" data-i18n="load_err_sub">Impossible de charger tes trades (problème réseau ou serveur). Tes données sont intactes. Réessaie.</div>
+    <button class="btn-orange" onclick="loadTradesFromDb()" style="margin-top:14px" data-i18n="load_err_btn">↻ Réessayer</button>
+  </div>
   <div id="pris-counter" class="pris-counter"></div>
   <div class="kpi-grid" id="kpi-grid"></div>
   <div class="gauge-row" id="gauge-row"></div>
@@ -1602,6 +1608,14 @@ body.no-scroll { overflow: hidden; }
   <div class="month-empty" id="month-empty" style="display:none">
     <div style="font-size:2.5rem;opacity:.3">📊</div>
     <div style="margin-top:8px;color:var(--text3);font-size:.85rem" data-i18n="mm_empty_month">Aucun trade pour ce mois</div>
+  </div>
+
+  <!-- Journal / bilan du mois -->
+  <div class="month-card" style="margin-top:16px">
+    <div class="month-card-title">📝 <span data-i18n="mm_journal_title">Mon bilan du mois — erreurs & analyse</span></div>
+    <div class="month-card-sub" data-i18n="mm_journal_sub">Écris ton analyse de fin de mois : erreurs récurrentes, leçons apprises, objectifs. Sauvegardé automatiquement pour ce mois.</div>
+    <textarea id="month-journal" class="field-textarea" style="margin-top:10px;min-height:170px" placeholder="Ex : j'ai coupé mes trades trop tôt, overtrading le mercredi…" data-i18n-ph="mm_journal_ph" onchange="setMonthlyNote(this.dataset.key,this.value)"></textarea>
+    <div id="month-journal-saved" style="margin-top:6px;font-size:.72rem;color:var(--text3);height:14px"></div>
   </div>
 </div>
 
@@ -2388,6 +2402,9 @@ const STRINGS = {
     welcome_title:"Bienvenue sur ton Journal",
     welcome_sub:"Commence par enregistrer ton premier trade pour suivre ta performance, ton R cumulé, et tes patterns gagnants.",
     welcome_btn:"＋ Mon premier trade",
+    load_err_title:"Erreur de chargement",
+    load_err_sub:"Impossible de charger tes trades (problème réseau ou serveur). Tes données sont intactes. Réessaie.",
+    load_err_btn:"↻ Réessayer",
     tip_new:"Nouveau trade", tip_close:"Fermer", tip_nav:"Naviguer le mois",
     ov_eq:"Courbe de Capital", ov_pnl30:"P&L par Trade (30 derniers)",
     ov_bypair:"Performance par Paire", ov_byday:"Wins par Jour de la Semaine",
@@ -2419,6 +2436,9 @@ const STRINGS = {
     mm_besttrade:"Meilleur trade", mm_worsttrade:"Pire trade", mm_losses:"Pertes",
     mh_totalr:"Total R du mois", qh_totalr:"Total R du trimestre",
     mm_empty_month:"Aucun trade pour ce mois", mm_empty_quarter:"Aucun trade pour ce trimestre",
+    mm_journal_title:"Mon bilan du mois — erreurs & analyse",
+    mm_journal_sub:"Écris ton analyse de fin de mois : erreurs récurrentes, leçons apprises, objectifs. Sauvegardé automatiquement pour ce mois.",
+    mm_journal_ph:"Ex : j'ai coupé mes trades trop tôt, overtrading le mercredi, à retravailler la patience sur les entrées…",
     mm_prev_month:"Mois précédent", mm_next_month:"Mois suivant",
     mm_prev_q:"Trimestre précédent", mm_next_q:"Trimestre suivant",
     // Insights page (FR)
@@ -2571,6 +2591,9 @@ const STRINGS = {
     welcome_title:"Welcome to your Journal",
     welcome_sub:"Start by logging your first trade to track your performance, your cumulative R, and your winning patterns.",
     welcome_btn:"＋ My first trade",
+    load_err_title:"Loading error",
+    load_err_sub:"Could not load your trades (network or server issue). Your data is safe. Please retry.",
+    load_err_btn:"↻ Retry",
     tip_new:"New trade", tip_close:"Close", tip_nav:"Navigate the month",
     ov_eq:"Equity Curve", ov_pnl30:"P&L per Trade (last 30)",
     ov_bypair:"Performance by Pair", ov_byday:"Wins by Day of Week",
@@ -2602,6 +2625,9 @@ const STRINGS = {
     mm_besttrade:"Best trade", mm_worsttrade:"Worst trade", mm_losses:"Losses",
     mh_totalr:"Total R this month", qh_totalr:"Total R this quarter",
     mm_empty_month:"No trades for this month", mm_empty_quarter:"No trades for this quarter",
+    mm_journal_title:"My monthly review — mistakes & analysis",
+    mm_journal_sub:"Write your end-of-month analysis: recurring mistakes, lessons learned, goals. Saved automatically for this month.",
+    mm_journal_ph:"E.g. I cut my trades too early, overtrading on Wednesdays, need to work on patience at entries…",
     mm_prev_month:"Previous month", mm_next_month:"Next month",
     mm_prev_q:"Previous quarter", mm_next_q:"Next quarter",
     // Insights page (EN)
@@ -2955,6 +2981,40 @@ const CONFLUENCES_DEFAULT = [
 ];
 let CONFLUENCES = (()=>{ try{ const v=JSON.parse(localStorage.getItem('confluences_items')||'null'); return (Array.isArray(v)&&v.length)?v:CONFLUENCES_DEFAULT.slice(); }catch(e){ return CONFLUENCES_DEFAULT.slice(); } })();
 function saveConfluences(){ localStorage.setItem('confluences_items', JSON.stringify(CONFLUENCES)); }
+
+// ─── Journal mensuel (bilan de fin de mois) — { "YYYY-MM": "texte" } ───
+// Cache local immédiat + sync Supabase (colonne user_preferences.monthly_notes, JSONB).
+// La sauvegarde/chargement des notes est ISOLÉE des autres préférences : si la colonne
+// n'existe pas encore, seules les notes retombent sur le cache local, sans casser le reste.
+let MONTHLY_NOTES = (()=>{ try{ const v=JSON.parse(localStorage.getItem('monthly_notes')||'null'); return (v&&typeof v==='object'&&!Array.isArray(v))?v:{}; }catch(e){ return {}; } })();
+function monthlyNoteKey(y,m){ return `${y}-${String(m+1).padStart(2,'0')}`; }
+let _saveNotesTimer = null;
+function setMonthlyNote(key,val){
+  if(!key) return;
+  if(val && val.trim()) MONTHLY_NOTES[key]=val; else delete MONTHLY_NOTES[key];
+  try{ localStorage.setItem('monthly_notes', JSON.stringify(MONTHLY_NOTES)); }catch(e){}
+  const savedEl=document.getElementById('month-journal-saved');
+  if(savedEl) savedEl.textContent = L('Enregistré','Saved')+' ✓';
+  if(!currentUser) return;
+  clearTimeout(_saveNotesTimer);
+  _saveNotesTimer=setTimeout(async()=>{
+    try{
+      const { error } = await sb.from('user_preferences').upsert({ user_id: currentUser.id, monthly_notes: MONTHLY_NOTES }, { onConflict:'user_id' });
+      if(error) console.error('[Notes] save error (colonne monthly_notes manquante ?)', error);
+    }catch(e){ console.error('[Notes] exception', e); }
+  }, 600);
+}
+async function loadMonthlyNotes(){
+  if(!currentUser) return;
+  try{
+    const { data, error } = await sb.from('user_preferences').select('monthly_notes').eq('user_id', currentUser.id).maybeSingle();
+    if(error){ console.warn('[Notes] load skipped (colonne absente ?) — cache local conservé', error.message); return; }
+    if(data && data.monthly_notes && typeof data.monthly_notes==='object' && !Array.isArray(data.monthly_notes)){
+      MONTHLY_NOTES = data.monthly_notes;
+      try{ localStorage.setItem('monthly_notes', JSON.stringify(MONTHLY_NOTES)); }catch(e){}
+    }
+  }catch(e){ console.warn('[Notes] load exception — cache local conservé', e); }
+}
 
 // ─── Sauvegarde locale (fallback) + Supabase (source de vérité) ───
 function saveChecklist(){
@@ -3684,7 +3744,10 @@ function renderOverview(){
   const nPris = ts.length;
   const nMissed = all.length - nPris;
   const s = calcStats(ts);
-  document.getElementById('welcome-card').style.display = (trades.length===0) ? 'block' : 'none';
+  // Erreur de chargement ≠ compte vide : on n'affiche JAMAIS « premier trade » sur erreur.
+  const errCard = document.getElementById('load-error-card');
+  if (errCard) errCard.style.display = tradesLoadError ? 'block' : 'none';
+  document.getElementById('welcome-card').style.display = (!tradesLoadError && trades.length===0) ? 'block' : 'none';
 
   // ── Compteur discret trades pris / trades manqués ──
   const pc = document.getElementById('pris-counter');
@@ -4384,6 +4447,10 @@ function openPanel(id){
   document.getElementById('panelOverlay').classList.add('open');
   updatePanelNavButtons();
   if(pb) pb.scrollTop = sameTrade ? prevScroll : 0;
+  // Screenshots chargés à la demande (non inclus dans loadTradesFromDb pour éviter le timeout).
+  if(!t._ssLoaded){
+    ensureScreenshotsLoaded(id).then(()=>{ if(activeTrade && activeTrade.id===id) refreshPanelBody(activeTrade); });
+  }
 }
 function updatePanelNavButtons(){
   const prev=document.getElementById('p-prev'), next=document.getElementById('p-next');
@@ -4576,7 +4643,12 @@ function handleScreenshot(id,key,input){
   const t=trades.find(x=>x.id===id);
   if(!t||!input.files[0]) return;
   const reader=new FileReader();
-  reader.onload=e=>{ t.screenshots[key]=e.target.result; dbUpsert(t); openPanel(id); };
+  reader.onload=async e=>{
+    await ensureScreenshotsLoaded(id);
+    if(!t.screenshots) t.screenshots={};
+    t.screenshots[key]=e.target.result;
+    dbUpdateScreenshots(t.id, t.screenshots); openPanel(id);
+  };
   reader.readAsDataURL(input.files[0]);
 }
 // ── MGMT MULTI-PHOTOS ──────────────────────
@@ -4692,21 +4764,23 @@ function updateSectionNote(id, key, val){
   else delete t.extra_data['note_'+key];
   dbUpsert(t);
 }
-function addPhoto(id, key, dataUrl){
+async function addPhoto(id, key, dataUrl){
   const t = trades.find(x=>x.id===id); if(!t) return;
+  await ensureScreenshotsLoaded(id); // ne jamais partir d'un état non chargé → sinon on écrase
   if(!t.screenshots) t.screenshots = {};
   const arr = getPhotoArr(t, key);
   arr.push(dataUrl);
   t.screenshots[key] = arr;
-  dbUpsert(t);
+  dbUpdateScreenshots(t.id, t.screenshots);
   openPanel(id);
 }
-function delPhoto(id, key, idx){
+async function delPhoto(id, key, idx){
   const t = trades.find(x=>x.id===id); if(!t) return;
+  await ensureScreenshotsLoaded(id);
   const arr = getPhotoArr(t, key);
   arr.splice(idx,1);
   t.screenshots[key] = arr;
-  dbUpsert(t);
+  dbUpdateScreenshots(t.id, t.screenshots);
   openPanel(id);
 }
 async function handlePhotoDrop(e, id, key){
@@ -4722,11 +4796,15 @@ async function handleDropOnSlot(e,id,key){
   const dataUrl = await resolveDropToDataUrl(e);
   if(!dataUrl) return;
   const t=trades.find(x=>x.id===id); if(!t) return;
-  t.screenshots[key]=dataUrl; dbUpsert(t); openPanel(id); showToast(L('📸 Image ajoutée','📸 Image added'));
+  await ensureScreenshotsLoaded(id);
+  if(!t.screenshots) t.screenshots={};
+  t.screenshots[key]=dataUrl; dbUpdateScreenshots(t.id, t.screenshots); openPanel(id); showToast(L('📸 Image ajoutée','📸 Image added'));
 }
-function saveImgToSlot(id,key,dataUrl){
+async function saveImgToSlot(id,key,dataUrl){
   const t=trades.find(x=>x.id===id); if(!t) return;
-  t.screenshots[key]=dataUrl; dbUpsert(t); openPanel(id);
+  await ensureScreenshotsLoaded(id);
+  if(!t.screenshots) t.screenshots={};
+  t.screenshots[key]=dataUrl; dbUpdateScreenshots(t.id, t.screenshots); openPanel(id);
 }
 function openLightbox(src, label){
   document.getElementById('lightbox-img').src = src;
@@ -4745,9 +4823,12 @@ function toggleErr(id, err, btn){
   btn.classList.toggle('selected', t.errs.includes(err));
   dbUpsert(t);
 }
-function delScreenshot(id,key){
+async function delScreenshot(id,key){
   const t=trades.find(x=>x.id===id);
-  if(t){ t.screenshots[key]=null; dbUpsert(t); openPanel(id); }
+  if(!t) return;
+  await ensureScreenshotsLoaded(id);
+  if(!t.screenshots) t.screenshots={};
+  t.screenshots[key]=null; dbUpdateScreenshots(t.id, t.screenshots); openPanel(id);
 }
 
 function closePanel(){
@@ -4962,7 +5043,7 @@ function closeAddModal(){
   document.getElementById('addModal').classList.remove('open');
 }
 
-function saveTrade(){
+async function saveTrade(){
   const pair=(document.getElementById('m-pair').value||'').toUpperCase().trim();
   if(!pair){ document.getElementById('m-pair').focus(); return; }
   const date=document.getElementById('m-date').value;
@@ -5000,8 +5081,11 @@ function saveTrade(){
     confluences, psy, checklist: CHECKLIST.map(()=>false), extra_data,
     screenshots:{exec:modalExecScreenshot,mgmt:[],close:null}
   };
+  newTrade._ssLoaded = true; // screenshots connus localement → pas de fetch nécessaire
   trades.unshift(newTrade);
-  dbUpsert(newTrade);
+  await dbUpsert(newTrade); // insère la ligne (sans screenshots)
+  // Persiste le screenshot d'exécution séparément (dbUpsert n'envoie plus screenshots).
+  if(modalExecScreenshot) await dbUpdateScreenshots(newTrade.id, newTrade.screenshots);
   // Pointe les vues temporelles (Mensuel + Calendrier) sur le mois du nouveau trade
   // (date de prise de position, repli sur création) pour qu'il s'y affiche tout de suite.
   const effISO = getTradeDate(newTrade);
@@ -5153,6 +5237,13 @@ function renderMonthly(){
     .sort((a,b)=>(getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
 
   renderPeriodBody(ts, 'mh-', 'm-', 'month-empty');
+
+  // Journal du mois
+  const jk = monthlyNoteKey(monthY, monthM);
+  const jEl = document.getElementById('month-journal');
+  if(jEl){ jEl.dataset.key = jk; jEl.value = MONTHLY_NOTES[jk] || ''; }
+  const jSaved = document.getElementById('month-journal-saved');
+  if(jSaved) jSaved.textContent = '';
 }
 
 // ─────────────────────────────────────────────
@@ -5897,6 +5988,7 @@ function dbToLocal(r) {
 }
 
 let _loadingTrades = false;
+let tradesLoadError = false; // true si le dernier chargement a échoué (≠ compte vide)
 async function loadTradesFromDb() {
   if (!currentUser) { console.warn('[Supabase] loadTradesFromDb: pas d\'utilisateur connecté, abandon'); return; }
   if (_loadingTrades) { console.log('[Supabase] SELECT déjà en cours, skip duplicate'); return; }
@@ -5906,12 +5998,21 @@ async function loadTradesFromDb() {
     // ⚠️ NE PAS appeler sb.auth.* ici si on est dans le contexte d'un onAuthStateChange callback
     // → ça crée un deadlock dans supabase-js v2.
     // Le client attache automatiquement le token courant à chaque requête.
-    const { data, error, status } = await sb.from('trades').select('*').order('date', { ascending: false });
+    // ⚠️ PAS de select('*') : la colonne `screenshots` (base64 lourde) ferait timeout
+    //    Postgres (57014) sur tout le compte. On liste explicitement les colonnes SAUF
+    //    screenshots ; celles-ci sont chargées à la demande (ensureScreenshotsLoaded).
+    const TRADE_COLS = 'id, pair, date, prise, tf, ordre, risk, rri, result, rrf, jour, hold, type_trade, tend, retails, errs, bon_trade, manage_trade, confluences, psy, checklist, extra_data';
+    const { data, error, status } = await sb.from('trades').select(TRADE_COLS).order('date', { ascending: false });
     if (error) {
       console.error('[Supabase] SELECT échec', { status, error, fullError: JSON.stringify(error) });
       showToast(L('Erreur chargement : ','Loading error: ')+error.message, true);
+      // On distingue une ERREUR (réseau/timeout) d'un compte vide : on l'affiche
+      // comme telle au lieu de l'écran « premier trade ».
+      tradesLoadError = true;
+      if (typeof refreshCurrentPage === 'function') refreshCurrentPage();
       return;
     }
+    tradesLoadError = false;
     console.log('[Supabase] SELECT OK :', (data||[]).length, 'trades reçus');
 
     // ─── GARDE ANTI-EFFACEMENT (bug « 0 trade qui apparaît/disparaît ») ───
@@ -5965,6 +6066,8 @@ async function loadTradesFromDb() {
   } catch(e) {
     console.error('[Supabase] SELECT exception', e);
     showToast(L('Erreur : ','Error: ')+e.message, true);
+    tradesLoadError = true;
+    if (typeof refreshCurrentPage === 'function') refreshCurrentPage();
   } finally {
     _loadingTrades = false;
   }
@@ -6011,6 +6114,11 @@ async function dbUpsert(trade) {
   const row = localToDb(trade);
   // ⚠️ On n'envoie PAS user_id : Supabase le remplit via DEFAULT auth.uid()
   if('user_id' in row){ delete row.user_id; }
+  // ⚠️ On n'envoie JAMAIS screenshots ici : la colonne (base64 lourde) est gérée
+  //    séparément via dbUpdateScreenshots(). Ça évite (1) d'alourdir chaque save de
+  //    champ, (2) d'ÉCRASER les images serveur quand elles ne sont pas chargées en
+  //    mémoire (chargement à la demande à l'ouverture du panneau).
+  if('screenshots' in row){ delete row.screenshots; }
   console.log('[Supabase] UPSERT trade id=', row.id, row);
   setSaveStatus('saving');
   const { data, error, status } = await sb.from('trades').upsert(row, { onConflict: 'id' }).select();
@@ -6022,6 +6130,53 @@ async function dbUpsert(trade) {
   }
   console.log('[Supabase] UPSERT OK', data);
   setSaveStatus('saved');
+}
+
+// ─── Screenshots : écriture ciblée (UNIQUEMENT la colonne screenshots) ───
+// Ne renvoie aucune autre colonne : payload minimal, aucun risque sur le reste.
+async function dbUpdateScreenshots(id, screenshots) {
+  if (!currentUser){ console.warn('[Supabase] UPDATE screenshots abandonné — pas d\'utilisateur'); showToast(L('⚠️ Non connecté','⚠️ Not logged in'), true); return; }
+  setSaveStatus('saving');
+  const { error, status } = await sb.from('trades').update({ screenshots: screenshots || {} }).eq('id', id);
+  if (error) {
+    console.error('[Supabase] UPDATE screenshots échec', { status, error, fullError: JSON.stringify(error) });
+    showToast(L('Erreur images : ','Image error: ') + (error.message || JSON.stringify(error)), true);
+    setSaveStatus('error');
+    return;
+  }
+  setSaveStatus('saved');
+}
+
+// ─── Screenshots : lecture à la demande ───
+// Les screenshots ne sont PAS chargés par loadTradesFromDb (trop lourds → timeout).
+// On récupère la colonne du seul trade concerné à l'ouverture de son panneau.
+const _ssLoading = new Map(); // id → Promise (dédoublonne les requêtes concurrentes)
+function ensureScreenshotsLoaded(id) {
+  const t = trades.find(x => x.id === id);
+  if (!t) return Promise.resolve();
+  if (t._ssLoaded) return Promise.resolve();
+  if (_ssLoading.has(id)) return _ssLoading.get(id);
+  const p = (async () => {
+    const { data, error } = await sb.from('trades').select('screenshots').eq('id', id).maybeSingle();
+    if (error) {
+      console.error('[Supabase] SELECT screenshots échec', error);
+      showToast(L('Erreur chargement images','Image load error'), true);
+      return;
+    }
+    t.screenshots = (data && data.screenshots) || {};
+    t._ssLoaded = true;
+  })();
+  _ssLoading.set(id, p);
+  p.finally(() => _ssLoading.delete(id));
+  return p;
+}
+// Recharge le corps du panneau (préserve le scroll) — utilisé après chargement async des images.
+function refreshPanelBody(t) {
+  const pb = document.getElementById('panel');
+  const prev = pb ? pb.scrollTop : 0;
+  const body = document.getElementById('panel-body');
+  if (body) body.innerHTML = buildPanelHTML(t);
+  if (pb) pb.scrollTop = prev;
 }
 
 async function dbDelete(id) {
@@ -6231,6 +6386,7 @@ sb.auth.onAuthStateChange((event, session) => {
     // Charge les préférences (checklist + erreurs) AVANT les trades
     // pour que le rendu utilise déjà les valeurs personnalisées
     await loadUserPreferences();
+    await loadMonthlyNotes();
     await loadTradesFromDb();
     _dataLoadedForUser = session.user.id;
   }, 0);
@@ -6280,11 +6436,37 @@ function renderGoalCard(ts){
 // ─────────────────────────────────────────────
 //  EXPORT / IMPORT JSON
 // ─────────────────────────────────────────────
-function exportJSON(){
+// Récupère les screenshots de TOUS les trades par petits lots (jamais en une requête :
+// la colonne base64 ferait timeout comme loadTradesFromDb). → { id: screenshots }
+async function fetchAllScreenshots(){
+  const map = new Map();
+  const ids = trades.map(t=>t.id);
+  const CHUNK = 25;
+  for(let i=0;i<ids.length;i+=CHUNK){
+    const slice = ids.slice(i, i+CHUNK);
+    const { data, error } = await sb.from('trades').select('id, screenshots').in('id', slice);
+    if(error) throw error;
+    for(const r of (data||[])) map.set(r.id, r.screenshots || {});
+  }
+  return map;
+}
+async function exportJSON(){
+  // Les screenshots ne sont plus en mémoire (chargés à la demande) → on les rapatrie
+  // pour que la sauvegarde reste COMPLÈTE. En cas d'échec, on demande avant d'exporter sans.
+  let tradesForExport = trades;
+  showToast(L('💾 Préparation de la sauvegarde…','💾 Preparing backup…'));
+  try {
+    const ss = await fetchAllScreenshots();
+    tradesForExport = trades.map(t => ({ ...t, screenshots: t._ssLoaded ? (t.screenshots||{}) : (ss.get(t.id) || {}) }));
+  } catch(e){
+    console.error('[Export] chargement screenshots échec', e);
+    if(!confirm(L('Impossible de charger les images. Exporter la sauvegarde SANS les screenshots ?',
+                  'Could not load images. Export the backup WITHOUT screenshots?'))) return;
+  }
   const data = {
     version: 1,
     exportedAt: new Date().toISOString(),
-    trades,
+    trades: tradesForExport,
     checklist: CHECKLIST,
     years: JOURNAL_YEARS,
     monthlyGoal: getGoal(),
@@ -7047,6 +7229,7 @@ async function confirmCsvImport() {
 
   for (let i = 0; i < newTrades.length; i++) {
     const t = newTrades[i];
+    t._ssLoaded = true; // trade neuf : screenshots connus en mémoire
     trades.push(t);
     try {
       const row = localToDb(t);
@@ -7091,6 +7274,7 @@ function importJSON(input){
       // ─── Insert en séquentiel pour catcher les erreurs proprement ───
       for (let i = 0; i < newTrades.length; i++) {
         const t = newTrades[i];
+        t._ssLoaded = true; // restauration : screenshots présents dans la sauvegarde
         trades.push(t);
         try {
           const row = localToDb(t);

@@ -1,0 +1,11 @@
+# Dépendances
+node_modules/
+
+# Export Notion local (screenshots perso, volumineux — ne pas versionner)
+notion-export/
+
+# Fichiers OS / éditeur
+.DS_Store
+
+# Settings Claude locaux (par machine)
+.claude/settings.local*.json
