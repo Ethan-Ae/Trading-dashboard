@@ -4007,17 +4007,22 @@ function renderYoYChart(){
   const curYear = new Date().getFullYear();
   // Dégradé orange sous l'année en cours (même esprit que la courbe de capital du haut).
   const ctx = cvs.getContext('2d');
-  const curGrad = ctx.createLinearGradient(0, 0, 0, 240);
-  curGrad.addColorStop(0, 'rgba(255,159,10,.16)');
+  const curGrad = ctx.createLinearGradient(0, 0, 0, 260);
+  curGrad.addColorStop(0, 'rgba(255,159,10,.15)');
   curGrad.addColorStop(1, 'rgba(255,159,10,0)');
-  // Palette discrète pour les années passées (cyclique) ; année en cours = orange charte.
-  const pastColors = ['#5e9eff','#30d158','#bf5af2','#64d2ff','#ff9f45','#ffd60a','#bf5af2','#7d7aff'];
+  // Palette douce / désaturée pour les années passées (cyclique) ; année en cours = orange charte.
+  const pastColors = ['#6f93c4','#5fa580','#9b82c4','#6fa6b8','#c79a6b','#c2bd72','#a88fc4','#8a88c4'];
   const datasets = years.map((y,idx)=>{
     const isCur = y === curYear;
-    const pts = byYear[y].slice().sort((a,b)=>a.d.localeCompare(b.d));
+    // AGRÉGATION PAR JOUR : un seul point par date = cumul en fin de journée (supprime les
+    // pics verticaux quand plusieurs trades tombent le même jour). Le calcul du R pondéré
+    // cumulé est identique — seul l'échantillonnage des points change.
+    const perDay = {};
+    byYear[y].forEach(p=>{ perDay[p.d] = (perDay[p.d]||0) + p.w; });
+    const dates = Object.keys(perDay).sort();
     let cum = 0;
     const data = [{ x:0, y:0, d:`${y}-01-01` }];
-    pts.forEach(p=>{ cum += p.w; data.push({ x:+xOfDate(p.d).toFixed(4), y:+cum.toFixed(2), d:p.d }); });
+    dates.forEach(d=>{ cum += perDay[d]; data.push({ x:+xOfDate(d).toFixed(4), y:+cum.toFixed(2), d }); });
     const color = isCur ? '#ff9f0a' : pastColors[idx % pastColors.length];
     return {
       label:String(y),
@@ -4025,6 +4030,9 @@ function renderYoYChart(){
       borderColor: color,
       backgroundColor: isCur ? curGrad : color,
       borderWidth: isCur ? 2.5 : 1.5,
+      // Lissage fidèle : interpolation monotone (pas de rebond artificiel au-dessus/en-dessous
+      // des vraies valeurs, contrairement au bézier/catmull-rom classique).
+      cubicInterpolationMode:'monotone',
       tension: .4,
       fill: isCur ? 'origin' : false,
       pointRadius: 0,
@@ -4047,6 +4055,12 @@ function renderYoYChart(){
   ch['yoyChart'] = new Chart(cvs, {
     type:'line',
     data:{ datasets },
+    // Petite ombre portée sous le tooltip (Chart.js ne la gère pas nativement).
+    plugins:[{
+      id:'yoyTooltipShadow',
+      beforeTooltipDraw(chart){ const c=chart.ctx; c.save(); c.shadowColor='rgba(0,0,0,.5)'; c.shadowBlur=14; c.shadowOffsetY=5; },
+      afterTooltipDraw(chart){ chart.ctx.restore(); }
+    }],
     options: chartDefaults({
       responsive:true,
       maintainAspectRatio:true,
@@ -4055,7 +4069,11 @@ function renderYoYChart(){
       plugins:{
         legend:{ display:true, position:'top', labels:{ color:'#aeaeb2', font:{size:11}, boxWidth:12, boxHeight:12, usePointStyle:true, pointStyle:'line' } },
         tooltip:{
-          backgroundColor:'#1c1c1e', titleColor:'#fff', bodyColor:'#aeaeb2', borderColor:'#2c2c2e', borderWidth:1,
+          backgroundColor:'rgba(18,18,20,.92)', titleColor:'#fff', bodyColor:'#e5e5ea',
+          borderColor:'rgba(255,255,255,.08)', borderWidth:1, cornerRadius:8,
+          padding:{ top:8, bottom:8, left:10, right:12 }, caretSize:5, caretPadding:8,
+          displayColors:true, usePointStyle:true, boxWidth:8, boxHeight:8, boxPadding:4,
+          titleFont:{ size:12, weight:'600' }, bodyFont:{ size:12 },
           callbacks:{
             title:(items)=>{ const c=items[0]; return `${c.dataset.label} · ${fmtDate(c.raw.d)}`; },
             label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}`
@@ -4065,12 +4083,20 @@ function renderYoYChart(){
       scales:{
         x:{
           type:'linear', min:0, max:12, offset:false,
-          grid:{ color:'rgba(255,255,255,.05)' },
+          // Séparations de mois uniquement, très discrètes.
+          grid:{ color:'rgba(255,255,255,.04)', drawTicks:false },
+          border:{ color:'rgba(255,255,255,.08)' },
           ticks:{ color:'#636366', font:{size:10}, stepSize:1, autoSkipPadding:6,
             callback:(v)=> (v>=0 && v<12 && Number.isInteger(v)) ? shortMonths[v] : '' }
         },
         y:{
-          grid:{ color:'rgba(255,255,255,.05)' },
+          // Grille horizontale très fine ; ligne du zéro un peu plus marquée.
+          grid:{
+            color:(c)=> (c.tick && c.tick.value===0) ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.04)',
+            lineWidth:(c)=> (c.tick && c.tick.value===0) ? 1.2 : 1,
+            drawTicks:false
+          },
+          border:{ display:false },
           ticks:{ color:'#636366', font:{size:10}, callback:v=>(v>0?'+':'')+v+'R' },
           title:{ display:true, text:L('R pondéré cumulé','Cumulative weighted R'), color:'#636366', font:{size:10} }
         }
