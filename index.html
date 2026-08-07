@@ -1364,9 +1364,9 @@ body.no-scroll { overflow: hidden; }
   <!-- Comparaison des années (courbes superposées) -->
   <div class="charts-row" id="yoy-row" style="display:none">
     <div class="chart-card" style="grid-column:1/-1">
-      <div class="chart-card-title" data-i18n="ov_mom">Comparaison des mois</div>
+      <div class="chart-card-title" data-i18n="ov_mom">Comparaison des mois par année</div>
       <div class="chart-card-tag" data-i18n="ov_mom_all" style="font-size:.7rem;font-weight:600;color:var(--orange);opacity:.85;margin-bottom:4px">Tous journaux confondus</div>
-      <div class="chart-card-sub" data-i18n="ov_mom_sub">R pondéré cumulé, chaque mois repartant de zéro le 1ᵉʳ jour. Clique sur un mois dans la légende pour l'afficher / la masquer.</div>
+      <div class="chart-card-sub" data-i18n="ov_mom_sub">R pondéré par mois, une barre par année. Clique sur une année dans la légende pour l'afficher / la masquer.</div>
       <canvas id="yoyChart" height="150"></canvas>
     </div>
   </div>
@@ -2428,7 +2428,7 @@ const STRINGS = {
     ov_eq:"Courbe de Capital", ov_pnl30:"P&L par Trade (30 derniers)",
     ov_bypair:"Performance par Paire", ov_byday:"Wins par Jour de la Semaine",
     ov_rdist:"Distribution R Final", ov_bytype:"Performance par Type de Trade",
-    ov_mom:"Comparaison des mois", ov_mom_all:"Tous journaux confondus", ov_mom_sub:"R pondéré cumulé, chaque mois repartant de zéro le 1ᵉʳ jour. Clique sur un mois dans la légende pour l'afficher / la masquer.",
+    ov_mom:"Comparaison des mois par année", ov_mom_all:"Tous journaux confondus", ov_mom_sub:"R pondéré par mois, une barre par année. Clique sur une année dans la légende pour l'afficher / la masquer.",
     // Trades page (FR)
     ph_search:"🔎 Rechercher…", title_search:"Cherche dans paire, résultat, ordre, tendance, confluences, notes…",
     ph_allpairs:"Toutes les devises", opt_tf:"Time-Frame", opt_result:"Résultat",
@@ -2620,7 +2620,7 @@ const STRINGS = {
     ov_eq:"Equity Curve", ov_pnl30:"P&L per Trade (last 30)",
     ov_bypair:"Performance by Pair", ov_byday:"Wins by Day of Week",
     ov_rdist:"Final R Distribution", ov_bytype:"Performance by Trade Type",
-    ov_mom:"Month-over-month comparison", ov_mom_all:"All journals combined", ov_mom_sub:"Cumulative weighted R, each month restarting from zero on day 1. Click a month in the legend to show / hide it.",
+    ov_mom:"Monthly comparison by year", ov_mom_all:"All journals combined", ov_mom_sub:"Weighted R per month, one bar per year. Click a year in the legend to show / hide it.",
     // Trades page (EN)
     ph_search:"🔎 Search…", title_search:"Search pair, result, order, trend, confluences, notes…",
     ph_allpairs:"All pairs", opt_tf:"Time-Frame", opt_result:"Result",
@@ -3983,75 +3983,45 @@ function renderYoYChart(){
   const riskPctOf = t => { const v = parseFloat(String(t.risk||'').replace('%','').replace(',','.')); return isNaN(v)?0:v; };
   // Contribution en R PONDÉRÉ (identique aux perfs mensuelles).
   const wR = t => RISK_PER_R > 0 ? (rrfNum(t)||0)*riskPctOf(t)/RISK_PER_R : (rrfNum(t)||0);
-  // Position = jour du mois (1→31) ; le 1ᵉʳ du mois = 1.
-  const dayOfMonth = iso => +iso.slice(8,10);
-
-  // Trades pris & clôturés (R/R numérique), datés via getTradeDate (close_date si présente),
-  // regroupés par mois-clé "YYYY-MM".
-  const byMonth = {};
+  // Trades pris & clôturés (R/R numérique), datés via getTradeDate (close_date si présente).
+  // On agrège le R pondéré par ANNÉE puis par MOIS (index 0-11) : chaque année = une série
+  // de 12 valeurs, une barre par mois → barres groupées, années superposées mois par mois.
+  const byYear = {};
   allTrades.filter(isTradePris).forEach(t=>{
     if(rrfNum(t)===null) return;
     const d = getTradeDate(t); if(!d) return;
-    const mk = d.slice(0,7); if(mk.length!==7) return;
-    (byMonth[mk] || (byMonth[mk]=[])).push({ d, w:wR(t) });
+    const y = +d.slice(0,4); const mi = +d.slice(5,7)-1;
+    if(isNaN(y) || mi<0 || mi>11) return;
+    const arr = byYear[y] || (byYear[y] = new Array(12).fill(0));
+    arr[mi] += wR(t);
   });
-  const monthKeys = Object.keys(byMonth).sort();
-  if(monthKeys.length === 0){ row.style.display='none'; return; }
+  const years = Object.keys(byYear).map(Number).sort((a,b)=>a-b);
+  if(years.length === 0){ row.style.display='none'; return; }
   row.style.display='';
 
-  const now = new Date();
-  const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const curYear = new Date().getFullYear();
   const shortMonths = currentLang==='en'
     ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     : ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
-  const monthLabel = mk => { const p = mk.split('-'); return `${shortMonths[+p[1]-1]} ${p[0]}`; };
-  // Dégradé orange sous le mois en cours (même esprit que la courbe de capital du haut).
-  const ctx = cvs.getContext('2d');
-  const curGrad = ctx.createLinearGradient(0, 0, 0, 260);
-  curGrad.addColorStop(0, 'rgba(255,159,10,.15)');
-  curGrad.addColorStop(1, 'rgba(255,159,10,0)');
-  // Palette douce / désaturée pour les mois passés (cyclique) ; mois en cours = orange charte.
+  // Palette douce / désaturée pour les années passées (cyclique) ; année en cours = orange charte.
   const pastColors = ['#6f93c4','#5fa580','#9b82c4','#6fa6b8','#c79a6b','#c2bd72','#a88fc4','#8a88c4'];
-  const datasets = monthKeys.map((mk,idx)=>{
-    const isCur = mk === curMonth;
-    // AGRÉGATION PAR JOUR : un seul point par date = cumul en fin de journée (supprime les
-    // pics verticaux quand plusieurs trades tombent le même jour). Le calcul du R pondéré
-    // cumulé est identique — seul l'échantillonnage des points change.
-    const perDay = {};
-    byMonth[mk].forEach(p=>{ perDay[p.d] = (perDay[p.d]||0) + p.w; });
-    const dates = Object.keys(perDay).sort();
-    let cum = 0;
-    const data = [{ x:0, y:0, d:`${mk}-01` }];
-    dates.forEach(d=>{ cum += perDay[d]; data.push({ x:dayOfMonth(d), y:+cum.toFixed(2), d }); });
+  const datasets = years.map((y,idx)=>{
+    const isCur = y === curYear;
     const color = isCur ? '#ff9f0a' : pastColors[idx % pastColors.length];
     return {
-      label:monthLabel(mk),
-      data,
-      borderColor: color,
-      backgroundColor: isCur ? curGrad : color,
-      borderWidth: isCur ? 2.5 : 1.5,
-      // Lissage fidèle : interpolation monotone (pas de rebond artificiel au-dessus/en-dessous
-      // des vraies valeurs, contrairement au bézier/catmull-rom classique).
-      cubicInterpolationMode:'monotone',
-      tension: .4,
-      fill: isCur ? 'origin' : false,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      pointBackgroundColor: color,
-      pointHoverBackgroundColor: color,
-      pointHoverBorderColor: '#0d0d0f',
-      pointHoverBorderWidth: 2,
-      order: isCur ? 0 : 1,
-      borderCapStyle:'round',
-      borderJoinStyle:'round'
+      label:String(y),
+      data: byYear[y].map(v=>+v.toFixed(2)),
+      backgroundColor: isCur ? 'rgba(255,159,10,.85)' : color,
+      hoverBackgroundColor: color,
+      borderRadius: 4,
+      borderSkipped: false,
+      order: isCur ? 0 : 1
     };
   });
 
-  const fmtDate = iso => { const p = iso.split('-'); return currentLang==='en' ? `${p[1]}/${p[2]}/${p[0]}` : `${p[2]}/${p[1]}/${p[0]}`; };
-
   ch['yoyChart'] = new Chart(cvs, {
-    type:'line',
-    data:{ datasets },
+    type:'bar',
+    data:{ labels: shortMonths, datasets },
     // Petite ombre portée sous le tooltip (Chart.js ne la gère pas nativement).
     plugins:[{
       id:'yoyTooltipShadow',
@@ -4062,29 +4032,26 @@ function renderYoYChart(){
       responsive:true,
       maintainAspectRatio:true,
       animation:{duration:400},
-      interaction:{ mode:'nearest', intersect:false, axis:'xy' },
+      interaction:{ mode:'index', intersect:false },
       plugins:{
-        legend:{ display:true, position:'top', labels:{ color:'#aeaeb2', font:{size:11}, boxWidth:12, boxHeight:12, usePointStyle:true, pointStyle:'line' } },
+        legend:{ display:true, position:'top', labels:{ color:'#aeaeb2', font:{size:11}, boxWidth:12, boxHeight:12, usePointStyle:true, pointStyle:'rectRounded' } },
         tooltip:{
           backgroundColor:'rgba(18,18,20,.92)', titleColor:'#fff', bodyColor:'#e5e5ea',
           borderColor:'rgba(255,255,255,.08)', borderWidth:1, cornerRadius:8,
           padding:{ top:8, bottom:8, left:10, right:12 }, caretSize:5, caretPadding:8,
           displayColors:true, usePointStyle:true, boxWidth:8, boxHeight:8, boxPadding:4,
           titleFont:{ size:12, weight:'600' }, bodyFont:{ size:12 },
+          filter:(item)=> item.parsed.y !== 0,
           callbacks:{
-            title:(items)=>{ const c=items[0]; return `${c.dataset.label} · ${fmtDate(c.raw.d)}`; },
-            label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}`
+            label:(c)=>` ${c.dataset.label} : ${c.parsed.y>=0?'+':''}${c.parsed.y}R`
           }
         }
       },
       scales:{
         x:{
-          type:'linear', min:0, max:31, offset:false,
-          // Repères de jours, très discrets.
-          grid:{ color:'rgba(255,255,255,.04)', drawTicks:false },
+          grid:{ display:false, drawTicks:false },
           border:{ color:'rgba(255,255,255,.08)' },
-          ticks:{ color:'#636366', font:{size:10}, stepSize:5, autoSkipPadding:6,
-            callback:(v)=> (v>0 && v<=31 && v%5===0) ? (L('J','D')+v) : (v===1?L('J1','D1'):'') }
+          ticks:{ color:'#636366', font:{size:10} }
         },
         y:{
           // Grille horizontale très fine ; ligne du zéro un peu plus marquée.
@@ -4095,7 +4062,7 @@ function renderYoYChart(){
           },
           border:{ display:false },
           ticks:{ color:'#636366', font:{size:10}, callback:v=>(v>0?'+':'')+v+'R' },
-          title:{ display:true, text:L('R pondéré cumulé','Cumulative weighted R'), color:'#636366', font:{size:10} }
+          title:{ display:true, text:L('R pondéré','Weighted R'), color:'#636366', font:{size:10} }
         }
       }
     })
