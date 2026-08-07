@@ -5324,6 +5324,10 @@ function renderPeriodBody(ts, P, C, emptyId){
   const profits = +wins.reduce((s,t)=>s+rrfNum(t),0).toFixed(2);
   const lossR  = +losses.reduce((s,t)=>s+rrfNum(t),0).toFixed(2);
   const pf = lossR!==0 ? +(profits/Math.abs(lossR)).toFixed(2) : (profits>0?Infinity:0);
+  // Profit/Loss en R PONDÉRÉ (perf réelle) : contribution d'un trade = rrf × risque% / RISK_PER_R
+  const wR = t => RISK_PER_R > 0 ? (rrfNum(t)||0)*riskPctOf(t)/RISK_PER_R : (rrfNum(t)||0);
+  const profitsW = +wins.reduce((s,t)=>s+wR(t),0).toFixed(2);
+  const lossW    = +losses.reduce((s,t)=>s+wR(t),0).toFixed(2);
   const exp = closed.length ? +(totalR/closed.length).toFixed(2) : 0;
 
   // Hero — hiérarchie inversée : valeur principale = perf RÉELLE en R PONDÉRÉ.
@@ -5351,8 +5355,8 @@ function renderPeriodBody(ts, P, C, emptyId){
 
   $(P+'wins').textContent = wins.length;
   $(P+'losses').textContent = losses.length;
-  $(P+'profits').textContent = '+' + profits + 'R';
-  $(P+'loss').textContent = lossR + 'R';
+  $(P+'profits').textContent = '+' + profitsW + 'R';
+  $(P+'loss').textContent = lossW + 'R';
 
   // Streaks
   let bestW=0,bestL=0,curW=0,curL=0;
@@ -5371,7 +5375,7 @@ function renderPeriodBody(ts, P, C, emptyId){
 
   // Hit rate donut
   $(P+'hr').textContent = wr.toFixed(0) + '%';
-  $(P+'net').textContent = (totalR>=0?'+':'') + totalR + 'R';
+  $(P+'net').textContent = (weightedR>=0?'+':'') + weightedR + 'R';
 
   // Charts
   if(typeof Chart === 'undefined') return;
@@ -5430,7 +5434,7 @@ function renderPeriodBody(ts, P, C, emptyId){
   dc(C+'pl-pie');
   ch[C+'pl-pie'] = new Chart($(C+'pl-pie'), {
     type:'doughnut',
-    data:{ datasets:[{ data:[profits, Math.abs(lossR)], backgroundColor:['#30d158','#ff453a'], borderWidth:0 }] },
+    data:{ datasets:[{ data:[profitsW, Math.abs(lossW)], backgroundColor:['#30d158','#ff453a'], borderWidth:0 }] },
     options:{ responsive:true, maintainAspectRatio:false, cutout:'72%', plugins:{legend:{display:false},tooltip:{enabled:false}}, animation:{duration:600} }
   });
 }
