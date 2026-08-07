@@ -1361,6 +1361,14 @@ body.no-scroll { overflow: hidden; }
       <canvas id="typeChart" height="180"></canvas>
     </div>
   </div>
+  <!-- Comparaison des années (courbes superposées) -->
+  <div class="charts-row" id="yoy-row" style="display:none">
+    <div class="chart-card" style="grid-column:1/-1">
+      <div class="chart-card-title" data-i18n="ov_yoy">Comparaison des années</div>
+      <div class="chart-card-sub" data-i18n="ov_yoy_sub">R pondéré cumulé, chaque année repartant de zéro au 1ᵉʳ janvier. Clique sur une année dans la légende pour l'afficher / la masquer.</div>
+      <canvas id="yoyChart" height="150"></canvas>
+    </div>
+  </div>
 </div>
 
 <!-- ══════════ TRADES ══════════ -->
@@ -2419,6 +2427,7 @@ const STRINGS = {
     ov_eq:"Courbe de Capital", ov_pnl30:"P&L par Trade (30 derniers)",
     ov_bypair:"Performance par Paire", ov_byday:"Wins par Jour de la Semaine",
     ov_rdist:"Distribution R Final", ov_bytype:"Performance par Type de Trade",
+    ov_yoy:"Comparaison des années", ov_yoy_sub:"R pondéré cumulé, chaque année repartant de zéro au 1ᵉʳ janvier. Clique sur une année dans la légende pour l'afficher / la masquer.",
     // Trades page (FR)
     ph_search:"🔎 Rechercher…", title_search:"Cherche dans paire, résultat, ordre, tendance, confluences, notes…",
     ph_allpairs:"Toutes les devises", opt_tf:"Time-Frame", opt_result:"Résultat",
@@ -2610,6 +2619,7 @@ const STRINGS = {
     ov_eq:"Equity Curve", ov_pnl30:"P&L per Trade (last 30)",
     ov_bypair:"Performance by Pair", ov_byday:"Wins by Day of Week",
     ov_rdist:"Final R Distribution", ov_bytype:"Performance by Trade Type",
+    ov_yoy:"Year-over-year comparison", ov_yoy_sub:"Cumulative weighted R, each year restarting from zero on January 1. Click a year in the legend to show / hide it.",
     // Trades page (EN)
     ph_search:"🔎 Search…", title_search:"Search pair, result, order, trend, confluences, notes…",
     ph_allpairs:"All pairs", opt_tf:"Time-Frame", opt_result:"Result",
@@ -3909,6 +3919,111 @@ function renderOverview(){
     type:'bar',
     data:{ labels:typeKeys.map(k=>k.length>12?k.slice(0,12)+'…':k), datasets:[{ data:typeKeys.map(k=>{const arr=typeR[k];return+(arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(2);}), backgroundColor:'rgba(255,159,10,.75)', borderRadius:4 }] },
     options: chartDefaults({responsive:true,animation:{duration:400}})
+  });
+
+  renderYoYChart();
+}
+
+// ───────────────────────────────────────────
+//  COMPARAISON DES ANNÉES (courbes superposées)
+//  Chaque année de trading = une courbe, superposées sur un axe jan→déc.
+//  Y = R pondéré cumulé (même calcul que les perfs mensuelles : rrf × risque% / RISK_PER_R),
+//  chaque courbe repart de 0 au 1ᵉʳ janvier. X = position proportionnelle à la date dans l'année.
+//  Utilise TOUTES les années (indépendant du filtre d'année de la barre).
+// ───────────────────────────────────────────
+function renderYoYChart(){
+  const row = document.getElementById('yoy-row');
+  const cvs = document.getElementById('yoyChart');
+  if(!row || !cvs || typeof Chart === 'undefined') return;
+  dc('yoyChart');
+
+  // Risque % du capital d'un trade (ex. "1.00%") — repli 0 si vide/illisible.
+  const riskPctOf = t => { const v = parseFloat(String(t.risk||'').replace('%','').replace(',','.')); return isNaN(v)?0:v; };
+  // Contribution en R PONDÉRÉ (identique aux perfs mensuelles).
+  const wR = t => RISK_PER_R > 0 ? (rrfNum(t)||0)*riskPctOf(t)/RISK_PER_R : (rrfNum(t)||0);
+  // Position 0→12 proportionnelle à la date dans l'année (Jan 1 = 0, Déc 31 ≈ 12).
+  const xOfDate = iso => {
+    const p = iso.split('-').map(Number);
+    const dt = Date.UTC(p[0], p[1]-1, p[2]);
+    const start = Date.UTC(p[0], 0, 1);
+    const leap = (p[0]%4===0 && p[0]%100!==0) || p[0]%400===0;
+    return ((dt-start)/86400000) / (leap?366:365) * 12;
+  };
+
+  // Trades pris & clôturés (R/R numérique), datés via getTradeDate (close_date si présente).
+  const byYear = {};
+  trades.filter(isTradePris).forEach(t=>{
+    if(rrfNum(t)===null) return;
+    const d = getTradeDate(t); if(!d) return;
+    const y = +d.slice(0,4); if(isNaN(y)) return;
+    (byYear[y] || (byYear[y]=[])).push({ d, w:wR(t) });
+  });
+  const years = Object.keys(byYear).map(Number).sort((a,b)=>a-b);
+  if(years.length === 0){ row.style.display='none'; return; }
+  row.style.display='';
+
+  const curYear = new Date().getFullYear();
+  // Palette discrète pour les années passées (cyclique) ; année en cours = orange charte.
+  const pastColors = ['#5e9eff','#30d158','#bf5af2','#ff375f','#64d2ff','#ffd60a','#ac8e68','#7d7aff'];
+  const datasets = years.map((y,idx)=>{
+    const isCur = y === curYear;
+    const pts = byYear[y].slice().sort((a,b)=>a.d.localeCompare(b.d));
+    let cum = 0;
+    const data = [{ x:0, y:0, d:`${y}-01-01` }];
+    pts.forEach(p=>{ cum += p.w; data.push({ x:+xOfDate(p.d).toFixed(4), y:+cum.toFixed(2), d:p.d }); });
+    const color = isCur ? '#ff9f0a' : pastColors[idx % pastColors.length];
+    return {
+      label:String(y),
+      data,
+      borderColor: color,
+      backgroundColor: color,
+      borderWidth: isCur ? 3 : 1.6,
+      tension: .3,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      pointHoverBackgroundColor: color,
+      order: isCur ? 0 : 1,
+      borderCapStyle:'round'
+    };
+  });
+
+  const shortMonths = currentLang==='en'
+    ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    : ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
+  const fmtDate = iso => { const p = iso.split('-'); return currentLang==='en' ? `${p[1]}/${p[2]}/${p[0]}` : `${p[2]}/${p[1]}/${p[0]}`; };
+
+  ch['yoyChart'] = new Chart(cvs, {
+    type:'line',
+    data:{ datasets },
+    options: chartDefaults({
+      responsive:true,
+      maintainAspectRatio:true,
+      animation:{duration:400},
+      interaction:{ mode:'nearest', intersect:false, axis:'xy' },
+      plugins:{
+        legend:{ display:true, position:'top', labels:{ color:'#aeaeb2', font:{size:11}, boxWidth:12, boxHeight:12, usePointStyle:true, pointStyle:'line' } },
+        tooltip:{
+          backgroundColor:'#1c1c1e', titleColor:'#fff', bodyColor:'#aeaeb2', borderColor:'#2c2c2e', borderWidth:1,
+          callbacks:{
+            title:(items)=>{ const c=items[0]; return `${c.dataset.label} · ${fmtDate(c.raw.d)}`; },
+            label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}`
+          }
+        }
+      },
+      scales:{
+        x:{
+          type:'linear', min:0, max:12, offset:false,
+          grid:{ color:'rgba(255,255,255,.05)' },
+          ticks:{ color:'#636366', font:{size:10}, stepSize:1, autoSkipPadding:6,
+            callback:(v)=> (v>=0 && v<12 && Number.isInteger(v)) ? shortMonths[v] : '' }
+        },
+        y:{
+          grid:{ color:'rgba(255,255,255,.05)' },
+          ticks:{ color:'#636366', font:{size:10}, callback:v=>(v>0?'+':'')+v+'R' },
+          title:{ display:true, text:L('R pondéré cumulé','Cumulative weighted R'), color:'#636366', font:{size:10} }
+        }
+      }
+    })
   });
 }
 
