@@ -1789,6 +1789,15 @@ body.no-scroll { overflow: hidden; }
             <option value="en">🇬🇧 English</option>
           </select>
         </div>
+        <div style="flex:1;min-width:200px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px" data-i18n="set_riskperr_label">1R = X % du capital</label>
+          <select class="year-select" id="set-riskperr-select" style="width:100%">
+            <option value="0.25">1R = 0.25%</option>
+            <option value="0.5">1R = 0.5%</option>
+            <option value="1">1R = 1%</option>
+            <option value="2">1R = 2%</option>
+          </select>
+        </div>
         <button class="btn-orange" id="set-langcur-save" onclick="saveLangCurrency()" data-i18n="set_save" style="white-space:nowrap">💾 Enregistrer</button>
       </div>
     </div>
@@ -2218,6 +2227,7 @@ body.no-scroll { overflow: hidden; }
       </div>
       <div class="form-group"><label data-i18n="am_created">Date de création</label><input type="date" id="m-date" onchange="syncModalPriseDate()"></div>
       <div class="form-group"><label><span data-i18n="am_entrydate">Date prise de position</span> <span style="color:var(--text3);font-weight:400;font-size:.7rem" data-i18n="am_entrydate_hint">(base des stats)</span></label><input type="date" id="m-prise-date" oninput="this.dataset.touched='1'"></div>
+      <div class="form-group"><label><span data-i18n="am_closedate">Date de clôture</span> <span style="color:var(--text3);font-weight:400;font-size:.7rem" data-i18n="am_closedate_hint">(optionnel)</span></label><input type="date" id="m-close-date"></div>
       <div class="form-group" style="grid-column:span 2"><label>Time-Frame <span style="color:var(--text3);font-weight:400;font-size:.7rem" data-i18n="am_multi">(plusieurs possibles)</span></label>
         <div id="m-tf-group" class="emoji-btn-group" style="flex-wrap:wrap;gap:6px"></div>
       </div>
@@ -2422,6 +2432,7 @@ const STRINGS = {
     // Add-trade modal (FR)
     am_title:"Nouveau Trade", am_asset:"Actif", am_asset_ph:"ex: eurusd ou EURUSD…",
     am_created:"Date de création", am_entrydate:"Date prise de position", am_entrydate_hint:"(base des stats)",
+    am_closedate:"Date de clôture", am_closedate_hint:"(optionnel)",
     am_multi:"(plusieurs possibles)", am_ordertype:"Type d'Ordre", am_trend:"Tendance", am_tradetype:"Type de Trade",
     am_result:"Résultat", am_retails:"Position vs Retails", am_ifclosed:"(si clôturé)", am_goodtrade:"Bon Trade ?",
     am_errors:"Erreurs", am_reasons:"Raisons & Confluences", am_reasons_ph:"Décris tes confluences, la raison du trade…",
@@ -2525,9 +2536,10 @@ const STRINGS = {
     set_delaccount_btn:"🗑 Supprimer mon compte",
     set_reset:"↺ Reset",
     // Langue & Devise (settings)
-    set_langcur_title:"🌍 Langue",
-    set_langcur_sub:"Choisis la langue de l'interface.",
+    set_langcur_title:"🌍 Langue & pondération",
+    set_langcur_sub:"Choisis la langue de l'interface et la valeur d'un 1R.",
     set_lang_label:"Langue de l'interface",
+    set_riskperr_label:"1R = X % du capital",
     set_currency_label:"Devise",
     set_save:"💾 Enregistrer",
     set_saved:"✓ Préférences enregistrées",
@@ -2611,6 +2623,7 @@ const STRINGS = {
     // Add-trade modal (EN)
     am_title:"New Trade", am_asset:"Asset", am_asset_ph:"e.g. eurusd or EURUSD…",
     am_created:"Creation date", am_entrydate:"Entry date", am_entrydate_hint:"(basis for stats)",
+    am_closedate:"Close date", am_closedate_hint:"(optional)",
     am_multi:"(multiple possible)", am_ordertype:"Order Type", am_trend:"Trend", am_tradetype:"Trade Type",
     am_result:"Result", am_retails:"Position vs Retail", am_ifclosed:"(if closed)", am_goodtrade:"Good Trade?",
     am_errors:"Errors", am_reasons:"Reasons & Confluences", am_reasons_ph:"Describe your confluences, the reason for the trade…",
@@ -2710,9 +2723,10 @@ const STRINGS = {
     set_delaccount_desc:"Permanently deletes your account and all your data (trades, settings, subscription). This cannot be undone.",
     set_delaccount_btn:"🗑 Delete my account",
     set_reset:"↺ Reset",
-    set_langcur_title:"🌍 Language",
-    set_langcur_sub:"Choose the interface language.",
+    set_langcur_title:"🌍 Language & weighting",
+    set_langcur_sub:"Choose the interface language and how much 1R is worth.",
     set_lang_label:"Interface language",
+    set_riskperr_label:"1R = X % of capital",
     set_currency_label:"Currency",
     set_save:"💾 Save",
     set_saved:"✓ Preferences saved",
@@ -2925,6 +2939,11 @@ const CHECKLIST_DEFAULT = [
 ];
 let CHECKLIST = CHECKLIST_DEFAULT.slice();
 
+// ─── 1R = X % du capital (pondération du R) — stocké dans user_preferences.risk_per_r ───
+// Défaut 1 : compatible avec l'ancien comportement (R brut = R pondéré quand tous les
+// trades risquent 1%). Valeurs possibles dans l'UI : 0.25 / 0.5 / 1 / 2 (%).
+let RISK_PER_R = 1;
+
 // ─── Émotions (état psychologique structuré, stocké dans extra_data.emotions) ───
 // good:true = état favorable à la discipline ; good:false = état à risque.
 const EMOTIONS = [
@@ -3044,6 +3063,7 @@ async function saveUserPreferences(){
         tendances: TEND_OPTIONS,
         language:  currentLang,
         currency:  currentCurrency,
+        risk_per_r: RISK_PER_R,
       }, { onConflict: 'user_id' });
       if (error) console.error('[Prefs] save error', error);
       else console.log('[Prefs] sauvegardé');
@@ -3056,7 +3076,7 @@ async function loadUserPreferences(){
   try {
     const { data, error } = await sb
       .from('user_preferences')
-      .select('checklist, errors, tendances, language, currency')
+      .select('checklist, errors, tendances, language, currency, risk_per_r')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     if (error) { console.error('[Prefs] load error', error); return; }
@@ -3071,6 +3091,8 @@ async function loadUserPreferences(){
       if (Array.isArray(data.tendances) && data.tendances.length) {
         TEND_OPTIONS = data.tendances.slice();
       }
+      // ─── 1R = X % (pondération) — défaut 1 si absent/invalide ───
+      { const v = parseFloat(data.risk_per_r); RISK_PER_R = (!isNaN(v) && v > 0) ? v : 1; }
       // ─── Langue (la devise suit la langue : FR→EUR, EN→USD) ───
       if (data.language && STRINGS[data.language]) { setLang(data.language, {silent:true}); }
       applyTranslations();
@@ -3090,6 +3112,7 @@ async function loadUserPreferences(){
         tendances: TEND_OPTIONS,
         language:  signupLang,
         currency:  currentCurrency,
+        risk_per_r: RISK_PER_R,
       });
       try { localStorage.removeItem('signup_pref_lang'); localStorage.removeItem('signup_pref_currency'); } catch(e){}
     }
@@ -3471,16 +3494,24 @@ function addYear(){
   renderYearSelect(); refreshCurrentPage();
 }
 
-// ─── Date EFFECTIVE d'un trade pour TOUS les calculs/affichages temporels ───
+// ─── Date d'ENTRÉE d'un trade (prise de position) ───
 // Priorité à la date de prise de position (extra_data["Date Prise de Position"],
 // format JJ/MM/AAAA) si valide, sinon repli propre sur t.date (date de création stockée).
 // Ne modifie jamais la donnée stockée ; en cas de date de prise vide/invalide → t.date.
-function getTradeDate(t){
+function getTradeEntryDate(t){
   if (t && t.extra_data && typeof t.extra_data === 'object'){
     const iso = parseFrenchDate(t.extra_data['Date Prise de Position']);
     if (iso) return iso;
   }
   return t ? t.date : undefined;
+}
+// ─── Date EFFECTIVE d'un trade pour TOUS les calculs/affichages temporels ───
+// La performance se réalise à la CLÔTURE : si close_date (ISO AAAA-MM-JJ) est renseignée,
+// elle prime pour le rattachement mensuel/trimestriel/calendrier. Sinon repli sur la date
+// d'entrée. Les trades sans close_date se comportent donc EXACTEMENT comme avant.
+function getTradeDate(t){
+  if (t && t.close_date) return t.close_date;
+  return getTradeEntryDate(t);
 }
 // Jour de la semaine (nom FR) dérivé de la date EFFECTIVE — pour les regroupements/affichages
 // temporels par jour. Repli sur le champ stocké t.jour si la date effective est inexploitable.
@@ -3984,7 +4015,7 @@ function renderTradesTable(){
   tb.innerHTML=ts.map(t=>`
     <tr onclick="openPanel(${t.id})">
       <td class="pair-cell">${t.pair||'—'}</td>
-      <td style="color:var(--text2)">${getTradeDate(t)||'—'}</td>
+      <td style="color:var(--text2)">${getTradeEntryDate(t)||'—'}${t.close_date?`<div style="color:var(--text3);font-size:.68rem;margin-top:2px" title="${L('Date de clôture','Close date')}">🏁 ${t.close_date}</div>`:''}</td>
       <td><button class="toggle ${t.prise?'on':''}" onclick="event.stopPropagation();togglePrise(${t.id},this)" style="pointer-events:auto"></button></td>
       <td>${tfChip(t.tf)}</td>
       <td>${ordreChip(t.ordre)}</td>
@@ -4546,7 +4577,8 @@ function buildPanelHTML(t){
   return `
     ${field(icoCalendar,L('Actif','Asset'),`<input class="field-input" value="${t.pair||''}" oninput="this.value=this.value.toUpperCase()" onchange="updateField(${t.id},'pair',this.value)">`)}
     ${field(icoCalendar,L('Date de création','Creation date'),`<input class="field-input" type="date" value="${t.date||''}" onchange="updatePanelDate(${t.id},this.value)">`)}
-    ${field(icoCalendar,L('Date prise de position','Entry date'),`<input class="field-input" type="date" value="${getTradeDate(t)||''}" onchange="updatePriseDate(${t.id},this.value)"><div style="color:var(--text3);font-size:.68rem;margin-top:3px">${L('Base de toutes les statistiques. Par défaut = date de création.','Basis of all statistics. Defaults to the creation date.')}</div>`)}
+    ${field(icoCalendar,L('Date prise de position','Entry date'),`<input class="field-input" type="date" value="${getTradeEntryDate(t)||''}" onchange="updatePriseDate(${t.id},this.value)"><div style="color:var(--text3);font-size:.68rem;margin-top:3px">${L('Par défaut = date de création.','Defaults to the creation date.')}</div>`)}
+    ${field(icoCalendar,L('Date de clôture','Close date'),`<input class="field-input" type="date" value="${t.close_date||''}" onchange="updateCloseDate(${t.id},this.value)"><div style="color:var(--text3);font-size:.68rem;margin-top:3px">${L('Optionnel. Base des stats mensuelles si renseignée (sinon la date de prise).','Optional. Used for monthly stats when set (otherwise entry date).')}</div>`)}
     ${field(icoCalendar,L('Prise de Position','Position taken'),`<button class="toggle ${t.prise?'on':''}" onclick="togglePrise(${t.id},this)"></button>`)}
     ${field(icoTF,'Time-Frame',tfChips(t))}
     ${field(icoOrdre,L("Type d'Ordre",'Order Type'),sel(ORDRE_OPTIONS,t.ordre,'ordre'))}
@@ -4605,6 +4637,15 @@ function updatePriseDate(id,val){
   else { const [y,m,d]=val.split('-'); t.extra_data['Date Prise de Position']=`${d}/${m}/${y}`; }
   dbUpsert(t);
   openPanel(id);
+}
+// Met à jour la date de clôture (colonne DB close_date, ISO AAAA-MM-JJ). Vide → null.
+// Rattache le trade à un autre mois pour les stats via getTradeDate → on rafraîchit.
+function updateCloseDate(id,val){
+  const t=trades.find(x=>x.id===id); if(!t) return;
+  t.close_date = val || null;
+  dbUpsert(t);
+  openPanel(id);
+  if(typeof refreshCurrentPage==='function') refreshCurrentPage();
 }
 function updateField(id,field,val){
   const t=trades.find(x=>x.id===id); if(!t) return;
@@ -4961,6 +5002,7 @@ function openAddModal(){
   document.getElementById('m-date').value=new Date().toISOString().slice(0,10);
   const mPrise=document.getElementById('m-prise-date');
   mPrise.value=new Date().toISOString().slice(0,10); delete mPrise.dataset.touched;
+  document.getElementById('m-close-date').value='';
   document.getElementById('m-pair').value='';
   document.getElementById('m-rri').value='';
   document.getElementById('m-rrf').value='';
@@ -5067,6 +5109,7 @@ async function saveTrade(){
   // Date de prise de position : par défaut = date de création ; si l'utilisateur l'a
   // modifiée, on la stocke (format FR JJ/MM/AAAA) → base de TOUS les calculs via getTradeDate.
   const priseDate=document.getElementById('m-prise-date').value||date;
+  const closeDate=document.getElementById('m-close-date').value||null;
   const emotions=[...document.querySelectorAll('#m-emotions-group .emoji-btn.selected')].map(b=>b.dataset.val);
   const extra_data={};
   if(priseDate && priseDate!==date){
@@ -5075,7 +5118,7 @@ async function saveTrade(){
   }
   if(emotions.length) extra_data.emotions=emotions;
   const newTrade = {
-    id:Date.now(), pair, date, prise:true, tf, ordre, risk, rri, result, rrf,
+    id:Date.now(), pair, date, close_date:closeDate, prise:true, tf, ordre, risk, rri, result, rrf,
     jour, hold, type, tend, retails, errs, bonTrade: null,
     manageTrade: manageTrade || null,
     confluences, psy, checklist: CHECKLIST.map(()=>false), extra_data,
@@ -5283,10 +5326,16 @@ function renderPeriodBody(ts, P, C, emptyId){
   const pf = lossR!==0 ? +(profits/Math.abs(lossR)).toFixed(2) : (profits>0?Infinity:0);
   const exp = closed.length ? +(totalR/closed.length).toFixed(2) : 0;
 
-  // Hero
+  // Hero — hiérarchie inversée : valeur principale = perf RÉELLE en R PONDÉRÉ.
+  // 1R vaut RISK_PER_R % du capital. Un trade risquant 0.5% qui fait 2RR ne pèse donc
+  // pas 2R mais (2×0.5)/RISK_PER_R = 1R (si 1R=1%). Le % du capital reste la valeur
+  // secondaire ; on rappelle le R/R BRUT (Σ rrf) entre parenthèses s'il diffère.
+  const weightedR = RISK_PER_R > 0 ? +(totalPct / RISK_PER_R).toFixed(2) : totalR;
   const totalEl = $(P+'totalR');
-  totalEl.textContent = (totalR>=0?'+':'') + totalR + 'R';
-  totalEl.className = 'month-hero-value ' + (totalR>=0?'pos':'neg');
+  const rawDiff = Math.abs(weightedR - totalR) >= 0.01;
+  totalEl.innerHTML = (weightedR>=0?'+':'') + weightedR + 'R'
+    + (rawDiff ? `<span style="font-size:.4em;opacity:.65;font-weight:600;margin-left:.35em">(${totalR>=0?'+':''}${totalR}R ${L('brut','raw')})</span>` : '');
+  totalEl.className = 'month-hero-value ' + (weightedR>=0?'pos':'neg');
   const pctEl = $(P+'totalPct');
   if(pctEl){
     pctEl.innerHTML = `${totalPct>=0?'+':''}${totalPct}<span style="font-size:.7em;opacity:.7">% ${L('du capital','of capital')}</span>`;
@@ -5713,6 +5762,9 @@ function renderSettings(){
   // Sélecteur de langue (la devise suit automatiquement la langue)
   const lsel = document.getElementById('set-lang-select');
   if(lsel) lsel.value = currentLang;
+  // Sélecteur 1R = X %
+  const rprSel = document.getElementById('set-riskperr-select');
+  if(rprSel) rprSel.value = String(RISK_PER_R);
 
   clEl.innerHTML = buildList(CHECKLIST,   'editChecklistItem', 'delChecklistItem', L('Aucun élément. Clique sur « + Ajouter un élément » pour commencer.','No items. Click "+ Add an item" to get started.'));
   erEl.innerHTML = buildList(ERRORS,      'editError',         'delError',         L('Aucune erreur. Clique sur « + Ajouter une erreur » pour commencer.','No errors. Click "+ Add an error" to get started.'));
@@ -5748,8 +5800,11 @@ function renderSettings(){
 function saveLangCurrency(){
   const lsel = document.getElementById('set-lang-select');
   const lang = lsel ? lsel.value : currentLang;
+  const rprSel = document.getElementById('set-riskperr-select');
+  if(rprSel){ const v = parseFloat(rprSel.value); if(!isNaN(v) && v > 0) RISK_PER_R = v; }
   setLang(lang);       // applique la traduction + la devise (FR→EUR, EN→USD) + re-render
   if(typeof saveUserPreferences==='function') saveUserPreferences();
+  if(typeof refreshCurrentPage==='function') refreshCurrentPage(); // recalcule les perfs pondérées
   if(typeof showToast==='function') showToast(t('set_saved'));
 }
 
@@ -5937,6 +5992,7 @@ function localToDb(t) {
     id:           t.id,
     pair:         t.pair,
     date:         t.date,
+    close_date:   t.close_date || null,
     prise:        t.prise,
     tf:           t.tf,
     ordre:        t.ordre,
@@ -5964,6 +6020,7 @@ function dbToLocal(r) {
     id:          r.id,
     pair:        r.pair,
     date:        r.date,
+    close_date:  r.close_date || null,
     prise:       r.prise,
     tf:          r.tf,
     ordre:       r.ordre,
@@ -6001,7 +6058,7 @@ async function loadTradesFromDb() {
     // ⚠️ PAS de select('*') : la colonne `screenshots` (base64 lourde) ferait timeout
     //    Postgres (57014) sur tout le compte. On liste explicitement les colonnes SAUF
     //    screenshots ; celles-ci sont chargées à la demande (ensureScreenshotsLoaded).
-    const TRADE_COLS = 'id, pair, date, prise, tf, ordre, risk, rri, result, rrf, jour, hold, type_trade, tend, retails, errs, bon_trade, manage_trade, confluences, psy, checklist, extra_data';
+    const TRADE_COLS = 'id, pair, date, close_date, prise, tf, ordre, risk, rri, result, rrf, jour, hold, type_trade, tend, retails, errs, bon_trade, manage_trade, confluences, psy, checklist, extra_data';
     const { data, error, status } = await sb.from('trades').select(TRADE_COLS).order('date', { ascending: false });
     if (error) {
       console.error('[Supabase] SELECT échec', { status, error, fullError: JSON.stringify(error) });
