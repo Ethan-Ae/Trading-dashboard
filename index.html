@@ -3963,8 +3963,13 @@ function renderYoYChart(){
   row.style.display='';
 
   const curYear = new Date().getFullYear();
+  // Dégradé orange sous l'année en cours (même esprit que la courbe de capital du haut).
+  const ctx = cvs.getContext('2d');
+  const curGrad = ctx.createLinearGradient(0, 0, 0, 240);
+  curGrad.addColorStop(0, 'rgba(255,159,10,.16)');
+  curGrad.addColorStop(1, 'rgba(255,159,10,0)');
   // Palette discrète pour les années passées (cyclique) ; année en cours = orange charte.
-  const pastColors = ['#5e9eff','#30d158','#bf5af2','#ff375f','#64d2ff','#ffd60a','#ac8e68','#7d7aff'];
+  const pastColors = ['#5e9eff','#30d158','#bf5af2','#64d2ff','#ff9f45','#ffd60a','#bf5af2','#7d7aff'];
   const datasets = years.map((y,idx)=>{
     const isCur = y === curYear;
     const pts = byYear[y].slice().sort((a,b)=>a.d.localeCompare(b.d));
@@ -3976,14 +3981,19 @@ function renderYoYChart(){
       label:String(y),
       data,
       borderColor: color,
-      backgroundColor: color,
-      borderWidth: isCur ? 3 : 1.6,
-      tension: .3,
+      backgroundColor: isCur ? curGrad : color,
+      borderWidth: isCur ? 2.5 : 1.5,
+      tension: .4,
+      fill: isCur ? 'origin' : false,
       pointRadius: 0,
       pointHoverRadius: 4,
+      pointBackgroundColor: color,
       pointHoverBackgroundColor: color,
+      pointHoverBorderColor: '#0d0d0f',
+      pointHoverBorderWidth: 2,
       order: isCur ? 0 : 1,
-      borderCapStyle:'round'
+      borderCapStyle:'round',
+      borderJoinStyle:'round'
     };
   });
 
