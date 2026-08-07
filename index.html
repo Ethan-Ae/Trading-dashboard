@@ -1365,6 +1365,7 @@ body.no-scroll { overflow: hidden; }
   <div class="charts-row" id="yoy-row" style="display:none">
     <div class="chart-card" style="grid-column:1/-1">
       <div class="chart-card-title" data-i18n="ov_yoy">Comparaison des années</div>
+      <div class="chart-card-tag" data-i18n="ov_yoy_all" style="font-size:.7rem;font-weight:600;color:var(--orange);opacity:.85;margin-bottom:4px">Tous journaux confondus</div>
       <div class="chart-card-sub" data-i18n="ov_yoy_sub">R pondéré cumulé, chaque année repartant de zéro au 1ᵉʳ janvier. Clique sur une année dans la légende pour l'afficher / la masquer.</div>
       <canvas id="yoyChart" height="150"></canvas>
     </div>
@@ -2427,7 +2428,7 @@ const STRINGS = {
     ov_eq:"Courbe de Capital", ov_pnl30:"P&L par Trade (30 derniers)",
     ov_bypair:"Performance par Paire", ov_byday:"Wins par Jour de la Semaine",
     ov_rdist:"Distribution R Final", ov_bytype:"Performance par Type de Trade",
-    ov_yoy:"Comparaison des années", ov_yoy_sub:"R pondéré cumulé, chaque année repartant de zéro au 1ᵉʳ janvier. Clique sur une année dans la légende pour l'afficher / la masquer.",
+    ov_yoy:"Comparaison des années", ov_yoy_all:"Tous journaux confondus", ov_yoy_sub:"R pondéré cumulé, chaque année repartant de zéro au 1ᵉʳ janvier. Clique sur une année dans la légende pour l'afficher / la masquer.",
     // Trades page (FR)
     ph_search:"🔎 Rechercher…", title_search:"Cherche dans paire, résultat, ordre, tendance, confluences, notes…",
     ph_allpairs:"Toutes les devises", opt_tf:"Time-Frame", opt_result:"Résultat",
@@ -2619,7 +2620,7 @@ const STRINGS = {
     ov_eq:"Equity Curve", ov_pnl30:"P&L per Trade (last 30)",
     ov_bypair:"Performance by Pair", ov_byday:"Wins by Day of Week",
     ov_rdist:"Final R Distribution", ov_bytype:"Performance by Trade Type",
-    ov_yoy:"Year-over-year comparison", ov_yoy_sub:"Cumulative weighted R, each year restarting from zero on January 1. Click a year in the legend to show / hide it.",
+    ov_yoy:"Year-over-year comparison", ov_yoy_all:"All journals combined", ov_yoy_sub:"Cumulative weighted R, each year restarting from zero on January 1. Click a year in the legend to show / hide it.",
     // Trades page (EN)
     ph_search:"🔎 Search…", title_search:"Search pair, result, order, trend, confluences, notes…",
     ph_allpairs:"All pairs", opt_tf:"Time-Frame", opt_result:"Result",
@@ -3354,6 +3355,7 @@ async function deleteAllTrades(){
     if (error) throw error;
     console.log('[Delete All] OK');
     trades = [];
+    yoyAllTrades = null;  // invalide le cache tous-journaux (comparaison des années)
     rebuildPairDatalist();
     refreshCurrentPage();
     showToast(L('🗑 ' + count + ' trades supprimés','🗑 ' + count + ' trades deleted'));
@@ -3929,13 +3931,53 @@ function renderOverview(){
 //  Chaque année de trading = une courbe, superposées sur un axe jan→déc.
 //  Y = R pondéré cumulé (même calcul que les perfs mensuelles : rrf × risque% / RISK_PER_R),
 //  chaque courbe repart de 0 au 1ᵉʳ janvier. X = position proportionnelle à la date dans l'année.
-//  Utilise TOUTES les années (indépendant du filtre d'année de la barre).
+//
+//  ⚠️ SEUL graphe à agréger TOUS les journaux : `trades` (chargé par loadTradesFromDb)
+//  est plafonné par PostgREST (~1000 lignes, tri date desc) → les années anciennes
+//  peuvent manquer. On complète donc avec un fetch dédié paginé (yoyAllTrades), fusionné
+//  avec `trades` par id (les trades en mémoire priment → toute édition récente est reflétée).
 // ───────────────────────────────────────────
+let yoyAllTrades = null;   // cache : TOUS les trades de l'utilisateur (tous journaux/années)
+let _yoyLoading = false;
+// Fetch dédié : récupère l'intégralité des trades en excluant `screenshots` (base64 lourd
+// → timeout). Pagination par tranches de 1000 pour dépasser la limite PostgREST.
+async function fetchYoYTrades(){
+  if(_yoyLoading || typeof sb === 'undefined' || !currentUser) return;
+  _yoyLoading = true;
+  try{
+    const COLS = 'id, date, close_date, prise, result, rrf, risk, extra_data';
+    const PAGE = 1000;
+    let all = [], from = 0;
+    while(true){
+      const { data, error } = await sb.from('trades').select(COLS).order('date',{ascending:true}).range(from, from+PAGE-1);
+      if(error){ console.warn('[YoY] fetch tous-journaux échec', error); return; }
+      all = all.concat(data||[]);
+      if(!data || data.length < PAGE) break;
+      from += PAGE;
+    }
+    yoyAllTrades = all.map(dbToLocal);
+    console.log('[YoY] tous journaux :', yoyAllTrades.length, 'trades chargés');
+    if(currentPage==='overview') renderYoYChart();
+  }catch(e){ console.warn('[YoY] fetch exception', e); }
+  finally{ _yoyLoading = false; }
+}
+
 function renderYoYChart(){
   const row = document.getElementById('yoy-row');
   const cvs = document.getElementById('yoyChart');
   if(!row || !cvs || typeof Chart === 'undefined') return;
   dc('yoyChart');
+
+  // Déclenche (une fois) le chargement complet tous-journaux si pas encore en cache.
+  if(yoyAllTrades === null && !_yoyLoading) fetchYoYTrades();
+
+  // Source = union (cache tous-journaux) ∪ (trades en mémoire), dédupliquée par id ;
+  // `trades` prime pour refléter les éditions récentes. Avant l'arrivée du fetch, on
+  // affiche déjà ce qu'on a en mémoire (pas d'écran vide).
+  const merged = {};
+  (Array.isArray(yoyAllTrades) ? yoyAllTrades : []).forEach(t=>{ if(t && t.id!=null) merged[t.id]=t; });
+  trades.forEach(t=>{ if(t && t.id!=null) merged[t.id]=t; });
+  const allTrades = Object.values(merged);
 
   // Risque % du capital d'un trade (ex. "1.00%") — repli 0 si vide/illisible.
   const riskPctOf = t => { const v = parseFloat(String(t.risk||'').replace('%','').replace(',','.')); return isNaN(v)?0:v; };
@@ -3952,7 +3994,7 @@ function renderYoYChart(){
 
   // Trades pris & clôturés (R/R numérique), datés via getTradeDate (close_date si présente).
   const byYear = {};
-  trades.filter(isTradePris).forEach(t=>{
+  allTrades.filter(isTradePris).forEach(t=>{
     if(rrfNum(t)===null) return;
     const d = getTradeDate(t); if(!d) return;
     const y = +d.slice(0,4); if(isNaN(y)) return;
@@ -6374,6 +6416,7 @@ async function dbDelete(id) {
     showToast(L('Erreur suppression : ','Delete error: ')+error.message, true);
   } else {
     console.log('[Supabase] DELETE OK');
+    yoyAllTrades = null;  // invalide le cache tous-journaux (évite un trade fantôme dans la comparaison des années)
   }
 }
 
