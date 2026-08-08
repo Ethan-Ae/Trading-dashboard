@@ -4014,10 +4014,10 @@ function renderYoYChart(){
     return {
       label:String(y),
       data: byYear[y].map(v=>+v.toFixed(2)),
-      backgroundColor: isCur ? 'rgba(255,159,10,.5)' : hexToRgba(color,.4),
-      hoverBackgroundColor: isCur ? 'rgba(255,159,10,.7)' : hexToRgba(color,.6),
+      backgroundColor: isCur ? 'rgba(255,159,10,.22)' : hexToRgba(color,.18),
+      hoverBackgroundColor: isCur ? 'rgba(255,159,10,.4)' : hexToRgba(color,.35),
       borderColor: color,
-      borderWidth: isCur ? 1.6 : 1,
+      borderWidth: isCur ? 2.5 : 2,
       borderRadius: 3,
       borderSkipped: false,
       grouped: false,
