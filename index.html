@@ -1366,7 +1366,7 @@ body.no-scroll { overflow: hidden; }
     <div class="chart-card" style="grid-column:1/-1">
       <div class="chart-card-title" data-i18n="ov_mom">Comparaison des mois par année</div>
       <div class="chart-card-tag" data-i18n="ov_mom_all" style="font-size:.7rem;font-weight:600;color:var(--orange);opacity:.85;margin-bottom:4px">Tous journaux confondus</div>
-      <div class="chart-card-sub" data-i18n="ov_mom_sub">R pondéré par mois, une barre par année. Clique sur une année dans la légende pour l'afficher / la masquer.</div>
+      <div class="chart-card-sub" data-i18n="ov_mom_sub">R pondéré par mois, années superposées en transparence. Clique sur une année dans la légende pour l'afficher / la masquer.</div>
       <canvas id="yoyChart" height="150"></canvas>
     </div>
   </div>
@@ -2428,7 +2428,7 @@ const STRINGS = {
     ov_eq:"Courbe de Capital", ov_pnl30:"P&L par Trade (30 derniers)",
     ov_bypair:"Performance par Paire", ov_byday:"Wins par Jour de la Semaine",
     ov_rdist:"Distribution R Final", ov_bytype:"Performance par Type de Trade",
-    ov_mom:"Comparaison des mois par année", ov_mom_all:"Tous journaux confondus", ov_mom_sub:"R pondéré par mois, une barre par année. Clique sur une année dans la légende pour l'afficher / la masquer.",
+    ov_mom:"Comparaison des mois par année", ov_mom_all:"Tous journaux confondus", ov_mom_sub:"R pondéré par mois, années superposées en transparence. Clique sur une année dans la légende pour l'afficher / la masquer.",
     // Trades page (FR)
     ph_search:"🔎 Rechercher…", title_search:"Cherche dans paire, résultat, ordre, tendance, confluences, notes…",
     ph_allpairs:"Toutes les devises", opt_tf:"Time-Frame", opt_result:"Résultat",
@@ -2620,7 +2620,7 @@ const STRINGS = {
     ov_eq:"Equity Curve", ov_pnl30:"P&L per Trade (last 30)",
     ov_bypair:"Performance by Pair", ov_byday:"Wins by Day of Week",
     ov_rdist:"Final R Distribution", ov_bytype:"Performance by Trade Type",
-    ov_mom:"Monthly comparison by year", ov_mom_all:"All journals combined", ov_mom_sub:"Weighted R per month, one bar per year. Click a year in the legend to show / hide it.",
+    ov_mom:"Monthly comparison by year", ov_mom_all:"All journals combined", ov_mom_sub:"Weighted R per month, years overlaid with transparency. Click a year in the legend to show / hide it.",
     // Trades page (EN)
     ph_search:"🔎 Search…", title_search:"Search pair, result, order, trend, confluences, notes…",
     ph_allpairs:"All pairs", opt_tf:"Time-Frame", opt_result:"Result",
@@ -4005,16 +4005,24 @@ function renderYoYChart(){
     : ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
   // Palette douce / désaturée pour les années passées (cyclique) ; année en cours = orange charte.
   const pastColors = ['#6f93c4','#5fa580','#9b82c4','#6fa6b8','#c79a6b','#c2bd72','#a88fc4','#8a88c4'];
+  const hexToRgba = (h,a)=>{ const n=parseInt(h.slice(1),16); return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`; };
+  // Barres SUPERPOSÉES (grouped:false) au même emplacement mensuel, en transparence :
+  // on voit d'un coup quelle année domine chaque mois. Année en cours = orange, dessus.
   const datasets = years.map((y,idx)=>{
     const isCur = y === curYear;
     const color = isCur ? '#ff9f0a' : pastColors[idx % pastColors.length];
     return {
       label:String(y),
       data: byYear[y].map(v=>+v.toFixed(2)),
-      backgroundColor: isCur ? 'rgba(255,159,10,.85)' : color,
-      hoverBackgroundColor: color,
-      borderRadius: 4,
+      backgroundColor: isCur ? 'rgba(255,159,10,.5)' : hexToRgba(color,.4),
+      hoverBackgroundColor: isCur ? 'rgba(255,159,10,.7)' : hexToRgba(color,.6),
+      borderColor: color,
+      borderWidth: isCur ? 1.6 : 1,
+      borderRadius: 3,
       borderSkipped: false,
+      grouped: false,
+      categoryPercentage: 0.9,
+      barPercentage: 0.92,
       order: isCur ? 0 : 1
     };
   });
