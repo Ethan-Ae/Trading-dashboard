@@ -5018,7 +5018,12 @@ function openLightbox(src, label){
   document.getElementById('lightbox').classList.add('open');
 }
 function closeLightbox(){ document.getElementById('lightbox').classList.remove('open'); }
-document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeLightbox(); closeDayModal(); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){
+  // Si une image est zoomée : fermer UNIQUEMENT le lightbox et bloquer les autres handlers (pour ne pas fermer le trade en dessous)
+  const el=document.getElementById('lightbox');
+  if(el && el.classList.contains('open')){ closeLightbox(); e.stopImmediatePropagation(); return; }
+  closeDayModal();
+} });
 
 function toggleErr(id, err, btn){
   const t = trades.find(x=>x.id===id);
