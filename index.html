@@ -7596,7 +7596,10 @@ document.addEventListener('keydown', e => {
   const panelOpen = (()=>{ const el=document.getElementById('panelOverlay'); return el && el.classList.contains('open'); })();
   // Esc closes modals / panel / popups
   if(e.key==='Escape'){
-    closeLightbox(); closeDayModal();
+    // Si une image est zoomée, Esc ne ferme QUE le lightbox (pas le trade en dessous)
+    const lbOpen = (()=>{ const el=document.getElementById('lightbox'); return el && el.classList.contains('open'); })();
+    if(lbOpen){ closeLightbox(); return; }
+    closeDayModal();
     ['addModal','panelOverlay'].forEach(id=>{
       const el = document.getElementById(id); if(el && el.classList.contains('open')) el.classList.remove('open');
     });
