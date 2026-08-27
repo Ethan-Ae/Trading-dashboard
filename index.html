@@ -1887,20 +1887,36 @@ body.no-scroll { overflow: hidden; }
       <button class="settings-add" onclick="addChecklistItem()">＋ Ajouter un élément</button>
     </div>
 
-    <!-- ─── Checklist pré-session ─── -->
+    <!-- ─── Discipline (checklist pré-session + limite de trades) ─── -->
     <div class="settings-card">
       <div class="settings-card-head">
         <div>
-          <div class="settings-card-title" data-i18n="set_presession_title">✅ Checklist pré-session</div>
-          <div class="settings-card-sub" data-i18n="set_presession_sub">Une routine à valider une fois par jour avant de pouvoir ajouter des trades</div>
+          <div class="settings-card-title" data-i18n="set_discipline_title">🎯 Discipline</div>
+          <div class="settings-card-sub" data-i18n="set_discipline_sub">Des garde-fous qui s'affichent avant chaque trade</div>
         </div>
       </div>
+
+      <!-- Checklist pré-session -->
       <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
         <button class="toggle" id="presession-toggle" onclick="togglePresessionRequired(this)"></button>
         <span style="font-size:.85rem;color:var(--text2);line-height:1.4" data-i18n="set_presession_toggle">Me faire valider ma checklist avant chaque trade</span>
       </div>
       <div class="settings-list" id="settings-presession"></div>
       <button class="settings-add" onclick="addPresessionItem()" data-i18n="set_presession_add">＋ Ajouter un point</button>
+
+      <div style="height:1px;background:var(--sep);margin:22px 0"></div>
+
+      <!-- Limite de trades par mois -->
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
+        <button class="toggle" id="tradelimit-toggle" onclick="toggleTradeLimit(this)"></button>
+        <span style="font-size:.85rem;color:var(--text2);line-height:1.4" data-i18n="set_tradelimit_toggle">Limiter mon nombre de trades par mois</span>
+      </div>
+      <div id="tradelimit-field" style="display:none;max-width:220px">
+        <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px" data-i18n="set_tradelimit_max">Trades max par mois</label>
+        <input class="year-select" type="number" min="1" step="1" id="tradelimit-input"
+               style="width:100%;font-family:'JetBrains Mono','SF Mono',Menlo,monospace"
+               oninput="commitTradeLimit(this.value)">
+      </div>
     </div>
 
     <!-- ─── Erreurs ─── -->
@@ -2318,15 +2334,28 @@ body.no-scroll { overflow: hidden; }
   </div>
 </div>
 
-<!-- ══════ CHECKLIST PRÉ-SESSION MODAL ══════ -->
-<div class="modal-overlay" id="presessionModal" onclick="if(event.target===this)closePresessionModal()">
+<!-- ══════ MODALE PRÉ-TRADE (quota + checklist) ══════ -->
+<div class="modal-overlay" id="pretradeModal" onclick="if(event.target===this)closePretradeModal()">
   <div class="modal" style="width:460px">
-    <div class="modal-title" data-i18n="presession_modal_title">✅ Checklist avant de trader</div>
-    <div class="modal-sub" style="color:var(--text3);font-size:.82rem;margin:-6px 0 16px" data-i18n="presession_modal_sub">Valide ta routine avant ce trade. Tout doit être coché.</div>
-    <div id="presession-modal-list" class="checklist-wrap"></div>
+    <div class="modal-title" data-i18n="pretrade_title">🎯 Avant de trader</div>
+
+    <!-- Bloc quota du mois -->
+    <div id="pretrade-quota-block" style="display:none;margin:6px 0 20px">
+      <div id="pretrade-quota-text" style="font-size:.9rem;font-weight:600;margin-bottom:9px;font-family:'JetBrains Mono','SF Mono',Menlo,monospace"></div>
+      <div style="height:8px;border-radius:6px;background:var(--bg2);overflow:hidden">
+        <div id="pretrade-quota-bar" style="height:100%;width:0%;background:var(--orange);border-radius:6px;transition:width .35s ease"></div>
+      </div>
+    </div>
+
+    <!-- Bloc checklist pré-session -->
+    <div id="pretrade-checklist-block" style="display:none">
+      <div class="modal-sub" style="color:var(--text3);font-size:.82rem;margin:0 0 14px" data-i18n="presession_modal_sub">Valide ta routine avant ce trade. Tout doit être coché.</div>
+      <div id="pretrade-checklist-list" class="checklist-wrap"></div>
+    </div>
+
     <div class="form-actions">
-      <button class="btn-ghost" onclick="closePresessionModal()" data-i18n="presession_cancel">Annuler</button>
-      <button class="btn-orange" id="presession-validate-btn" onclick="validatePresession()" disabled data-i18n="presession_validate">Valider et trader</button>
+      <button class="btn-ghost" onclick="closePretradeModal()" data-i18n="presession_cancel">Annuler</button>
+      <button class="btn-orange" id="pretrade-validate-btn" onclick="validatePretrade()" data-i18n="pretrade_take">Prendre le trade</button>
     </div>
   </div>
 </div>
@@ -2566,14 +2595,19 @@ const STRINGS = {
     mm_journal_title:"Mon bilan du mois — erreurs & analyse",
     mm_journal_sub:"Écris ton analyse de fin de mois : erreurs récurrentes, leçons apprises, objectifs. Sauvegardé automatiquement pour ce mois.",
     mm_journal_ph:"Ex : j'ai coupé mes trades trop tôt, overtrading le mercredi, à retravailler la patience sur les entrées…",
-    set_presession_title:"✅ Checklist pré-session",
-    set_presession_sub:"Une routine à valider une fois par jour avant de pouvoir ajouter des trades",
+    set_discipline_title:"🎯 Discipline",
+    set_discipline_sub:"Des garde-fous qui s'affichent avant chaque trade",
     set_presession_toggle:"Me faire valider ma checklist avant chaque trade",
     set_presession_add:"＋ Ajouter un point",
-    presession_modal_title:"✅ Checklist avant de trader",
+    set_tradelimit_toggle:"Limiter mon nombre de trades par mois",
+    set_tradelimit_max:"Trades max par mois",
+    pretrade_title:"🎯 Avant de trader",
     presession_modal_sub:"Valide ta routine avant ce trade. Tout doit être coché.",
     presession_cancel:"Annuler",
-    presession_validate:"Valider et trader",
+    pretrade_take:"Prendre le trade",
+    pretrade_take_anyway:"Prendre le trade quand même",
+    pretrade_validate:"Valider et trader",
+    pretrade_validate_anyway:"Valider et trader quand même",
     analysis_ph:"Décris tes confluences, la raison du trade…",
     mm_prev_month:"Mois précédent", mm_next_month:"Mois suivant",
     mm_prev_q:"Trimestre précédent", mm_next_q:"Trimestre suivant",
@@ -2767,14 +2801,19 @@ const STRINGS = {
     mm_journal_title:"My monthly review — mistakes & analysis",
     mm_journal_sub:"Write your end-of-month analysis: recurring mistakes, lessons learned, goals. Saved automatically for this month.",
     mm_journal_ph:"E.g. I cut my trades too early, overtrading on Wednesdays, need to work on patience at entries…",
-    set_presession_title:"✅ Pre-session checklist",
-    set_presession_sub:"A routine to validate once a day before you can add trades",
+    set_discipline_title:"🎯 Discipline",
+    set_discipline_sub:"Guardrails shown before every trade",
     set_presession_toggle:"Make me complete my checklist before every trade",
     set_presession_add:"＋ Add an item",
-    presession_modal_title:"✅ Checklist before trading",
+    set_tradelimit_toggle:"Limit my number of trades per month",
+    set_tradelimit_max:"Max trades per month",
+    pretrade_title:"🎯 Before trading",
     presession_modal_sub:"Validate your routine before this trade. Everything must be checked.",
     presession_cancel:"Cancel",
-    presession_validate:"Validate and trade",
+    pretrade_take:"Take the trade",
+    pretrade_take_anyway:"Take the trade anyway",
+    pretrade_validate:"Validate and trade",
+    pretrade_validate_anyway:"Validate and trade anyway",
     analysis_ph:"Describe your confluences, the reason for the trade…",
     mm_prev_month:"Previous month", mm_next_month:"Next month",
     mm_prev_q:"Previous quarter", mm_next_q:"Next quarter",
@@ -3089,6 +3128,39 @@ function presessionBlocks(){
   return CHECKLIST_REQUIRED && PRESESSION_ITEMS.length>0;
 }
 
+// ─── Limite de trades par mois (optionnelle) — stockée dans user_preferences ───
+// trade_limit_enabled (bool) · trade_limit_monthly (integer, défaut 20)
+let TRADE_LIMIT_ENABLED = false;
+let TRADE_LIMIT_MONTHLY = 20;
+// Préfixe du mois calendaire en cours en heure LOCALE, format YYYY-MM
+function monthPrefixLocal(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+// Nombre de trades du mois en cours : on réutilise les trades en mémoire si possible,
+// sinon on fait un count sur la table trades SANS jamais sélectionner `screenshots`.
+async function countTradesThisMonth(){
+  const pref = monthPrefixLocal();
+  if(Array.isArray(trades) && trades.length){
+    return trades.filter(t => (t.date||'').slice(0,7) === pref).length;
+  }
+  try{
+    const start = pref+'-01';
+    const d=new Date();
+    const nextY = d.getMonth()===11 ? d.getFullYear()+1 : d.getFullYear();
+    const nextM = d.getMonth()===11 ? 1 : d.getMonth()+2;
+    const end = nextY+'-'+String(nextM).padStart(2,'0')+'-01';
+    const { count } = await sb.from('trades')
+      .select('id', { count:'exact', head:true })
+      .gte('date', start).lt('date', end);
+    return count || 0;
+  }catch(e){ return 0; }
+}
+// La modale pré-trade est-elle nécessaire ? (checklist active OU limite active)
+function pretradeNeeded(){
+  return presessionBlocks() || TRADE_LIMIT_ENABLED;
+}
+
 // ─── 1R = X % du capital (pondération du R) — stocké dans user_preferences.risk_per_r ───
 // Défaut 1 : compatible avec l'ancien comportement (R brut = R pondéré quand tous les
 // trades risquent 1%). Valeurs possibles dans l'UI : 0.25 / 0.5 / 1 / 2 (%).
@@ -3216,6 +3288,8 @@ async function saveUserPreferences(){
         risk_per_r: RISK_PER_R,
         checklist_required:  CHECKLIST_REQUIRED,
         checklist_items:     PRESESSION_ITEMS,
+        trade_limit_enabled: TRADE_LIMIT_ENABLED,
+        trade_limit_monthly: TRADE_LIMIT_MONTHLY,
       }, { onConflict: 'user_id' });
       if (error) console.error('[Prefs] save error', error);
       else console.log('[Prefs] sauvegardé');
@@ -3228,7 +3302,7 @@ async function loadUserPreferences(){
   try {
     const { data, error } = await sb
       .from('user_preferences')
-      .select('checklist, errors, tendances, language, currency, risk_per_r, checklist_required, checklist_items')
+      .select('checklist, errors, tendances, language, currency, risk_per_r, checklist_required, checklist_items, trade_limit_enabled, trade_limit_monthly')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     if (error) { console.error('[Prefs] load error', error); return; }
@@ -3248,6 +3322,9 @@ async function loadUserPreferences(){
       // ─── Checklist pré-session ───
       if (typeof data.checklist_required === 'boolean') CHECKLIST_REQUIRED = data.checklist_required;
       if (Array.isArray(data.checklist_items)) PRESESSION_ITEMS = data.checklist_items.slice();
+      // ─── Limite de trades par mois ───
+      if (typeof data.trade_limit_enabled === 'boolean') TRADE_LIMIT_ENABLED = data.trade_limit_enabled;
+      { const n = parseInt(data.trade_limit_monthly, 10); if(!isNaN(n) && n >= 1) TRADE_LIMIT_MONTHLY = n; }
       // ─── Langue (la devise suit la langue : FR→EUR, EN→USD) ───
       if (data.language && STRINGS[data.language]) { setLang(data.language, {silent:true}); }
       applyTranslations();
@@ -3270,6 +3347,8 @@ async function loadUserPreferences(){
         risk_per_r: RISK_PER_R,
         checklist_required:  CHECKLIST_REQUIRED,
         checklist_items:     PRESESSION_ITEMS,
+        trade_limit_enabled: TRADE_LIMIT_ENABLED,
+        trade_limit_monthly: TRADE_LIMIT_MONTHLY,
       });
       try { localStorage.removeItem('signup_pref_lang'); localStorage.removeItem('signup_pref_currency'); } catch(e){}
     }
@@ -5329,10 +5408,10 @@ document.addEventListener('paste', async function(e){
 let modalExecScreenshot = null;
 
 function openAddModal(){
-  // Checklist pré-session : si active, on ouvre la checklist avant CHAQUE trade
-  // (_presessionBypass = true juste après une validation pour laisser passer)
-  if(presessionBlocks() && !_presessionBypass){ openPresessionModal(); return; }
-  _presessionBypass = false;
+  // Garde-fous pré-trade (checklist et/ou quota mensuel) : si au moins un est actif,
+  // on ouvre d'abord la modale pré-trade. (_pretradeBypass = true juste après validation)
+  if(pretradeNeeded() && !_pretradeBypass){ openPretradeModal(); return; }
+  _pretradeBypass = false;
   document.getElementById('m-date').value=new Date().toISOString().slice(0,10);
   const mPrise=document.getElementById('m-prise-date');
   mPrise.value=new Date().toISOString().slice(0,10); delete mPrise.dataset.touched;
@@ -5419,44 +5498,99 @@ function closeAddModal(){
   document.getElementById('addModal').classList.remove('open');
 }
 
-// ─── Checklist pré-session : modale avant chaque trade ───
-let _presessionChecks = [];
-let _presessionBypass = false; // vrai le temps d'ouvrir le formulaire juste après une validation
-function openPresessionModal(){
-  _presessionChecks = PRESESSION_ITEMS.map(()=>false);
-  const listEl=document.getElementById('presession-modal-list');
-  if(listEl){
-    listEl.innerHTML = PRESESSION_ITEMS.map((item,i)=>`
-      <div class="check-item" onclick="togglePresessionCheck(${i})" style="cursor:pointer">
-        <div class="check-box" id="ps-check-${i}">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-        <div class="check-label" style="flex:1">${escapeHtml(item)}</div>
-      </div>`).join('');
+// ─── Modale pré-trade : quota du mois + checklist pré-session (une seule modale) ───
+let _pretradeChecks = [];
+let _pretradeBypass = false;       // vrai le temps d'ouvrir le formulaire juste après validation
+let _pretradeQuotaReached = false; // le quota mensuel est-il atteint/dépassé ?
+
+async function openPretradeModal(){
+  const hasChecklist = presessionBlocks();
+  const hasLimit     = TRADE_LIMIT_ENABLED;
+
+  // ── Bloc quota du mois ──
+  const quotaBlock = document.getElementById('pretrade-quota-block');
+  _pretradeQuotaReached = false;
+  if(hasLimit){
+    const used = await countTradesThisMonth();
+    const max  = Math.max(1, TRADE_LIMIT_MONTHLY|0);
+    const remaining = Math.max(0, max - used);
+    _pretradeQuotaReached = used >= max;
+    const pct = Math.min(100, Math.round(used / max * 100));
+    const txt = document.getElementById('pretrade-quota-text');
+    const bar = document.getElementById('pretrade-quota-bar');
+    if(txt){
+      if(_pretradeQuotaReached){
+        txt.style.color = 'var(--red)';
+        txt.textContent = L('Quota atteint ('+used+' / '+max+')', 'Quota reached ('+used+' / '+max+')');
+      } else {
+        txt.style.color = 'var(--text)';
+        txt.textContent = L(used+' / '+max+' trades ce mois-ci — il t\'en reste '+remaining,
+                            used+' / '+max+' trades this month — '+remaining+' left');
+      }
+    }
+    if(bar){
+      bar.style.width = pct+'%';
+      bar.style.background = _pretradeQuotaReached ? 'var(--red)' : 'var(--orange)';
+    }
+    quotaBlock.style.display = 'block';
+  } else {
+    quotaBlock.style.display = 'none';
   }
-  updatePresessionValidateBtn();
-  document.getElementById('presessionModal').classList.add('open');
+
+  // ── Bloc checklist pré-session ──
+  const checklistBlock = document.getElementById('pretrade-checklist-block');
+  _pretradeChecks = [];
+  if(hasChecklist){
+    _pretradeChecks = PRESESSION_ITEMS.map(()=>false);
+    const listEl = document.getElementById('pretrade-checklist-list');
+    if(listEl){
+      listEl.innerHTML = PRESESSION_ITEMS.map((item,i)=>`
+        <div class="check-item" onclick="togglePretradeCheck(${i})" style="cursor:pointer">
+          <div class="check-box" id="pt-check-${i}">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="check-label" style="flex:1">${escapeHtml(item)}</div>
+        </div>`).join('');
+    }
+    checklistBlock.style.display = 'block';
+  } else {
+    checklistBlock.style.display = 'none';
+  }
+
+  updatePretradeValidateBtn();
+  document.getElementById('pretradeModal').classList.add('open');
 }
-function closePresessionModal(){
-  document.getElementById('presessionModal').classList.remove('open');
+function closePretradeModal(){
+  document.getElementById('pretradeModal').classList.remove('open');
 }
-function togglePresessionCheck(i){
-  _presessionChecks[i]=!_presessionChecks[i];
-  const box=document.getElementById('ps-check-'+i);
-  if(box) box.classList.toggle('checked', _presessionChecks[i]);
-  updatePresessionValidateBtn();
+function togglePretradeCheck(i){
+  _pretradeChecks[i] = !_pretradeChecks[i];
+  const box = document.getElementById('pt-check-'+i);
+  if(box) box.classList.toggle('checked', _pretradeChecks[i]);
+  updatePretradeValidateBtn();
 }
-function updatePresessionValidateBtn(){
-  const btn=document.getElementById('presession-validate-btn');
+function updatePretradeValidateBtn(){
+  const btn = document.getElementById('pretrade-validate-btn');
   if(!btn) return;
-  const all = _presessionChecks.length>0 && _presessionChecks.every(Boolean);
-  btn.disabled = !all;
+  const hasChecklist = presessionBlocks();
+  // Actif seulement si toutes les cases sont cochées (ou s'il n'y a pas de checklist).
+  // Le quota atteint NE bloque PAS (on laisse le choix) : il change juste le libellé.
+  const allChecked = !hasChecklist || (_pretradeChecks.length>0 && _pretradeChecks.every(Boolean));
+  btn.disabled = !allChecked;
+  const key = hasChecklist
+    ? (_pretradeQuotaReached ? 'pretrade_validate_anyway' : 'pretrade_validate')
+    : (_pretradeQuotaReached ? 'pretrade_take_anyway'     : 'pretrade_take');
+  btn.setAttribute('data-i18n', key);
+  btn.textContent = t(key);
+  // Bouton rouge et dissuasif si le quota est atteint
+  btn.style.background = _pretradeQuotaReached ? 'var(--red)' : '';
 }
-function validatePresession(){
-  if(!(_presessionChecks.length>0 && _presessionChecks.every(Boolean))) return;
-  _presessionBypass = true;       // laisse passer l'ouverture du formulaire une seule fois
-  closePresessionModal();
-  openAddModal();                 // ouvre directement le formulaire de trade
+function validatePretrade(){
+  const hasChecklist = presessionBlocks();
+  if(hasChecklist && !(_pretradeChecks.length>0 && _pretradeChecks.every(Boolean))) return;
+  _pretradeBypass = true;       // laisse passer l'ouverture du formulaire une seule fois
+  closePretradeModal();
+  openAddModal();               // ouvre directement le formulaire de trade
 }
 
 async function saveTrade(){
@@ -6189,6 +6323,14 @@ function renderSettings(){
         </div>`).join('');
   }
 
+  // ─── Limite de trades par mois ───
+  const tlToggle = document.getElementById('tradelimit-toggle');
+  if(tlToggle) tlToggle.classList.toggle('on', !!TRADE_LIMIT_ENABLED);
+  const tlField = document.getElementById('tradelimit-field');
+  if(tlField) tlField.style.display = TRADE_LIMIT_ENABLED ? 'block' : 'none';
+  const tlInput = document.getElementById('tradelimit-input');
+  if(tlInput && document.activeElement !== tlInput) tlInput.value = TRADE_LIMIT_MONTHLY;
+
   // Compteur de trades pour la zone dangereuse
   const cnt = document.getElementById('danger-count');
   if (cnt) cnt.textContent = trades.length;
@@ -6230,6 +6372,20 @@ function delPresessionItem(i){
   PRESESSION_ITEMS.splice(i,1);
   saveUserPreferences();
   renderSettings();
+}
+
+// ─── Limite de trades par mois : handlers Réglages ───
+function toggleTradeLimit(btn){
+  TRADE_LIMIT_ENABLED = !TRADE_LIMIT_ENABLED;
+  if(btn) btn.classList.toggle('on', TRADE_LIMIT_ENABLED);
+  saveUserPreferences();
+  renderSettings();
+}
+function commitTradeLimit(val){
+  let n = parseInt(val, 10);
+  if(isNaN(n) || n < 1) n = 1;   // minimum 1
+  TRADE_LIMIT_MONTHLY = n;
+  saveUserPreferences();
 }
 
 // ─── Enregistre la langue depuis les Réglages (la devise suit la langue) ───
