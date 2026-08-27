@@ -3272,8 +3272,14 @@ function saveTendances(){
 }
 
 let _savePrefsTimer = null;
+// ⚠️ ANTI-ÉCRASEMENT : tant que les préférences du client n'ont pas été chargées
+// (ou créées) depuis la base, l'état en mémoire ne contient que les valeurs par
+// défaut. Sauvegarder à ce moment-là écraserait les réglages du client. On bloque
+// donc toute sauvegarde tant que `prefsLoaded` n'est pas vrai.
+let prefsLoaded = false;
 async function saveUserPreferences(){
   if (!currentUser) return;
+  if (!prefsLoaded) { console.warn('[Prefs] sauvegarde ignorée : préférences pas encore chargées (anti-écrasement)'); return; }
   // Debounce 400ms pour éviter de spammer la DB pendant les éditions rapides
   clearTimeout(_savePrefsTimer);
   _savePrefsTimer = setTimeout(async () => {
@@ -3299,13 +3305,18 @@ async function saveUserPreferences(){
 
 async function loadUserPreferences(){
   if (!currentUser) return;
+  // On repart d'un état « non chargé » : aucune sauvegarde ne doit partir tant que
+  // la lecture (ou la création) de la ligne n'a pas réussi.
+  prefsLoaded = false;
   try {
     const { data, error } = await sb
       .from('user_preferences')
       .select('checklist, errors, tendances, language, currency, risk_per_r, checklist_required, checklist_items, trade_limit_enabled, trade_limit_monthly')
       .eq('user_id', currentUser.id)
       .maybeSingle();
-    if (error) { console.error('[Prefs] load error', error); return; }
+    // ⚠️ En cas d'erreur (réseau/token), on NE débloque PAS les sauvegardes : l'état
+    // en mémoire est encore par défaut, sauvegarder écraserait les réglages du client.
+    if (error) { console.error('[Prefs] load error — sauvegardes bloquées pour préserver les réglages', error); return; }
 
     if (data) {
       if (Array.isArray(data.checklist) && data.checklist.length) {
@@ -3328,6 +3339,7 @@ async function loadUserPreferences(){
       // ─── Langue (la devise suit la langue : FR→EUR, EN→USD) ───
       if (data.language && STRINGS[data.language]) { setLang(data.language, {silent:true}); }
       applyTranslations();
+      prefsLoaded = true; // réglages chargés → sauvegardes autorisées
       console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs,', TEND_OPTIONS.length, 'tendances · lang=', currentLang, '· devise=', currentCurrency);
     } else {
       // Pas de ligne → on crée avec les valeurs par défaut (ou le choix fait à l'inscription)
@@ -3337,7 +3349,7 @@ async function loadUserPreferences(){
         const sl = localStorage.getItem('signup_pref_lang'); if(sl && STRINGS[sl]) signupLang = sl;
       } catch(e){}
       setLang(signupLang, {silent:true}); applyTranslations();  // setLang fixe la devise selon la langue
-      await sb.from('user_preferences').insert({
+      const { error: insErr } = await sb.from('user_preferences').insert({
         user_id:   currentUser.id,
         checklist: CHECKLIST,
         errors:    ERRORS,
@@ -3350,6 +3362,9 @@ async function loadUserPreferences(){
         trade_limit_enabled: TRADE_LIMIT_ENABLED,
         trade_limit_monthly: TRADE_LIMIT_MONTHLY,
       });
+      // On n'autorise les sauvegardes que si la ligne a bien été créée.
+      if (insErr) console.error('[Prefs] création échouée — sauvegardes bloquées', insErr);
+      else prefsLoaded = true;
       try { localStorage.removeItem('signup_pref_lang'); localStorage.removeItem('signup_pref_currency'); } catch(e){}
     }
   } catch(e) { console.error('[Prefs] exception load', e); }
@@ -6996,6 +7011,7 @@ sb.auth.onAuthStateChange((event, session) => {
     hideTrialBanner();
     setSignedOutUI();
     _dataLoadedForUser = null;
+    prefsLoaded = false; // nouvelle session → on rebloque les sauvegardes jusqu'au prochain chargement
     return;
   }
 
