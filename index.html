@@ -760,6 +760,53 @@ body.no-scroll { overflow: hidden; }
   line-height: 1.5;
 }
 .field-textarea:focus { border-color: var(--orange); }
+.analysis-box-wrap { position: relative; }
+.analysis-expand-btn {
+  position: absolute; top: 6px; right: 6px; z-index: 1;
+  background: var(--bg4); border: none; color: var(--text2);
+  width: 24px; height: 24px; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; line-height: 1; transition: background .15s, color .15s;
+}
+.analysis-expand-btn:hover { background: rgba(255,159,10,.18); color: var(--orange); }
+
+/* ── ANALYSE PLEIN ÉCRAN ── */
+.analysis-overlay {
+  display: none; position: fixed; inset: 0; z-index: 210;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.analysis-overlay.open { display: flex; }
+.analysis-panel {
+  background: var(--bg1); border: 1px solid var(--sep); border-radius: 16px;
+  width: 90vw; height: 90vh; max-width: 1100px;
+  display: flex; flex-direction: column; overflow: hidden;
+  animation: fadeUp .2s ease;
+}
+.analysis-panel-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--sep); flex-shrink: 0;
+}
+.analysis-panel-title { font-size: 1rem; font-weight: 700; color: var(--text); flex: 1; }
+.analysis-textarea {
+  flex: 1; width: 100%; border: none; outline: none; resize: none;
+  background: var(--bg1); color: var(--text);
+  font-size: 16px; line-height: 1.6; padding: 20px 24px;
+  overflow-y: auto; font-family: inherit;
+}
+.analysis-textarea::placeholder { color: var(--text3); }
+.analysis-panel-footer {
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 10px 20px; border-top: 1px solid var(--sep); flex-shrink: 0;
+}
+.analysis-save-status { font-size: .72rem; color: var(--text3); display: flex; align-items: center; gap: 6px; min-height: 1em; }
+.analysis-save-status.saving { color: var(--orange); }
+.analysis-save-status.saved { color: var(--green); }
+.analysis-save-status .as-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+@media (max-width: 640px) {
+  .analysis-overlay { padding: 0; }
+  .analysis-panel { width: 100vw; height: 100vh; max-width: none; border-radius: 0; }
+}
 
 /* ── CHECKLIST ── */
 .checklist-wrap { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
@@ -2232,6 +2279,20 @@ body.no-scroll { overflow: hidden; }
   <div class="lightbox-label" id="lightbox-label"></div>
 </div>
 
+<!-- ══════ ANALYSE PLEIN ÉCRAN (agrandir Raisons & Confluences) ══════ -->
+<div class="analysis-overlay" id="analysisOverlay" onclick="if(event.target===this)closeAnalysisOverlay()">
+  <div class="analysis-panel">
+    <div class="analysis-panel-header">
+      <div class="analysis-panel-title" id="analysis-panel-title">—</div>
+      <button class="panel-close" onclick="closeAnalysisOverlay()">✕</button>
+    </div>
+    <textarea id="analysis-textarea" class="analysis-textarea" oninput="onAnalysisInput(this.value)" placeholder="Décris tes confluences, la raison du trade…" data-i18n-ph="analysis_ph"></textarea>
+    <div class="analysis-panel-footer">
+      <span class="analysis-save-status" id="analysis-save-status"></span>
+    </div>
+  </div>
+</div>
+
 <!-- ══════ TRADES DU JOUR (calendrier) ══════ -->
 <div class="modal-overlay" id="dayModal" onclick="if(event.target===this)closeDayModal()">
   <div class="modal" style="width:420px">
@@ -2476,6 +2537,7 @@ const STRINGS = {
     mm_journal_title:"Mon bilan du mois — erreurs & analyse",
     mm_journal_sub:"Écris ton analyse de fin de mois : erreurs récurrentes, leçons apprises, objectifs. Sauvegardé automatiquement pour ce mois.",
     mm_journal_ph:"Ex : j'ai coupé mes trades trop tôt, overtrading le mercredi, à retravailler la patience sur les entrées…",
+    analysis_ph:"Décris tes confluences, la raison du trade…",
     mm_prev_month:"Mois précédent", mm_next_month:"Mois suivant",
     mm_prev_q:"Trimestre précédent", mm_next_q:"Trimestre suivant",
     // Insights page (FR)
@@ -2668,6 +2730,7 @@ const STRINGS = {
     mm_journal_title:"My monthly review — mistakes & analysis",
     mm_journal_sub:"Write your end-of-month analysis: recurring mistakes, lessons learned, goals. Saved automatically for this month.",
     mm_journal_ph:"E.g. I cut my trades too early, overtrading on Wednesdays, need to work on patience at entries…",
+    analysis_ph:"Describe your confluences, the reason for the trade…",
     mm_prev_month:"Previous month", mm_next_month:"Next month",
     mm_prev_q:"Previous quarter", mm_next_q:"Next quarter",
     // Insights page (EN)
@@ -4740,7 +4803,10 @@ function buildPanelHTML(t){
     <div id="panel-evitable-section">${avoidableSectionHTML(t)}</div>
     <div class="panel-section-title">${L('Raisons & Confluences','Reasons & Confluences')}</div>
     ${confluenceChipsHTML(t.id)}
-    <textarea id="panel-confluences" class="field-textarea" placeholder="${L('Décris tes confluences, la raison du trade…','Describe your confluences, the reason for the trade…')}" onchange="updateField(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
+    <div class="analysis-box-wrap">
+      <button type="button" class="analysis-expand-btn" onclick="openAnalysisOverlay(${t.id})" title="${L('Agrandir','Expand')}" aria-label="${L('Agrandir','Expand')}">⤢</button>
+      <textarea id="panel-confluences" class="field-textarea" style="padding-right:34px" placeholder="${L('Décris tes confluences, la raison du trade…','Describe your confluences, the reason for the trade…')}" onchange="updateField(${t.id},'confluences',this.value)" oninput="syncAnalysisOverlay(this.value)">${t.confluences||''}</textarea>
+    </div>
     ${photoSectionHTML(t,'confluences',L('🖼️ Images des raisons','🖼️ Reason images'),L('(captures fondamentales / analyses)','(fundamental captures / analysis)'))}
     <div class="panel-section-title">${L('État Psychologique','Psychological State')}</div>
     ${emotionChipsHTML(t)}
@@ -5022,6 +5088,62 @@ function closePanel(){
   if(wasOpen && typeof refreshCurrentPage === 'function') refreshCurrentPage();
 }
 function closePanelOnBg(e){ if(e.target===document.getElementById('panelOverlay')) closePanel(); }
+
+// ───────────────────────────────────────────
+//  ANALYSE PLEIN ÉCRAN (agrandir "Raisons & Confluences")
+//  Même champ (t.confluences) et même sauvegarde (dbUpsert) que la petite case,
+//  juste avec un debounce ~1s pendant la frappe au lieu d'un onchange (blur).
+// ───────────────────────────────────────────
+let _analysisSaveTimer = null;
+let _analysisDirty = false;
+function openAnalysisOverlay(id){
+  const t = trades.find(x=>x.id===id); if(!t) return;
+  document.getElementById('analysis-panel-title').textContent = `${t.pair||''} — ${getTradeDate(t)||t.date||''}`;
+  const ta = document.getElementById('analysis-textarea');
+  ta.value = t.confluences || '';
+  ta.dataset.tradeId = id;
+  setAnalysisSaveStatus('');
+  document.getElementById('analysisOverlay').classList.add('open');
+  setTimeout(()=>ta.focus(), 50);
+}
+function onAnalysisInput(val){
+  const ta = document.getElementById('analysis-textarea');
+  const t = trades.find(x=>x.id===+ta.dataset.tradeId); if(!t) return;
+  t.confluences = val;
+  // Synchronise la petite case du panneau (même donnée)
+  const small = document.getElementById('panel-confluences');
+  if(small && small.value !== val) small.value = val;
+  _analysisDirty = true;
+  setAnalysisSaveStatus('saving');
+  clearTimeout(_analysisSaveTimer);
+  _analysisSaveTimer = setTimeout(()=>{ _analysisDirty=false; dbUpsert(t).then(()=>setAnalysisSaveStatus('saved')); }, 1000);
+}
+function syncAnalysisOverlay(val){
+  // Reflète en direct les frappes faites dans la petite case, si l'overlay est ouvert
+  const overlay = document.getElementById('analysisOverlay');
+  if(!overlay || !overlay.classList.contains('open')) return;
+  const ta = document.getElementById('analysis-textarea');
+  if(ta && ta.value !== val) ta.value = val;
+}
+function setAnalysisSaveStatus(state){
+  const el = document.getElementById('analysis-save-status');
+  if(!el) return;
+  const conf = {
+    saving: { cls:'saving', txt:L('Enregistrement…','Saving…') },
+    saved:  { cls:'saved',  txt:L('Enregistré','Saved') },
+  }[state];
+  if(!conf){ el.className='analysis-save-status'; el.innerHTML=''; return; }
+  el.className = 'analysis-save-status ' + conf.cls;
+  el.innerHTML = `<span class="as-dot"></span>${conf.txt}`;
+}
+function closeAnalysisOverlay(){
+  const overlay = document.getElementById('analysisOverlay');
+  if(!overlay || !overlay.classList.contains('open')) return;
+  const ta = document.getElementById('analysis-textarea');
+  const t = ta ? trades.find(x=>x.id===+ta.dataset.tradeId) : null;
+  if(t && _analysisDirty){ clearTimeout(_analysisSaveTimer); _analysisDirty=false; dbUpsert(t); }
+  overlay.classList.remove('open');
+}
 
 // ── PASTE IMAGE (Ctrl+V) ──────────────────────
 let pasteTargetKey = null; // which slot is focused for paste
@@ -7545,7 +7667,7 @@ function importJSON(input){
 
 // Verrouille le scroll de l'arrière-plan quand un panneau/modale est ouvert.
 (function(){
-  const overlayIds = ['panelOverlay','addModal','dayModal','lightbox','csvImportModal'];
+  const overlayIds = ['panelOverlay','addModal','dayModal','lightbox','csvImportModal','analysisOverlay'];
   function sync(){
     const anyOpen = overlayIds.some(id=>{ const el=document.getElementById(id); return el && el.classList.contains('open'); });
     document.body.classList.toggle('no-scroll', anyOpen);
@@ -7571,6 +7693,9 @@ document.addEventListener('keydown', e => {
   const panelOpen = (()=>{ const el=document.getElementById('panelOverlay'); return el && el.classList.contains('open'); })();
   // Esc closes modals / panel / popups
   if(e.key==='Escape'){
+    // Si l'analyse plein écran est ouverte, Esc ne la ferme QUE elle (pas le trade en dessous)
+    const anOpen = (()=>{ const el=document.getElementById('analysisOverlay'); return el && el.classList.contains('open'); })();
+    if(anOpen){ closeAnalysisOverlay(); return; }
     // Si une image est zoomée, Esc ne ferme QUE le lightbox (pas le trade en dessous)
     const lbOpen = (()=>{ const el=document.getElementById('lightbox'); return el && el.classList.contains('open'); })();
     if(lbOpen){ closeLightbox(); return; }
