@@ -4079,7 +4079,7 @@ function renderMonthlyHeatmap(ts){
     if(v === null){
       html += `<div class="heatmap-cell empty" title="${L('Aucun trade','No trade')}"><span class="heatmap-dot"></span></div>`;
     } else {
-      html += `<div class="heatmap-cell" style="background:${cellColor(v)}" title="${L('Moyenne','Average')} ${shortMonths[m]} : ${fmtR(v)}">${fmtR(v)}</div>`;
+      html += `<div class="heatmap-cell" style="background:${cellColor(v)}" title="${L('Moyenne','Average')} ${shortMonths[m]} : ${fmtR(v)}"></div>`;
     }
   }
   html += `<div class="heatmap-cell empty"></div>`;
@@ -4098,11 +4098,11 @@ function renderMonthlyHeatmap(ts){
         html += `<div class="heatmap-cell empty"><span class="heatmap-dot"></span></div>`;
       } else {
         const v = arr[m];
-        html += `<div class="heatmap-cell" style="background:${cellColor(v)}" title="${shortMonths[m]} ${y} : ${fmtR(v)} · ${cnts[m]} ${trWord(cnts[m])}">${fmtR(v)}</div>`;
+        html += `<div class="heatmap-cell" style="background:${cellColor(v)}" title="${shortMonths[m]} ${y} : ${fmtR(v)} · ${cnts[m]} ${trWord(cnts[m])}"></div>`;
       }
     }
     if(yearHasAny){
-      html += `<div class="heatmap-cell total" style="background:${cellColor(yearTotal)}" title="${y} : ${fmtR(yearTotal)} · ${yearCount} ${trWord(yearCount)}">${fmtR(yearTotal)}</div>`;
+      html += `<div class="heatmap-cell total" style="background:${cellColor(yearTotal)}" title="${y} : ${fmtR(yearTotal)} · ${yearCount} ${trWord(yearCount)}"></div>`;
     } else {
       html += `<div class="heatmap-cell empty"><span class="heatmap-dot"></span></div>`;
     }
