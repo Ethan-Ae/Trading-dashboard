@@ -1368,6 +1368,7 @@ body.no-scroll { overflow: hidden; }
         Déconnexion
       </button>
     </div>
+    <span id="presession-indicator" title="Checklist du jour validée" style="display:none;align-items:center;gap:5px;font-size:.72rem;font-weight:600;color:var(--green);background:rgba(48,209,88,.12);border:1px solid rgba(48,209,88,.3);padding:4px 9px;border-radius:8px">Checklist ✓</span>
     <button class="btn-add" onclick="openAddModal()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#000" stroke-width="2" stroke-linecap="round"/></svg>
       <span data-i18n="btn_new_trade">Nouveau Trade</span>
@@ -1887,6 +1888,22 @@ body.no-scroll { overflow: hidden; }
       <button class="settings-add" onclick="addChecklistItem()">＋ Ajouter un élément</button>
     </div>
 
+    <!-- ─── Checklist pré-session ─── -->
+    <div class="settings-card">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title" data-i18n="set_presession_title">✅ Checklist pré-session</div>
+          <div class="settings-card-sub" data-i18n="set_presession_sub">Une routine à valider une fois par jour avant de pouvoir ajouter des trades</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
+        <button class="toggle" id="presession-toggle" onclick="togglePresessionRequired(this)"></button>
+        <span style="font-size:.85rem;color:var(--text2);line-height:1.4" data-i18n="set_presession_toggle">Bloquer l'ajout de trades tant que ma checklist du jour n'est pas validée</span>
+      </div>
+      <div class="settings-list" id="settings-presession"></div>
+      <button class="settings-add" onclick="addPresessionItem()" data-i18n="set_presession_add">＋ Ajouter un point</button>
+    </div>
+
     <!-- ─── Erreurs ─── -->
     <div class="settings-card">
       <div class="settings-card-head">
@@ -2302,6 +2319,19 @@ body.no-scroll { overflow: hidden; }
   </div>
 </div>
 
+<!-- ══════ CHECKLIST PRÉ-SESSION MODAL ══════ -->
+<div class="modal-overlay" id="presessionModal" onclick="if(event.target===this)closePresessionModal()">
+  <div class="modal" style="width:460px">
+    <div class="modal-title" data-i18n="presession_modal_title">✅ Checklist du jour</div>
+    <div class="modal-sub" style="color:var(--text3);font-size:.82rem;margin:-6px 0 16px" data-i18n="presession_modal_sub">Valide ta routine avant de trader aujourd'hui. Tout doit être coché.</div>
+    <div id="presession-modal-list" class="checklist-wrap"></div>
+    <div class="form-actions">
+      <button class="btn-ghost" onclick="closePresessionModal()" data-i18n="presession_cancel">Annuler</button>
+      <button class="btn-orange" id="presession-validate-btn" onclick="validatePresession()" disabled data-i18n="presession_validate">Valider et trader</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════ ADD TRADE MODAL ══════ -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
@@ -2537,6 +2567,14 @@ const STRINGS = {
     mm_journal_title:"Mon bilan du mois — erreurs & analyse",
     mm_journal_sub:"Écris ton analyse de fin de mois : erreurs récurrentes, leçons apprises, objectifs. Sauvegardé automatiquement pour ce mois.",
     mm_journal_ph:"Ex : j'ai coupé mes trades trop tôt, overtrading le mercredi, à retravailler la patience sur les entrées…",
+    set_presession_title:"✅ Checklist pré-session",
+    set_presession_sub:"Une routine à valider une fois par jour avant de pouvoir ajouter des trades",
+    set_presession_toggle:"Bloquer l'ajout de trades tant que ma checklist du jour n'est pas validée",
+    set_presession_add:"＋ Ajouter un point",
+    presession_modal_title:"✅ Checklist du jour",
+    presession_modal_sub:"Valide ta routine avant de trader aujourd'hui. Tout doit être coché.",
+    presession_cancel:"Annuler",
+    presession_validate:"Valider et trader",
     analysis_ph:"Décris tes confluences, la raison du trade…",
     mm_prev_month:"Mois précédent", mm_next_month:"Mois suivant",
     mm_prev_q:"Trimestre précédent", mm_next_q:"Trimestre suivant",
@@ -2730,6 +2768,14 @@ const STRINGS = {
     mm_journal_title:"My monthly review — mistakes & analysis",
     mm_journal_sub:"Write your end-of-month analysis: recurring mistakes, lessons learned, goals. Saved automatically for this month.",
     mm_journal_ph:"E.g. I cut my trades too early, overtrading on Wednesdays, need to work on patience at entries…",
+    set_presession_title:"✅ Pre-session checklist",
+    set_presession_sub:"A routine to validate once a day before you can add trades",
+    set_presession_toggle:"Block adding trades until my checklist for the day is validated",
+    set_presession_add:"＋ Add an item",
+    presession_modal_title:"✅ Today's checklist",
+    presession_modal_sub:"Validate your routine before trading today. Everything must be checked.",
+    presession_cancel:"Cancel",
+    presession_validate:"Validate and trade",
     analysis_ph:"Describe your confluences, the reason for the trade…",
     mm_prev_month:"Previous month", mm_next_month:"Next month",
     mm_prev_q:"Previous quarter", mm_next_q:"Next quarter",
@@ -3029,6 +3075,27 @@ const CHECKLIST_DEFAULT = [
 ];
 let CHECKLIST = CHECKLIST_DEFAULT.slice();
 
+// ─── Checklist pré-session (optionnelle) — stockée dans user_preferences ───
+// checklist_required (bool) · checklist_items (jsonb array) · checklist_done_date (date locale YYYY-MM-DD)
+const PRESESSION_DEFAULT = [
+  'J\'ai vérifié le calendrier économique du jour',
+  'Je suis dans un état mental clair (pas de tilt)',
+  'J\'ai défini mon risque max pour la session',
+  'J\'ai analysé le contexte de marché (Higher Time Frame)',
+];
+let CHECKLIST_REQUIRED = false;
+let PRESESSION_ITEMS = PRESESSION_DEFAULT.slice();
+let CHECKLIST_DONE_DATE = null;
+// Date du jour en heure LOCALE (pas UTC) au format YYYY-MM-DD
+function todayLocal(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// La checklist bloque-t-elle l'ajout d'un trade maintenant ?
+function presessionBlocks(){
+  return CHECKLIST_REQUIRED && PRESESSION_ITEMS.length>0 && CHECKLIST_DONE_DATE !== todayLocal();
+}
+
 // ─── 1R = X % du capital (pondération du R) — stocké dans user_preferences.risk_per_r ───
 // Défaut 1 : compatible avec l'ancien comportement (R brut = R pondéré quand tous les
 // trades risquent 1%). Valeurs possibles dans l'UI : 0.25 / 0.5 / 1 / 2 (%).
@@ -3154,6 +3221,9 @@ async function saveUserPreferences(){
         language:  currentLang,
         currency:  currentCurrency,
         risk_per_r: RISK_PER_R,
+        checklist_required:  CHECKLIST_REQUIRED,
+        checklist_items:     PRESESSION_ITEMS,
+        checklist_done_date: CHECKLIST_DONE_DATE,
       }, { onConflict: 'user_id' });
       if (error) console.error('[Prefs] save error', error);
       else console.log('[Prefs] sauvegardé');
@@ -3166,7 +3236,7 @@ async function loadUserPreferences(){
   try {
     const { data, error } = await sb
       .from('user_preferences')
-      .select('checklist, errors, tendances, language, currency, risk_per_r')
+      .select('checklist, errors, tendances, language, currency, risk_per_r, checklist_required, checklist_items, checklist_done_date')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     if (error) { console.error('[Prefs] load error', error); return; }
@@ -3183,10 +3253,15 @@ async function loadUserPreferences(){
       }
       // ─── 1R = X % (pondération) — défaut 1 si absent/invalide ───
       { const v = parseFloat(data.risk_per_r); RISK_PER_R = (!isNaN(v) && v > 0) ? v : 1; }
+      // ─── Checklist pré-session ───
+      if (typeof data.checklist_required === 'boolean') CHECKLIST_REQUIRED = data.checklist_required;
+      if (Array.isArray(data.checklist_items)) PRESESSION_ITEMS = data.checklist_items.slice();
+      CHECKLIST_DONE_DATE = data.checklist_done_date || null;
       // ─── Langue (la devise suit la langue : FR→EUR, EN→USD) ───
       if (data.language && STRINGS[data.language]) { setLang(data.language, {silent:true}); }
       applyTranslations();
       console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs,', TEND_OPTIONS.length, 'tendances · lang=', currentLang, '· devise=', currentCurrency);
+      if(typeof updatePresessionIndicator==='function') updatePresessionIndicator();
     } else {
       // Pas de ligne → on crée avec les valeurs par défaut (ou le choix fait à l'inscription)
       console.log('[Prefs] première fois — création avec valeurs par défaut');
@@ -3203,6 +3278,9 @@ async function loadUserPreferences(){
         language:  signupLang,
         currency:  currentCurrency,
         risk_per_r: RISK_PER_R,
+        checklist_required:  CHECKLIST_REQUIRED,
+        checklist_items:     PRESESSION_ITEMS,
+        checklist_done_date: CHECKLIST_DONE_DATE,
       });
       try { localStorage.removeItem('signup_pref_lang'); localStorage.removeItem('signup_pref_currency'); } catch(e){}
     }
@@ -5262,6 +5340,8 @@ document.addEventListener('paste', async function(e){
 let modalExecScreenshot = null;
 
 function openAddModal(){
+  // Checklist pré-session : si active et pas validée aujourd'hui, on ouvre la checklist d'abord
+  if(presessionBlocks()){ openPresessionModal(); return; }
   document.getElementById('m-date').value=new Date().toISOString().slice(0,10);
   const mPrise=document.getElementById('m-prise-date');
   mPrise.value=new Date().toISOString().slice(0,10); delete mPrise.dataset.touched;
@@ -5346,6 +5426,55 @@ function handleModalScreenshot(input){
 }
 function closeAddModal(){
   document.getElementById('addModal').classList.remove('open');
+}
+
+// ─── Checklist pré-session : modale du jour ───
+let _presessionChecks = [];
+function openPresessionModal(){
+  _presessionChecks = PRESESSION_ITEMS.map(()=>false);
+  const listEl=document.getElementById('presession-modal-list');
+  if(listEl){
+    listEl.innerHTML = PRESESSION_ITEMS.map((item,i)=>`
+      <div class="check-item" onclick="togglePresessionCheck(${i})" style="cursor:pointer">
+        <div class="check-box" id="ps-check-${i}">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#000" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="check-label" style="flex:1">${escapeHtml(item)}</div>
+      </div>`).join('');
+  }
+  updatePresessionValidateBtn();
+  document.getElementById('presessionModal').classList.add('open');
+}
+function closePresessionModal(){
+  document.getElementById('presessionModal').classList.remove('open');
+}
+function togglePresessionCheck(i){
+  _presessionChecks[i]=!_presessionChecks[i];
+  const box=document.getElementById('ps-check-'+i);
+  if(box) box.classList.toggle('checked', _presessionChecks[i]);
+  updatePresessionValidateBtn();
+}
+function updatePresessionValidateBtn(){
+  const btn=document.getElementById('presession-validate-btn');
+  if(!btn) return;
+  const all = _presessionChecks.length>0 && _presessionChecks.every(Boolean);
+  btn.disabled = !all;
+}
+function validatePresession(){
+  if(!(_presessionChecks.length>0 && _presessionChecks.every(Boolean))) return;
+  CHECKLIST_DONE_DATE = todayLocal();
+  saveUserPreferences();
+  updatePresessionIndicator();
+  closePresessionModal();
+  openAddModal(); // la garde passe maintenant (validée aujourd'hui)
+}
+// Petit indicateur "Checklist ✓" près du bouton d'ajout (seulement si l'option est active)
+function updatePresessionIndicator(){
+  const el=document.getElementById('presession-indicator');
+  if(!el) return;
+  const done = CHECKLIST_REQUIRED && CHECKLIST_DONE_DATE===todayLocal();
+  el.style.display = done ? 'inline-flex' : 'none';
+  el.textContent = L('Checklist ✓','Checklist ✓');
 }
 
 async function saveTrade(){
@@ -6058,9 +6187,68 @@ function renderSettings(){
     }
   }
 
+  // ─── Checklist pré-session ───
+  const psToggle = document.getElementById('presession-toggle');
+  if(psToggle) psToggle.classList.toggle('on', !!CHECKLIST_REQUIRED);
+  const psEl = document.getElementById('settings-presession');
+  if(psEl){
+    psEl.innerHTML = PRESESSION_ITEMS.length===0
+      ? `<div class="settings-empty">${L('Aucun point. Clique sur « + Ajouter un point » pour commencer.','No items. Click "+ Add an item" to get started.')}</div>`
+      : PRESESSION_ITEMS.map((item,i)=>`
+        <div class="settings-row">
+          <input class="settings-row-input" type="text"
+                 value="${escapeHtml(item)}"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+                 onblur="commitPresessionItem(${i}, this.value)"
+                 aria-label="${L('Point de la checklist','Checklist item')}">
+          <div class="settings-row-actions">
+            <button class="del" onclick="delPresessionItem(${i})" title="${L('Supprimer','Delete')}">✕</button>
+          </div>
+        </div>`).join('');
+  }
+
   // Compteur de trades pour la zone dangereuse
   const cnt = document.getElementById('danger-count');
   if (cnt) cnt.textContent = trades.length;
+}
+
+// ─── Checklist pré-session : handlers Réglages ───
+function togglePresessionRequired(btn){
+  CHECKLIST_REQUIRED = !CHECKLIST_REQUIRED;
+  // Minimum 1 point si l'option est activée
+  if(CHECKLIST_REQUIRED && PRESESSION_ITEMS.length===0){
+    PRESESSION_ITEMS = PRESESSION_DEFAULT.slice();
+  }
+  if(btn) btn.classList.toggle('on', CHECKLIST_REQUIRED);
+  saveUserPreferences();
+  updatePresessionIndicator();
+  renderSettings();
+}
+function addPresessionItem(){
+  PRESESSION_ITEMS.push('');
+  saveUserPreferences();
+  renderSettings();
+  // Focus le nouveau champ
+  requestAnimationFrame(()=>{
+    const inputs=document.querySelectorAll('#settings-presession .settings-row-input');
+    const last=inputs[inputs.length-1]; if(last) last.focus();
+  });
+}
+function commitPresessionItem(i,val){
+  const v=(val||'').trim();
+  if(!v){ delPresessionItem(i); return; }
+  PRESESSION_ITEMS[i]=v;
+  saveUserPreferences();
+}
+function delPresessionItem(i){
+  if(CHECKLIST_REQUIRED && PRESESSION_ITEMS.length<=1){
+    alert(L('Garde au moins 1 point tant que la checklist est activée, ou désactive-la d\'abord.','Keep at least 1 item while the checklist is enabled, or disable it first.'));
+    renderSettings();
+    return;
+  }
+  PRESESSION_ITEMS.splice(i,1);
+  saveUserPreferences();
+  renderSettings();
 }
 
 // ─── Enregistre la langue depuis les Réglages (la devise suit la langue) ───
