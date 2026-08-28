@@ -2311,14 +2311,14 @@ body.no-scroll { overflow: hidden; }
   <div class="lightbox-label" id="lightbox-label"></div>
 </div>
 
-<!-- ══════ ANALYSE PLEIN ÉCRAN (agrandir Raisons & Confluences) ══════ -->
-<div class="analysis-overlay" id="analysisOverlay" onclick="if(event.target===this)closeAnalysisOverlay()">
+<!-- ══════ CHAMP TEXTE PLEIN ÉCRAN (composant générique réutilisable) ══════ -->
+<div class="analysis-overlay" id="analysisOverlay" onclick="if(event.target===this)closeFieldOverlay()">
   <div class="analysis-panel">
     <div class="analysis-panel-header">
       <div class="analysis-panel-title" id="analysis-panel-title">—</div>
-      <button class="panel-close" onclick="closeAnalysisOverlay()">✕</button>
+      <button class="panel-close" onclick="closeFieldOverlay()">✕</button>
     </div>
-    <textarea id="analysis-textarea" class="analysis-textarea" oninput="onAnalysisInput(this.value)" placeholder="Décris tes confluences, la raison du trade…" data-i18n-ph="analysis_ph"></textarea>
+    <textarea id="analysis-textarea" class="analysis-textarea" oninput="onFieldOverlayInput(this.value)"></textarea>
     <div class="analysis-panel-footer">
       <span class="analysis-save-status" id="analysis-save-status"></span>
     </div>
@@ -2609,6 +2609,7 @@ const STRINGS = {
     pretrade_validate:"Valider et trader",
     pretrade_validate_anyway:"Valider et trader quand même",
     analysis_ph:"Décris tes confluences, la raison du trade…",
+    exit_thesis:"Thèse de sortie", exit_thesis_ph:"Pourquoi et où je sors de ce trade…",
     mm_prev_month:"Mois précédent", mm_next_month:"Mois suivant",
     mm_prev_q:"Trimestre précédent", mm_next_q:"Trimestre suivant",
     // Insights page (FR)
@@ -2815,6 +2816,7 @@ const STRINGS = {
     pretrade_validate:"Validate and trade",
     pretrade_validate_anyway:"Validate and trade anyway",
     analysis_ph:"Describe your confluences, the reason for the trade…",
+    exit_thesis:"Exit thesis", exit_thesis_ph:"Why and where I exit this trade…",
     mm_prev_month:"Previous month", mm_next_month:"Next month",
     mm_prev_q:"Previous quarter", mm_next_q:"Next quarter",
     // Insights page (EN)
@@ -4965,13 +4967,21 @@ function buildPanelHTML(t){
     <div class="panel-section-title">${L('Raisons & Confluences','Reasons & Confluences')}</div>
     ${confluenceChipsHTML(t.id)}
     <div class="analysis-box-wrap">
-      <button type="button" class="analysis-expand-btn" onclick="openAnalysisOverlay(${t.id})" title="${L('Agrandir','Expand')}" aria-label="${L('Agrandir','Expand')}">⤢</button>
-      <textarea id="panel-confluences" class="field-textarea" style="padding-right:34px" placeholder="${L('Décris tes confluences, la raison du trade…','Describe your confluences, the reason for the trade…')}" onchange="updateField(${t.id},'confluences',this.value)" oninput="syncAnalysisOverlay(this.value)">${t.confluences||''}</textarea>
+      <button type="button" class="analysis-expand-btn" onclick="${expandBtnCall(t.id,'confluences',L('Confluences','Confluences'),'#panel-confluences',L('Décris tes confluences, la raison du trade…','Describe your confluences, the reason for the trade…'))}" title="${L('Agrandir','Expand')}" aria-label="${L('Agrandir','Expand')}">⤢</button>
+      <textarea id="panel-confluences" class="field-textarea" style="padding-right:34px" placeholder="${L('Décris tes confluences, la raison du trade…','Describe your confluences, the reason for the trade…')}" onchange="updateField(${t.id},'confluences',this.value)" oninput="syncFieldOverlay(${t.id},'confluences',this.value)">${t.confluences||''}</textarea>
+    </div>
+    <div class="panel-section-title">${L('Thèse de sortie','Exit thesis')}</div>
+    <div class="analysis-box-wrap">
+      <button type="button" class="analysis-expand-btn" onclick="${expandBtnCall(t.id,'exit_thesis',L('Thèse de sortie','Exit thesis'),'#panel-exit-thesis',L('Pourquoi et où je sors de ce trade…','Why and where I exit this trade…'))}" title="${L('Agrandir','Expand')}" aria-label="${L('Agrandir','Expand')}">⤢</button>
+      <textarea id="panel-exit-thesis" class="field-textarea" style="padding-right:34px" placeholder="${L('Pourquoi et où je sors de ce trade…','Why and where I exit this trade…')}" onchange="updateField(${t.id},'exit_thesis',this.value)" oninput="syncFieldOverlay(${t.id},'exit_thesis',this.value)">${t.exit_thesis||''}</textarea>
     </div>
     ${photoSectionHTML(t,'confluences',L('🖼️ Images des raisons','🖼️ Reason images'),L('(captures fondamentales / analyses)','(fundamental captures / analysis)'))}
     <div class="panel-section-title">${L('État Psychologique','Psychological State')}</div>
     ${emotionChipsHTML(t)}
-    <textarea class="field-textarea" style="margin-top:8px" placeholder="${L('Comment tu te sentais avant / pendant le trade…','How you felt before / during the trade…')}" onchange="updateField(${t.id},'psy',this.value)">${t.psy||''}</textarea>
+    <div class="analysis-box-wrap" style="margin-top:8px">
+      <button type="button" class="analysis-expand-btn" onclick="${expandBtnCall(t.id,'psy',L('État Psychologique','Psychological State'),'#panel-psy',L('Comment tu te sentais avant / pendant le trade…','How you felt before / during the trade…'))}" title="${L('Agrandir','Expand')}" aria-label="${L('Agrandir','Expand')}">⤢</button>
+      <textarea id="panel-psy" class="field-textarea" style="padding-right:34px" placeholder="${L('Comment tu te sentais avant / pendant le trade…','How you felt before / during the trade…')}" onchange="updateField(${t.id},'psy',this.value)" oninput="syncFieldOverlay(${t.id},'psy',this.value)">${t.psy||''}</textarea>
+    </div>
     <div class="panel-section-title">Checklist</div>
     <div class="checklist-wrap">${checkItems}</div>
     ${customFieldsHTML(t)}
@@ -5117,10 +5127,15 @@ function photoSectionHTML(t, key, title, hint, withNote){
   const arr = getPhotoArr(t, key);
   const n = arr.length;
   const label = title.replace(/^[^\s]+\s/,'');
+  const notePlaceholder = `${L('Notes sur','Notes on')} ${label}…`;
+  const noteTitle = `${L('Notes','Notes')} ${label}`;
   const noteHtml = withNote ? `
-    <textarea class="field-textarea" style="margin-top:8px;min-height:56px"
-      placeholder="${L('Notes sur','Notes on')} ${escapeHtml(label)}…"
-      onchange="updateSectionNote(${t.id},'${key}',this.value)">${escapeHtml(sectionNote(t,key))}</textarea>` : '';
+    <div class="analysis-box-wrap" style="margin-top:8px">
+      <button type="button" class="analysis-expand-btn" onclick="${expandBtnCall(t.id,'note_'+key,noteTitle,'#panel-note-'+t.id+'-'+key,notePlaceholder)}" title="${L('Agrandir','Expand')}" aria-label="${L('Agrandir','Expand')}">⤢</button>
+      <textarea id="panel-note-${t.id}-${key}" class="field-textarea" style="min-height:56px;padding-right:34px"
+        placeholder="${escapeHtml(notePlaceholder)}"
+        onchange="updateSectionNote(${t.id},'${key}',this.value)" oninput="syncFieldOverlay(${t.id},'note_${key}',this.value)">${escapeHtml(sectionNote(t,key))}</textarea>
+    </div>` : '';
   return `
     <div class="panel-section-title" style="margin-top:18px;display:flex;align-items:center;justify-content:space-between">
       <span>${title} <span style="color:var(--text3);font-weight:400;font-size:.72rem">${hint||''}</span></span>
@@ -5251,38 +5266,59 @@ function closePanel(){
 function closePanelOnBg(e){ if(e.target===document.getElementById('panelOverlay')) closePanel(); }
 
 // ───────────────────────────────────────────
-//  ANALYSE PLEIN ÉCRAN (agrandir "Raisons & Confluences")
-//  Même champ (t.confluences) et même sauvegarde (dbUpsert) que la petite case,
-//  juste avec un debounce ~1s pendant la frappe au lieu d'un onchange (blur).
+//  CHAMP TEXTE PLEIN ÉCRAN (composant générique réutilisable)
+//  Agrandit n'importe quel champ texte libre d'un trade (confluences, thèse de
+//  sortie, état psy, notes de section…). Même donnée et même sauvegarde
+//  (dbUpsert) que la petite case, juste avec un debounce ~1s pendant la frappe
+//  au lieu d'un onchange (blur).
+//  `key` = nom de colonne du trade ('confluences','exit_thesis','psy',…)
+//          ou 'note_<section>' pour une note stockée dans extra_data.
 // ───────────────────────────────────────────
-let _analysisSaveTimer = null;
-let _analysisDirty = false;
-function openAnalysisOverlay(id){
+let _fieldOverlaySaveTimer = null;
+let _fieldOverlayDirty = false;
+let _fieldOverlayCtx = null; // { tradeId, key, smallSelector }
+function getFieldOverlayValue(t, key){
+  if(key.indexOf('note_')===0) return sectionNote(t, key.slice(5));
+  return t[key] || '';
+}
+function applyFieldOverlayValue(t, key, val){
+  if(key.indexOf('note_')===0){
+    if(!t.extra_data || typeof t.extra_data!=='object') t.extra_data={};
+    if(val && val.trim()) t.extra_data[key]=val;
+    else delete t.extra_data[key];
+  } else {
+    t[key]=val;
+  }
+}
+function openFieldOverlay(id, key, titleLabel, smallSelector, placeholder){
   const t = trades.find(x=>x.id===id); if(!t) return;
-  document.getElementById('analysis-panel-title').textContent = `${t.pair||''} — ${getTradeDate(t)||t.date||''}`;
+  document.getElementById('analysis-panel-title').textContent = `${titleLabel} — ${t.pair||''} ${getTradeDate(t)||t.date||''}`;
   const ta = document.getElementById('analysis-textarea');
-  ta.value = t.confluences || '';
-  ta.dataset.tradeId = id;
+  ta.value = getFieldOverlayValue(t, key);
+  ta.placeholder = placeholder || '';
+  _fieldOverlayCtx = { tradeId:id, key, smallSelector };
   setAnalysisSaveStatus('');
   document.getElementById('analysisOverlay').classList.add('open');
   setTimeout(()=>ta.focus(), 50);
 }
-function onAnalysisInput(val){
-  const ta = document.getElementById('analysis-textarea');
-  const t = trades.find(x=>x.id===+ta.dataset.tradeId); if(!t) return;
-  t.confluences = val;
+function onFieldOverlayInput(val){
+  if(!_fieldOverlayCtx) return;
+  const { tradeId, key, smallSelector } = _fieldOverlayCtx;
+  const t = trades.find(x=>x.id===tradeId); if(!t) return;
+  applyFieldOverlayValue(t, key, val);
   // Synchronise la petite case du panneau (même donnée)
-  const small = document.getElementById('panel-confluences');
+  const small = smallSelector ? document.querySelector(smallSelector) : null;
   if(small && small.value !== val) small.value = val;
-  _analysisDirty = true;
+  _fieldOverlayDirty = true;
   setAnalysisSaveStatus('saving');
-  clearTimeout(_analysisSaveTimer);
-  _analysisSaveTimer = setTimeout(()=>{ _analysisDirty=false; dbUpsert(t).then(()=>setAnalysisSaveStatus('saved')); }, 1000);
+  clearTimeout(_fieldOverlaySaveTimer);
+  _fieldOverlaySaveTimer = setTimeout(()=>{ _fieldOverlayDirty=false; dbUpsert(t).then(()=>setAnalysisSaveStatus('saved')); }, 1000);
 }
-function syncAnalysisOverlay(val){
-  // Reflète en direct les frappes faites dans la petite case, si l'overlay est ouvert
+function syncFieldOverlay(id, key, val){
+  // Reflète en direct les frappes faites dans la petite case, si l'overlay est ouvert sur ce même champ
   const overlay = document.getElementById('analysisOverlay');
   if(!overlay || !overlay.classList.contains('open')) return;
+  if(!_fieldOverlayCtx || _fieldOverlayCtx.tradeId!==id || _fieldOverlayCtx.key!==key) return;
   const ta = document.getElementById('analysis-textarea');
   if(ta && ta.value !== val) ta.value = val;
 }
@@ -5297,13 +5333,19 @@ function setAnalysisSaveStatus(state){
   el.className = 'analysis-save-status ' + conf.cls;
   el.innerHTML = `<span class="as-dot"></span>${conf.txt}`;
 }
-function closeAnalysisOverlay(){
+function closeFieldOverlay(){
   const overlay = document.getElementById('analysisOverlay');
   if(!overlay || !overlay.classList.contains('open')) return;
-  const ta = document.getElementById('analysis-textarea');
-  const t = ta ? trades.find(x=>x.id===+ta.dataset.tradeId) : null;
-  if(t && _analysisDirty){ clearTimeout(_analysisSaveTimer); _analysisDirty=false; dbUpsert(t); }
+  const t = _fieldOverlayCtx ? trades.find(x=>x.id===_fieldOverlayCtx.tradeId) : null;
+  if(t && _fieldOverlayDirty){ clearTimeout(_fieldOverlaySaveTimer); _fieldOverlayDirty=false; dbUpsert(t); }
   overlay.classList.remove('open');
+  _fieldOverlayCtx = null;
+}
+// Construit l'appel onclick="openFieldOverlay(...)" en échappant les guillemets
+// (les libellés traduits peuvent contenir des apostrophes/quotes).
+function expandBtnCall(id, key, titleLabel, smallSelector, placeholder){
+  const args = [id, key, titleLabel, smallSelector, placeholder].map(a=>JSON.stringify(a)).join(',');
+  return `openFieldOverlay(${args})`.replace(/"/g,'&quot;');
 }
 
 // ── PASTE IMAGE (Ctrl+V) ──────────────────────
@@ -6616,6 +6658,7 @@ function localToDb(t) {
     bon_trade:    t.bonTrade,
     manage_trade: t.manageTrade,
     confluences:  t.confluences  || '',
+    exit_thesis:  t.exit_thesis  || '',
     psy:          t.psy          || '',
     checklist:    t.checklist    || [false,false,false,false,false],
     screenshots:  t.screenshots  || {},
@@ -6644,6 +6687,7 @@ function dbToLocal(r) {
     bonTrade:    r.bon_trade,
     manageTrade: r.manage_trade,
     confluences: r.confluences  || '',
+    exit_thesis: r.exit_thesis  || '',
     psy:         r.psy          || '',
     checklist:   r.checklist    || [false,false,false,false,false],
     screenshots: r.screenshots  || {},
@@ -6665,7 +6709,7 @@ async function loadTradesFromDb() {
     // ⚠️ PAS de select('*') : la colonne `screenshots` (base64 lourde) ferait timeout
     //    Postgres (57014) sur tout le compte. On liste explicitement les colonnes SAUF
     //    screenshots ; celles-ci sont chargées à la demande (ensureScreenshotsLoaded).
-    const TRADE_COLS = 'id, pair, date, close_date, prise, tf, ordre, risk, rri, result, rrf, jour, hold, type_trade, tend, retails, errs, bon_trade, manage_trade, confluences, psy, checklist, extra_data';
+    const TRADE_COLS = 'id, pair, date, close_date, prise, tf, ordre, risk, rri, result, rrf, jour, hold, type_trade, tend, retails, errs, bon_trade, manage_trade, confluences, exit_thesis, psy, checklist, extra_data';
     const { data, error, status } = await sb.from('trades').select(TRADE_COLS).order('date', { ascending: false });
     if (error) {
       console.error('[Supabase] SELECT échec', { status, error, fullError: JSON.stringify(error) });
@@ -8036,7 +8080,7 @@ document.addEventListener('keydown', e => {
   if(e.key==='Escape'){
     // Si l'analyse plein écran est ouverte, Esc ne la ferme QUE elle (pas le trade en dessous)
     const anOpen = (()=>{ const el=document.getElementById('analysisOverlay'); return el && el.classList.contains('open'); })();
-    if(anOpen){ closeAnalysisOverlay(); return; }
+    if(anOpen){ closeFieldOverlay(); return; }
     // Si une image est zoomée, Esc ne ferme QUE le lightbox (pas le trade en dessous)
     const lbOpen = (()=>{ const el=document.getElementById('lightbox'); return el && el.classList.contains('open'); })();
     if(lbOpen){ closeLightbox(); return; }
