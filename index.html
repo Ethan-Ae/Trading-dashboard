@@ -702,22 +702,24 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
   background: rgba(0,0,0,.5);
   backdrop-filter: blur(8px);
 }
-.panel-overlay.open { display: flex; align-items: flex-start; justify-content: flex-end; }
+.panel-overlay.open { display: flex; align-items: stretch; justify-content: center; }
 .panel {
   background: var(--bg1);
-  width: min(520px, 100vw);
+  width: 100vw;
+  max-width: none;
   height: 100vh;
   overflow-y: auto;
-  border-left: 1px solid var(--sep);
+  border-left: none;
   display: flex; flex-direction: column;
-  animation: slideIn .22s ease;
+  animation: fadeIn .18s ease;
 }
-@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .panel-header {
   display: flex; align-items: center; gap: 12px;
   padding: 18px 20px 16px;
   border-bottom: 1px solid var(--sep);
   position: sticky; top: 0; background: var(--bg1); z-index: 2;
+  max-width: 1500px; margin: 0 auto; width: 100%;
 }
 .panel-pair { font-size: 1.4rem; font-weight: 700; letter-spacing: -.03em; }
 .panel-close {
@@ -730,7 +732,20 @@ tbody td { padding: 11px 16px; font-size: .82rem; vertical-align: middle; white-
 .panel-nav { display: flex; gap: 6px; }
 .panel-nav .panel-close { margin-left: 0; font-size: 1.25rem; font-weight: 700; }
 body.no-scroll { overflow: hidden; }
-.panel-body { padding: 20px; display: flex; flex-direction: column; gap: 0; }
+.panel-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 28px;
+  align-items: start;
+  max-width: 1500px; margin: 0 auto; width: 100%;
+  padding: 24px 28px 48px;
+}
+.panel-col { min-width: 0; display: flex; flex-direction: column; }
+@media (max-width: 1100px) {
+  .panel-body { grid-template-columns: 1fr; gap: 8px; padding: 16px 14px 40px; }
+}
+#panel-confluences { min-height: 300px; }
+#panel-exit-thesis, #panel-psy { min-height: 160px; }
 
 /* ── FIELD ROWS ── */
 .field-row {
@@ -1857,7 +1872,7 @@ body.no-scroll { overflow: hidden; }
       <div class="langcur-row" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end">
         <div style="flex:1;min-width:200px">
           <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px" data-i18n="set_lang_label">Langue de l'interface</label>
-          <select class="year-select" id="set-lang-select" style="width:100%">
+          <select class="year-select" id="set-lang-select" style="width:100%" onchange="onLangSelectChange(this.value)">
             <option value="fr">🇫🇷 Français</option>
             <option value="en">🇬🇧 English</option>
           </select>
@@ -3319,7 +3334,17 @@ async function loadUserPreferences(){
       .maybeSingle();
     // ⚠️ En cas d'erreur (réseau/token), on NE débloque PAS les sauvegardes : l'état
     // en mémoire est encore par défaut, sauvegarder écraserait les réglages du client.
-    if (error) { console.error('[Prefs] load error — sauvegardes bloquées pour préserver les réglages', error); return; }
+    if (error) {
+      console.error('[Prefs] load error — sauvegardes bloquées pour préserver les réglages', error);
+      // Même en cas d'échec réseau, on affiche la langue mémorisée localement
+      // (pas d'attente indéfinie en anglais) — prefsLoaded reste false, donc
+      // aucune sauvegarde n'est débloquée par cet appel.
+      try {
+        const cached = localStorage.getItem('app_lang');
+        if (cached && STRINGS[cached]) { setLang(cached, {silent:true}); applyTranslations(); }
+      } catch(e){}
+      return;
+    }
 
     if (data) {
       if (Array.isArray(data.checklist) && data.checklist.length) {
@@ -4938,6 +4963,7 @@ function buildPanelHTML(t){
   };
 
   return `
+    <div class="panel-col">
     ${field(icoCalendar,L('Actif','Asset'),`<input class="field-input" value="${t.pair||''}" oninput="this.value=this.value.toUpperCase()" onchange="updateField(${t.id},'pair',this.value)">`)}
     ${field(icoCalendar,L('Date de création','Creation date'),`<input class="field-input" type="date" value="${t.date||''}" onchange="updatePanelDate(${t.id},this.value)">`)}
     ${field(icoCalendar,L('Date prise de position','Entry date'),`<input class="field-input" type="date" value="${getTradeEntryDate(t)||''}" onchange="updatePriseDate(${t.id},this.value)"><div style="color:var(--text3);font-size:.68rem;margin-top:3px">${L('Par défaut = date de création.','Defaults to the creation date.')}</div>`)}
@@ -4965,6 +4991,11 @@ function buildPanelHTML(t){
         <button class="emoji-btn ${t.manageTrade==='👎'?'selected':''}" onclick="setEmoji(${t.id},'manageTrade','👎',this)">👎</button>
       </div>`)}</div>
     <div id="panel-evitable-section">${avoidableSectionHTML(t)}</div>
+    <div class="panel-section-title">Checklist</div>
+    <div class="checklist-wrap">${checkItems}</div>
+    ${customFieldsHTML(t)}
+    </div>
+    <div class="panel-col">
     <div class="panel-section-title">${L('Raisons & Confluences','Reasons & Confluences')}</div>
     ${confluenceChipsHTML(t.id)}
     <div class="analysis-box-wrap">
@@ -4983,15 +5014,13 @@ function buildPanelHTML(t){
       <button type="button" class="analysis-expand-btn" onclick="${expandBtnCall(t.id,'psy',L('État Psychologique','Psychological State'),'#panel-psy',L('Comment tu te sentais avant / pendant le trade…','How you felt before / during the trade…'))}" title="${L('Agrandir','Expand')}" aria-label="${L('Agrandir','Expand')}">⤢</button>
       <textarea id="panel-psy" class="field-textarea" style="padding-right:34px" placeholder="${L('Comment tu te sentais avant / pendant le trade…','How you felt before / during the trade…')}" onchange="updateField(${t.id},'psy',this.value)" oninput="syncFieldOverlay(${t.id},'psy',this.value)">${t.psy||''}</textarea>
     </div>
-    <div class="panel-section-title">Checklist</div>
-    <div class="checklist-wrap">${checkItems}</div>
-    ${customFieldsHTML(t)}
     ${photoSectionHTML(t,'exec',L('📸 Exécution','📸 Execution'),L('(toutes tes prises de position)','(all your entries)'),true)}
     ${photoSectionHTML(t,'addin','➕ Add-in',L('(une 2ᵉ position prise dans la première)','(a 2nd position taken within the first)'),true)}
     ${photoSectionHTML(t,'mgmt','🔄 Management',L('(suis ton raisonnement étape par étape)','(follow your reasoning step by step)'),true)}
     ${photoSectionHTML(t,'close',L('🏁 Clôture','🏁 Close'),L('(le moment où tu sors)','(the moment you exit)'),true)}
     ${photoSectionHTML(t,'after',L('📈 Après position','📈 After position'),L('(où le prix est allé après ta sortie)','(where price went after your exit)'),true)}
     <div style="height:28px"></div>
+    </div>
   `;
 }
 
@@ -6458,6 +6487,16 @@ function saveLangCurrency(){
   if(typeof showToast==='function') showToast(t('set_saved'));
 }
 
+// ─── Applique + sauvegarde immédiatement la langue choisie dans le sélecteur ───
+// setTimeout nécessaire : setLang() appelle renderSettings() qui reconstruit
+// le <select> pendant son propre événement change.
+function onLangSelectChange(lang){
+  setTimeout(()=>{ setLang(lang);
+    if(typeof saveUserPreferences==='function') saveUserPreferences();
+    if(typeof showToast==='function') showToast(t('set_saved'));
+  }, 0);
+}
+
 function escapeHtml(s){
   return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -7038,6 +7077,15 @@ async function startCheckout(plan) {
 
 // ─── Bootstrap auth ───
 renderYearSelect();
+// Un visiteur non connecté voit toujours l'anglais. Mais si une session Supabase
+// est déjà en cache (utilisateur déjà connecté qui recharge la page), on restaure
+// tout de suite sa langue mémorisée pour éviter le flash anglais → français une
+// fois checkSubscription()/loadUserPreferences() terminés (1 à 3s plus tard).
+try {
+  const hasSupabaseSession = Object.keys(localStorage).some(k => /^sb-.*-auth-token$/.test(k));
+  const cachedLang = localStorage.getItem('app_lang');
+  if (hasSupabaseSession && cachedLang && STRINGS[cachedLang]) { setLang(cachedLang, {silent:true}); }
+} catch(e){}
 // Applique la langue mémorisée (localStorage) dès le chargement, avant toute connexion
 applyTranslations();
 applyCurrencyPrices();
@@ -7062,6 +7110,14 @@ sb.auth.onAuthStateChange((event, session) => {
 
   // INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, USER_UPDATED → tous avec session
   setSignedInUI(session.user);
+
+  // Applique tout de suite la langue mise en cache (avant l'appel réseau
+  // checkSubscription/loadUserPreferences) pour que le paywall / la bannière
+  // d'essai s'affichent déjà dans la bonne langue.
+  try {
+    const cachedLang = localStorage.getItem('app_lang');
+    if (cachedLang && STRINGS[cachedLang]) { setLang(cachedLang, {silent:true}); }
+  } catch(e){}
 
   // ⚠️ FIX bug « 0 trade intermittent » :
   // TOKEN_REFRESHED / USER_UPDATED se déclenchent périodiquement en arrière-plan
