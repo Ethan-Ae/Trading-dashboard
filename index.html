@@ -1826,6 +1826,11 @@ body.no-scroll { overflow: hidden; }
       <div class="ins-card-sub" data-i18n="in_byemo_sub">Quelles émotions accompagnent tes meilleurs (et pires) trades</div>
       <div id="emotion-table"></div>
     </div>
+    <div class="ins-card" style="grid-column:1/-1">
+      <div class="ins-card-title" data-i18n="in_byerr">🎯 Tes erreurs qui coûtent le plus cher</div>
+      <div class="ins-card-sub" data-i18n="in_byerr_sub">R cumulé par erreur taguée : un trade avec plusieurs erreurs compte dans chacune</div>
+      <div id="error-table"></div>
+    </div>
   </div>
 </div>
 
@@ -2634,6 +2639,8 @@ const STRINGS = {
     in_byhold_sub:"R moyen et nombre de trades selon combien de temps tu gardes ta position",
     in_byemo:"🧠 Performance par émotion",
     in_byemo_sub:"Quelles émotions accompagnent tes meilleurs (et pires) trades",
+    in_byerr:"🎯 Tes erreurs qui coûtent le plus cher",
+    in_byerr_sub:"R cumulé par erreur taguée : un trade avec plusieurs erreurs compte dans chacune",
     // CSV import modal (FR)
     csv_title:"📊 Configuration de l'import CSV",
     csv_sub:"Associe chaque champ du journal à une colonne de ton fichier. Les colonnes non mappées sont préservées dans <code>extra_data</code> — <b>aucune donnée perdue</b>.",
@@ -2841,6 +2848,8 @@ const STRINGS = {
     in_byhold_sub:"Average R and number of trades by how long you hold your position",
     in_byemo:"🧠 Performance by emotion",
     in_byemo_sub:"Which emotions accompany your best (and worst) trades",
+    in_byerr:"🎯 Your costliest mistakes",
+    in_byerr_sub:"Cumulative R per tagged error: a trade with several errors counts in each of them",
     // CSV import modal (EN)
     csv_title:"📊 CSV import configuration",
     csv_sub:"Map each journal field to a column in your file. Unmapped columns are preserved in <code>extra_data</code> — <b>no data lost</b>.",
@@ -6311,6 +6320,17 @@ function renderInsights(){
     if(!emoKeys.length){ emoEl.innerHTML = `<div class="ins-empty">${L("Tague l'émotion de tes trades (dans le panneau ou à la création) pour découvrir comment ton mental impacte tes résultats.","Tag the emotion of your trades (in the panel or at creation) to discover how your mindset impacts your results.")}</div>`; }
     else emoEl.innerHTML = `<table class="bd-table" style="margin-top:12px"><thead><tr><th>${L('Émotion','Emotion')}</th><th>Trades</th><th>W/L</th><th>Avg R</th><th>Total R</th></tr></thead><tbody>${
       emoKeys.map(k=>{ const v=emoMap[k]; const e=EMOTION_BY_LABEL[k]; const avg=+(v.r/v.n).toFixed(2); return `<tr><td style="font-weight:600">${e?e.emoji+' ':''}${tVal(k)}</td><td>${v.n}</td><td>${v.w}/${v.l}</td><td class="${rClass(avg)}">${avg>0?'+':''}${avg}R</td><td class="${rClass(v.r)}">${v.r>0?'+':''}${+v.r.toFixed(2)}R</td></tr>`; }).join('')
+    }</tbody></table>`;
+  }
+
+  // ── Erreurs les plus coûteuses ──
+  const errMap = groupPerf(ts, t=>(t.errs||[]).filter(e=>e && e!=='Aucune'));
+  const errKeys = ERRORS.filter(e=>errMap[e]).sort((a,b)=>errMap[a].r-errMap[b].r);
+  const errEl = document.getElementById('error-table');
+  if(errEl){
+    if(!errKeys.length){ errEl.innerHTML = `<div class="ins-empty">${L("Tague les erreurs de tes trades (dans le panneau ou à la création) pour découvrir lesquelles te coûtent le plus cher.","Tag the errors of your trades (in the panel or at creation) to discover which ones cost you the most.")}</div>`; }
+    else errEl.innerHTML = `<table class="bd-table" style="margin-top:12px"><thead><tr><th>${L('Erreur','Error')}</th><th>Trades</th><th>W/L</th><th>Avg R</th><th>Total R</th></tr></thead><tbody>${
+      errKeys.map(k=>{ const v=errMap[k]; const avg=+(v.r/v.n).toFixed(2); return `<tr><td style="font-weight:600">${tVal(k)}</td><td>${v.n}</td><td>${v.w}/${v.l}</td><td class="${rClass(avg)}">${avg>0?'+':''}${avg}R</td><td class="${rClass(v.r)}">${v.r>0?'+':''}${+v.r.toFixed(2)}R</td></tr>`; }).join('')
     }</tbody></table>`;
   }
 }
