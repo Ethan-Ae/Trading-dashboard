@@ -73,13 +73,18 @@ export default async function handler(req, res) {
     // ─── 2) Récupérer (ou créer) le customer Stripe pour ce user ───
     const { data: subRow, error: subErr } = await supabaseAdmin
       .from('subscriptions')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, trial_ends_at')
       .eq('user_id', user.id)
       .maybeSingle();
 
     if (subErr) {
       console.error('[create-checkout] subscriptions lookup error', subErr);
       return res.status(500).json({ error: 'DB lookup failed' });
+    }
+
+    // Compte gratuit à vie (accordé manuellement) : aucun paiement Stripe requis.
+    if (subRow?.trial_ends_at && new Date(subRow.trial_ends_at) > new Date('2090-01-01T00:00:00Z')) {
+      return res.status(403).json({ error: 'Ce compte dispose déjà d\'un accès gratuit à vie — aucun paiement requis.' });
     }
 
     let customerId = subRow?.stripe_customer_id;
@@ -96,9 +101,23 @@ export default async function handler(req, res) {
         .from('subscriptions')
         .update({ stripe_customer_id: customerId })
         .eq('user_id', user.id);
+    } else {
+      // ─── 3) Si un abonnement actif/past_due existe déjà, on redirige vers le
+      //     Portail client Stripe (changer de carte/formule) au lieu de créer
+      //     un 2e abonnement en doublon. ───
+      const existingSubs = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100 });
+      const hasActiveOrPastDue = existingSubs.data.some(s => ['active', 'trialing', 'past_due'].includes(s.status));
+
+      if (hasActiveOrPastDue) {
+        const portalSession = await stripe.billingPortal.sessions.create({
+          customer: customerId,
+          return_url: SITE_URL,
+        });
+        return res.status(200).json({ url: portalSession.url, portal: true });
+      }
     }
 
-    // ─── 3) Créer la session Checkout ───
+    // ─── 4) Créer la session Checkout ───
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,

@@ -66,6 +66,62 @@ async function upsertSubscription(userId, fields) {
   else console.log('[webhook] subscriptions mis à jour pour', userId, fields);
 }
 
+// ⚠️ Protection « compte gratuit à vie » (accordé manuellement) : si trial_ends_at
+// est dans un futur lointain (après 2090), on ignore TOUT event Stripe pour ce
+// user — aucun paiement/abonnement Stripe ne doit modifier son statut.
+function isLifetimeFree(existingRow) {
+  return !!(existingRow?.trial_ends_at && new Date(existingRow.trial_ends_at) > new Date('2090-01-01T00:00:00Z'));
+}
+
+// Reconcilie la ligne `subscriptions` avec la VRAIE liste des abonnements Stripe
+// du client, plutôt que de faire confiance aveuglément à un seul event. Utilisé
+// par customer.subscription.updated ET .deleted : s'il existe un abonnement actif
+// ou en essai chez Stripe (ex. le nouvel annuel), c'est lui qui prévaut — même si
+// l'event reçu concerne un autre abonnement (ex. l'ancien mensuel supprimé).
+async function reconcileSubscriptionState({ userId, customerId, eventSubId, eventStatus, isDeleteEvent }) {
+  if (!userId) {
+    console.error('[webhook] userId manquant — reconciliation annulée');
+    return;
+  }
+
+  const { data: existing } = await supabaseAdmin
+    .from('subscriptions')
+    .select('trial_ends_at, stripe_subscription_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (isLifetimeFree(existing)) {
+    console.log('[webhook] compte gratuit à vie (trial_ends_at', existing.trial_ends_at, ') — event ignoré pour', userId);
+    return;
+  }
+
+  const list = await stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100 });
+  const active = list.data.find(s => s.status === 'active' || s.status === 'trialing');
+
+  if (active) {
+    await upsertSubscription(userId, {
+      status:                 active.status,
+      stripe_customer_id:     customerId,
+      stripe_subscription_id: active.id,
+    });
+    return;
+  }
+
+  // Aucun abonnement actif chez Stripe. On ne met à jour que si l'event concerne
+  // bien l'abonnement actuellement enregistré, pour ignorer les events tardifs/
+  // orphelins d'un abonnement déjà remplacé.
+  if (existing?.stripe_subscription_id && existing.stripe_subscription_id !== eventSubId) {
+    console.log('[webhook] ignoré : event sub', eventSubId, '≠ sub enregistrée', existing.stripe_subscription_id, 'pour', userId);
+    return;
+  }
+
+  await upsertSubscription(userId, {
+    status:                 isDeleteEvent ? 'canceled' : eventStatus,
+    stripe_customer_id:     customerId,
+    stripe_subscription_id: eventSubId,
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -96,6 +152,18 @@ export default async function handler(req, res) {
           customerId:        session.customer,
         });
 
+        if (userId) {
+          const { data: existing } = await supabaseAdmin
+            .from('subscriptions')
+            .select('trial_ends_at')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (isLifetimeFree(existing)) {
+            console.log('[webhook] compte gratuit à vie (trial_ends_at', existing.trial_ends_at, ') — checkout.session.completed ignoré pour', userId);
+            break;
+          }
+        }
+
         // On va chercher l'objet subscription pour avoir son vrai status (au cas où)
         let stripeStatus = 'active';
         if (session.subscription) {
@@ -108,6 +176,24 @@ export default async function handler(req, res) {
           stripe_customer_id:     session.customer || null,
           stripe_subscription_id: session.subscription || null,
         });
+
+        // Sécurité anti-doublon : si le client a d'autres abonnements Stripe encore
+        // actifs (ex. ancien mensuel pas résilié), on les annule — en excluant
+        // explicitement celui qu'on vient tout juste de créer.
+        if (session.customer && session.subscription) {
+          const list = await stripe.subscriptions.list({ customer: session.customer, status: 'all', limit: 100 });
+          const duplicates = list.data.filter(s =>
+            s.id !== session.subscription && ['active', 'trialing', 'past_due'].includes(s.status)
+          );
+          for (const dup of duplicates) {
+            try {
+              await stripe.subscriptions.cancel(dup.id);
+              console.log('[webhook] doublon annulé automatiquement :', dup.id, '(nouveau :', session.subscription, ') pour customer', session.customer);
+            } catch (cancelErr) {
+              console.error('[webhook] échec annulation doublon', dup.id, cancelErr.message);
+            }
+          }
+        }
         break;
       }
 
@@ -118,10 +204,12 @@ export default async function handler(req, res) {
           metadataUserId: sub.metadata?.user_id,
           customerId:     sub.customer,
         });
-        await upsertSubscription(userId, {
-          status:                 sub.status,
-          stripe_customer_id:     sub.customer,
-          stripe_subscription_id: sub.id,
+        await reconcileSubscriptionState({
+          userId,
+          customerId:  sub.customer,
+          eventSubId:  sub.id,
+          eventStatus: sub.status,
+          isDeleteEvent: false,
         });
         break;
       }
@@ -133,9 +221,12 @@ export default async function handler(req, res) {
           metadataUserId: sub.metadata?.user_id,
           customerId:     sub.customer,
         });
-        await upsertSubscription(userId, {
-          status:                 'canceled',
-          stripe_subscription_id: sub.id,
+        await reconcileSubscriptionState({
+          userId,
+          customerId:  sub.customer,
+          eventSubId:  sub.id,
+          eventStatus: 'canceled',
+          isDeleteEvent: true,
         });
         break;
       }
