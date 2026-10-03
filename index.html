@@ -1639,6 +1639,7 @@ body.no-scroll { overflow: hidden; }
       <div class="month-hero-label" data-i18n="mh_totalr">Total R du mois</div>
       <div class="month-hero-value" id="mh-totalR">—</div>
       <div class="month-hero-pct" id="mh-totalPct">—</div>
+      <div class="month-hero-pct" id="mh-money" style="display:none;font-family:'JetBrains Mono','SF Mono',Menlo,monospace"></div>
       <div class="month-hero-sub" id="mh-sub">—</div>
     </div>
     <div class="month-hero-side">
@@ -1989,6 +1990,34 @@ body.no-scroll { overflow: hidden; }
       </div>
       <div class="settings-list" id="settings-risk"></div>
       <button class="settings-add" onclick="addRiskOption()" data-i18n="set_risk_add">＋ Ajouter un palier de risque</button>
+    </div>
+
+    <!-- ─── Mon compte (capital & devise, optionnel) ─── -->
+    <div class="settings-card" style="grid-column:span 2">
+      <div class="settings-card-head">
+        <div>
+          <div class="settings-card-title" data-i18n="set_account_title">💰 Mon compte</div>
+          <div class="settings-card-sub" data-i18n="set_account_sub">Optionnel — renseigne ton capital pour afficher ton P&amp;L en argent en plus du R.</div>
+        </div>
+      </div>
+      <div class="langcur-row" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end">
+        <div style="flex:1;min-width:200px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px" data-i18n="set_account_capital_label">Capital du compte</label>
+          <input class="year-select" type="number" min="0" step="any" id="set-account-capital"
+                 style="width:100%;font-family:'JetBrains Mono','SF Mono',Menlo,monospace"
+                 data-i18n-ph="set_account_capital_ph" placeholder="Ex. 10000">
+        </div>
+        <div style="flex:1;min-width:200px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:6px" data-i18n="set_account_currency_label">Devise du compte</label>
+          <select class="year-select" id="set-account-currency" style="width:100%">
+            <option value="" data-i18n="set_account_currency_none">—</option>
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="CHF">CHF</option>
+          </select>
+        </div>
+        <button class="btn-orange" onclick="saveAccountSettings()" data-i18n="set_save" style="white-space:nowrap">💾 Enregistrer</button>
+      </div>
     </div>
 
     <!-- ─── Contact / About ─── -->
@@ -2704,6 +2733,12 @@ const STRINGS = {
     set_risk_title:"🎚️ % de risque par trade",
     set_risk_sub:"Les paliers proposés dans le champ « Risk » (1R). Ajoute les tiens si tu risques plus de 2%.",
     set_risk_add:"＋ Ajouter un palier de risque",
+    set_account_title:"💰 Mon compte",
+    set_account_sub:"Optionnel — renseigne ton capital pour afficher ton P&L en argent en plus du R.",
+    set_account_capital_label:"Capital du compte",
+    set_account_capital_ph:"Ex. 10000",
+    set_account_currency_label:"Devise du compte",
+    set_account_currency_none:"—",
     set_contact_title:"📬 Contact & À propos",
     set_contact_sub:"Une question, une suggestion, un bug ? Écris-nous.",
     set_danger_title:"⚠️ Zone dangereuse",
@@ -2910,6 +2945,12 @@ const STRINGS = {
     set_risk_title:"🎚️ Risk % per trade",
     set_risk_sub:"The levels offered in the \"Risk\" field (1R). Add your own if you risk more than 2%.",
     set_risk_add:"＋ Add a risk level",
+    set_account_title:"💰 My account",
+    set_account_sub:"Optional — set your capital to show your P&L in money alongside R.",
+    set_account_capital_label:"Account capital",
+    set_account_capital_ph:"E.g. 10000",
+    set_account_currency_label:"Account currency",
+    set_account_currency_none:"—",
     set_contact_title:"📬 Contact & About",
     set_contact_sub:"A question, a suggestion, a bug? Write to us.",
     set_danger_title:"⚠️ Danger zone",
@@ -3193,6 +3234,54 @@ function pretradeNeeded(){
 // trades risquent 1%). Valeurs possibles dans l'UI : 0.25 / 0.5 / 1 / 2 (%).
 let RISK_PER_R = 1;
 
+// ─── Capital & devise du compte (optionnel) — stocké dans user_preferences
+// (account_capital, account_currency). Capital FIXE (ne compose jamais) ; sert
+// uniquement à afficher le P&L en argent en complément du R, jamais à la place.
+let ACCOUNT_CAPITAL = null;   // number|null — null = fonctionnalité désactivée
+let ACCOUNT_CURRENCY = null;  // 'USD'|'EUR'|'CHF'|null
+const ACCOUNT_CURRENCY_SYMS = { USD:'$', EUR:'€', CHF:'CHF' };
+function hasAccountSetup(){
+  return typeof ACCOUNT_CAPITAL === 'number' && ACCOUNT_CAPITAL > 0 && !!ACCOUNT_CURRENCY_SYMS[ACCOUNT_CURRENCY];
+}
+// Risque % du trade (ex. "1.00%" → 1). null si vide/invalide (→ repli sur RISK_PER_R).
+function riskPctOf(t){
+  const raw = String((t && t.risk) || '').replace('%','').replace(',','.').trim();
+  if(!raw) return null;
+  const v = parseFloat(raw);
+  return isNaN(v) ? null : v;
+}
+// P&L en argent d'un trade = capital × risque% × R/R final. Repli sur RISK_PER_R
+// si le risque% du trade est vide. null si le trade n'a pas de R/R final numérique
+// ou si le compte n'est pas configuré.
+function moneyPnL(t){
+  if(!hasAccountSetup()) return null;
+  const r = rrfNum(t);
+  if(r === null) return null;
+  const pct = riskPctOf(t);
+  const effPct = pct !== null ? pct : RISK_PER_R;
+  return ACCOUNT_CAPITAL * (effPct/100) * r;
+}
+function sumMoneyPnL(ts){
+  return ts.reduce((s,t)=>{ const m = moneyPnL(t); return s + (m||0); }, 0);
+}
+// Solde actuel = capital + Σ P&L argent de tous les trades pris (toutes années confondues).
+function currentBalance(){
+  if(!hasAccountSetup()) return null;
+  return ACCOUNT_CAPITAL + sumMoneyPnL(trades.filter(isTradePris));
+}
+function accountPerformancePct(){
+  if(!hasAccountSetup() || ACCOUNT_CAPITAL <= 0) return null;
+  return ((currentBalance() - ACCOUNT_CAPITAL) / ACCOUNT_CAPITAL) * 100;
+}
+// Formatte un montant en argent : signe, milliers séparés par espace, symbole en suffixe.
+// Ex. "+1 250 $", "-430 €", "+2 100 CHF".
+function formatMoney(amount){
+  const sym = ACCOUNT_CURRENCY_SYMS[ACCOUNT_CURRENCY] || '';
+  const sign = amount >= 0 ? '+' : '-';
+  const grouped = Math.round(Math.abs(amount)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${sign}${grouped} ${sym}`;
+}
+
 // ─── Émotions (état psychologique structuré, stocké dans extra_data.emotions) ───
 // good:true = état favorable à la discipline ; good:false = état à risque.
 const EMOTIONS = [
@@ -3360,7 +3449,7 @@ async function loadUserPreferences(){
   try {
     const { data, error } = await sb
       .from('user_preferences')
-      .select('checklist, errors, tendances, confluences, risk_options, language, currency, risk_per_r, checklist_required, checklist_items, trade_limit_enabled, trade_limit_monthly')
+      .select('checklist, errors, tendances, confluences, risk_options, language, currency, risk_per_r, checklist_required, checklist_items, trade_limit_enabled, trade_limit_monthly, account_capital, account_currency')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     // ⚠️ En cas d'erreur (réseau/token), on NE débloque PAS les sauvegardes : l'état
@@ -3411,6 +3500,9 @@ async function loadUserPreferences(){
       // ─── Limite de trades par mois ───
       if (typeof data.trade_limit_enabled === 'boolean') TRADE_LIMIT_ENABLED = data.trade_limit_enabled;
       { const n = parseInt(data.trade_limit_monthly, 10); if(!isNaN(n) && n >= 1) TRADE_LIMIT_MONTHLY = n; }
+      // ─── Capital & devise du compte (optionnel) ───
+      { const c = parseFloat(data.account_capital); ACCOUNT_CAPITAL = (!isNaN(c) && c > 0) ? c : null; }
+      ACCOUNT_CURRENCY = (data.account_currency && ACCOUNT_CURRENCY_SYMS[data.account_currency]) ? data.account_currency : null;
       // ─── Langue (la devise suit la langue : FR→EUR, EN→USD) ───
       if (data.language && STRINGS[data.language]) { setLang(data.language, {silent:true}); }
       applyTranslations();
@@ -3441,6 +3533,8 @@ async function loadUserPreferences(){
         checklist_items:     PRESESSION_ITEMS,
         trade_limit_enabled: TRADE_LIMIT_ENABLED,
         trade_limit_monthly: TRADE_LIMIT_MONTHLY,
+        account_capital:  ACCOUNT_CAPITAL,
+        account_currency: ACCOUNT_CURRENCY,
       });
       // On n'autorise les sauvegardes que si la ligne a bien été créée.
       if (insErr) console.error('[Prefs] création échouée — sauvegardes bloquées', insErr);
@@ -4118,15 +4212,24 @@ function renderOverview(){
       <span class="pc-pill pc-pris"><span class="pc-dot"></span><span class="pc-num">${nPris}</span> ${L('trade'+(nPris>1?'s':'')+' pris','trade'+(nPris>1?'s':'')+' taken')}</span>
       <span class="pc-pill pc-missed"><span class="pc-dot"></span><span class="pc-num">${nMissed}</span> ${L('trade'+(nMissed>1?'s':'')+' manqué'+(nMissed>1?'s':''),'trade'+(nMissed>1?'s':'')+' missed')}</span>`;
   }
+  // P&L en argent (optionnel) — même sous-ensemble de trades que les stats R (ts)
+  const acctOn = hasAccountSetup();
+  const totalRMoney = acctOn ? sumMoneyPnL(ts) : null;
+  const balance = acctOn ? currentBalance() : null;
+  const perfPct = acctOn ? accountPerformancePct() : null;
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi"><div class="kpi-label">Total Trades</div><div class="kpi-value">${s.total}</div><div class="kpi-sub">${s.wins}W · ${s.losses}L</div></div>
     <div class="kpi"><div class="kpi-label">Win Rate</div><div class="kpi-value ora">${s.winRate.toFixed(1)}%</div></div>
-    <div class="kpi"><div class="kpi-label">Total R</div><div class="kpi-value ${s.totalR>=0?'pos':'neg'}">${s.totalR>0?'+':''}${s.totalR}R</div></div>
+    <div class="kpi"><div class="kpi-label">Total R</div><div class="kpi-value ${s.totalR>=0?'pos':'neg'}">${s.totalR>0?'+':''}${s.totalR}R</div>${totalRMoney!==null?`<div class="kpi-sub" style="font-family:'JetBrains Mono','SF Mono',Menlo,monospace">${formatMoney(totalRMoney)}</div>`:''}</div>
     <div class="kpi"><div class="kpi-label">${L('R moyen/trade','Avg R/trade')}</div><div class="kpi-value ${s.avgR>=0?'pos':'neg'}">${s.avgR>0?'+':''}${s.avgR}R</div></div>
     <div class="kpi"><div class="kpi-label">Profit Factor</div><div class="kpi-value ora">${s.pf}</div></div>
     <div class="kpi"><div class="kpi-label">Avg Win</div><div class="kpi-value pos">+${s.avgWin}R</div></div>
     <div class="kpi"><div class="kpi-label">Avg Loss</div><div class="kpi-value neg">-${s.avgLoss}R</div></div>
     <div class="kpi"><div class="kpi-label">${L('Drawdown Max','Max Drawdown')}</div><div class="kpi-value ${s.maxDD>0?'neg':''}">${s.maxDD>0?'-':''}${s.maxDD}R</div><div class="kpi-sub">${L('plus forte baisse depuis un sommet','largest drop from a peak')}</div></div>
+    ${acctOn ? `
+    <div class="kpi"><div class="kpi-label">${L('Solde actuel','Current balance')}</div><div class="kpi-value" style="font-family:'JetBrains Mono','SF Mono',Menlo,monospace">${formatMoney(balance).replace(/^[+-]/,'')}</div></div>
+    <div class="kpi"><div class="kpi-label">${L('Performance du compte','Account performance')}</div><div class="kpi-value ${perfPct>=0?'pos':'neg'}">${perfPct>=0?'+':''}${perfPct.toFixed(1)}%</div></div>
+    ` : ''}
   `;
 
   // Gauges
@@ -4258,8 +4361,10 @@ function renderMonthlyHeatmap(ts){
   const grid = document.getElementById('heatmap-grid');
   if(!wrap || !grid) return;
 
+  const acctOn = hasAccountSetup();
   const byYear = {};   // { year: [12 sommes R] }
   const cntByYear = {}; // { year: [12 nb trades] }
+  const byYearMoney = {}; // { year: [12 sommes argent] } — uniquement si compte configuré
   ts.forEach(t=>{
     const r = rrfNum(t); if(r===null) return;
     const d = getTradeDate(t); if(!d) return;
@@ -4267,6 +4372,7 @@ function renderMonthlyHeatmap(ts){
     if(isNaN(y) || mi<0 || mi>11) return;
     (byYear[y] || (byYear[y]=new Array(12).fill(0)))[mi] += r;
     (cntByYear[y] || (cntByYear[y]=new Array(12).fill(0)))[mi]++;
+    if(acctOn){ const m = moneyPnL(t); (byYearMoney[y] || (byYearMoney[y]=new Array(12).fill(0)))[mi] += (m||0); }
   });
   const years = Object.keys(byYear).map(Number);
   if(years.length === 0){ wrap.style.display='none'; return; }
@@ -4284,9 +4390,12 @@ function renderMonthlyHeatmap(ts){
 
   // Ligne Moy. : moyenne du R mensuel sur les années qui ont ≥1 trade ce mois-là
   const avgRow = new Array(12).fill(null);
+  const avgMoneyRow = new Array(12).fill(null);
   for(let m=0;m<12;m++){
-    const vals = allYears.filter(y=>cntByYear[y] && cntByYear[y][m]>0).map(y=>byYear[y][m]);
+    const ys = allYears.filter(y=>cntByYear[y] && cntByYear[y][m]>0);
+    const vals = ys.map(y=>byYear[y][m]);
     avgRow[m] = vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : null;
+    if(acctOn && ys.length){ avgMoneyRow[m] = ys.reduce((s,y)=>s+byYearMoney[y][m],0)/ys.length; }
   }
 
   // Max absolu de TOUTE la grille (Moy. + cases mensuelles + totaux "An") → intensité couleur
@@ -4320,7 +4429,8 @@ function renderMonthlyHeatmap(ts){
     if(v === null){
       html += `<div class="heatmap-cell empty" title="${L('Aucun trade','No trade')}"><span class="heatmap-dot"></span></div>`;
     } else {
-      html += `<div class="heatmap-cell" style="background:${cellColor(v)}" title="${L('Moyenne','Average')} ${shortMonths[m]} : ${fmtR(v)}"></div>`;
+      const moneyTip = (acctOn && avgMoneyRow[m]!==null) ? ` (${formatMoney(avgMoneyRow[m])})` : '';
+      html += `<div class="heatmap-cell" style="background:${cellColor(v)}" title="${L('Moyenne','Average')} ${shortMonths[m]} : ${fmtR(v)}${moneyTip}"></div>`;
     }
   }
   html += `<div class="heatmap-cell empty"></div>`;
@@ -4330,20 +4440,22 @@ function renderMonthlyHeatmap(ts){
     html += `<div class="heatmap-cell heatmap-rowlabel">${y}</div>`;
     const arr = byYear[y] || new Array(12).fill(0);
     const cnts = cntByYear[y] || new Array(12).fill(0);
-    let yearTotal = 0, yearCount = 0, yearHasAny = false;
+    let yearTotal = 0, yearCount = 0, yearHasAny = false, yearMoneyTotal = 0;
     for(let m=0;m<12;m++){
       const isFuture = (y === curYear && m > now.getMonth()) || y > curYear;
       const has = cnts[m] > 0;
-      if(has){ yearTotal += arr[m]; yearCount += cnts[m]; yearHasAny = true; }
+      if(has){ yearTotal += arr[m]; yearCount += cnts[m]; yearHasAny = true; if(acctOn) yearMoneyTotal += byYearMoney[y][m]; }
       if(isFuture || !has){
         html += `<div class="heatmap-cell empty"><span class="heatmap-dot"></span></div>`;
       } else {
         const v = arr[m];
-        html += `<div class="heatmap-cell" style="background:${cellColor(v)}" title="${shortMonths[m]} ${y} : ${fmtR(v)} · ${cnts[m]} ${trWord(cnts[m])}"></div>`;
+        const moneyTip = acctOn ? ` (${formatMoney(byYearMoney[y][m])})` : '';
+        html += `<div class="heatmap-cell" style="background:${cellColor(v)}" title="${shortMonths[m]} ${y} : ${fmtR(v)}${moneyTip} · ${cnts[m]} ${trWord(cnts[m])}"></div>`;
       }
     }
     if(yearHasAny){
-      html += `<div class="heatmap-cell total" style="background:${cellColor(yearTotal)}" title="${y} : ${fmtR(yearTotal)} · ${yearCount} ${trWord(yearCount)}"></div>`;
+      const moneyTip = acctOn ? ` (${formatMoney(yearMoneyTotal)})` : '';
+      html += `<div class="heatmap-cell total" style="background:${cellColor(yearTotal)}" title="${y} : ${fmtR(yearTotal)}${moneyTip} · ${yearCount} ${trWord(yearCount)}"></div>`;
     } else {
       html += `<div class="heatmap-cell empty"><span class="heatmap-dot"></span></div>`;
     }
@@ -5027,6 +5139,7 @@ function buildPanelHTML(t){
     ${field(icoRisk,L('R/R Initial','Initial R/R'),`<input class="field-input" type="number" step="0.01" value="${t.rri||''}" placeholder="${L('ex: 3.2','e.g. 3.2')}" onchange="updateField(${t.id},'rri',+this.value)">`)}
     ${field(icoRisk,L('Résultat','Result'),sel(RESULT_OPTIONS,t.result,'result'))}
     ${field(icoRisk,L('R/R Final','Final R/R'),`<input class="field-input" type="number" step="0.01" value="${t.rrf??''}" placeholder="${L('ex: -1 ou 3.2','e.g. -1 or 3.2')}" onchange="updateField(${t.id},'rrf',this.value===''?null:+this.value)">`)}
+    ${hasAccountSetup() && moneyPnL(t)!==null ? field(icoRisk,L('P&L en argent','P&L in money'),`<span style="color:${moneyPnL(t)>=0?'var(--green)':'var(--red)'};font-family:'JetBrains Mono','SF Mono',Menlo,monospace;font-size:.82rem">${formatMoney(moneyPnL(t))}</span>`) : ''}
     ${field(icoJour,L('Jour','Day'),`<span style="color:var(--text2);font-size:.82rem">${tVal(getTradeJour(t))||'—'}</span>`)}
     ${field(icoType,L('Type de Trade','Trade Type'),sel(TYPE_OPTIONS,t.type,'type'))}
     ${field(icoTend,L('Tendance','Trend'),sel(TEND_OPTIONS,t.tend,'tend'))}
@@ -5947,6 +6060,7 @@ function renderPeriodBody(ts, P, C, emptyId){
   if(ts.length===0){
     if($(P+'totalR')){ $(P+'totalR').textContent = '0R'; $(P+'totalR').className = 'month-hero-value'; }
     if($(P+'totalPct')){ $(P+'totalPct').innerHTML = '0%'; $(P+'totalPct').className = 'month-hero-pct'; }
+    if($(P+'money')) $(P+'money').style.display = 'none';
     if($(P+'sub')) $(P+'sub').textContent = '—';
     ['total','wr','pf','exp','wins','losses','profits','loss','bestw','bestl','best','worst','hr','net'].forEach(sfx=>{
       const el=$(P+sfx); if(!el) return;
@@ -5991,6 +6105,18 @@ function renderPeriodBody(ts, P, C, emptyId){
   if(pctEl){
     pctEl.innerHTML = `${totalPct>=0?'+':''}${totalPct}<span style="font-size:.7em;opacity:.7">% ${L('du capital','of capital')}</span>`;
     pctEl.className = 'month-hero-pct ' + (totalPct>=0?'pos':'neg');
+  }
+  // P&L en argent (optionnel, mensuel uniquement — l'élément n'existe pas en vue trimestrielle)
+  const moneyEl = $(P+'money');
+  if(moneyEl){
+    if(hasAccountSetup()){
+      const moneyTotal = sumMoneyPnL(closed);
+      moneyEl.textContent = formatMoney(moneyTotal);
+      moneyEl.className = 'month-hero-pct ' + (moneyTotal>=0?'pos':'neg');
+      moneyEl.style.display = '';
+    } else {
+      moneyEl.style.display = 'none';
+    }
   }
   $(P+'sub').textContent = L(`${closed.length} trade${closed.length>1?'s':''} clôturé${closed.length>1?'s':''} · ${ts.length - closed.length} en cours`, `${closed.length} closed trade${closed.length>1?'s':''} · ${ts.length - closed.length} open`);
   $(P+'total').textContent = ts.length;
@@ -6424,6 +6550,11 @@ function renderSettings(){
   // Sélecteur de langue (la devise suit automatiquement la langue)
   const lsel = document.getElementById('set-lang-select');
   if(lsel) lsel.value = currentLang;
+  // Capital & devise du compte (optionnel)
+  const capEl = document.getElementById('set-account-capital');
+  if(capEl) capEl.value = (typeof ACCOUNT_CAPITAL === 'number') ? ACCOUNT_CAPITAL : '';
+  const curEl = document.getElementById('set-account-currency');
+  if(curEl) curEl.value = ACCOUNT_CURRENCY || '';
   // Sélecteur 1R = X %
   const rprSel = document.getElementById('set-riskperr-select');
   if(rprSel) rprSel.value = String(RISK_PER_R);
@@ -6547,6 +6678,21 @@ function saveLangCurrency(){
   setLang(lang);       // applique la traduction + la devise (FR→EUR, EN→USD) + re-render
   if(typeof saveUserPreferences==='function') saveUserPreferences();
   if(typeof refreshCurrentPage==='function') refreshCurrentPage(); // recalcule les perfs pondérées
+  if(typeof showToast==='function') showToast(t('set_saved'));
+}
+
+// ─── Capital & devise du compte (optionnel) — sauvegarde ciblée (2 colonnes séparées) ───
+function saveAccountSettings(){
+  const capEl = document.getElementById('set-account-capital');
+  const curEl = document.getElementById('set-account-currency');
+  const rawCap = capEl ? String(capEl.value).replace(',','.').trim() : '';
+  const n = parseFloat(rawCap);
+  ACCOUNT_CAPITAL = (rawCap !== '' && !isNaN(n) && n > 0) ? n : null;
+  const curVal = curEl ? curEl.value : '';
+  ACCOUNT_CURRENCY = ACCOUNT_CURRENCY_SYMS[curVal] ? curVal : null;
+  savePrefColumn('account_capital', ACCOUNT_CAPITAL);
+  savePrefColumn('account_currency', ACCOUNT_CURRENCY);
+  if(typeof refreshCurrentPage==='function') refreshCurrentPage();
   if(typeof showToast==='function') showToast(t('set_saved'));
 }
 
