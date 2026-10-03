@@ -3096,7 +3096,7 @@ let TEND_OPTIONS = TEND_OPTIONS_DEFAULT.slice();
 // ajouter leurs propres paliers (ex. "3.00%", "5.00%").
 const RISK_OPTIONS_DEFAULT = ['0.25%','0.33%','0.50%','0.66%','0.75%','1.00%','1.50%','2.00%','2.50%'];
 let RISK_OPTIONS = (()=>{ try{ const v=JSON.parse(localStorage.getItem('risk_options')||'null'); return (Array.isArray(v)&&v.length)?v:RISK_OPTIONS_DEFAULT.slice(); }catch(e){ return RISK_OPTIONS_DEFAULT.slice(); } })();
-function saveRiskOptions(){ localStorage.setItem('risk_options', JSON.stringify(RISK_OPTIONS)); }
+function saveRiskOptions(){ localStorage.setItem('risk_options', JSON.stringify(RISK_OPTIONS)); savePrefColumn('risk_options', RISK_OPTIONS); }
 // Normalise une saisie utilisateur en palier "X.XX%" (accepte "2", "2%", "2,5", "0.75%").
 function normalizeRisk(raw){
   if(raw==null) return null;
@@ -3248,7 +3248,7 @@ const CONFLUENCES_DEFAULT = [
   'Zone Premium / Discount',
 ];
 let CONFLUENCES = (()=>{ try{ const v=JSON.parse(localStorage.getItem('confluences_items')||'null'); return (Array.isArray(v)&&v.length)?v:CONFLUENCES_DEFAULT.slice(); }catch(e){ return CONFLUENCES_DEFAULT.slice(); } })();
-function saveConfluences(){ localStorage.setItem('confluences_items', JSON.stringify(CONFLUENCES)); }
+function saveConfluences(){ localStorage.setItem('confluences_items', JSON.stringify(CONFLUENCES)); savePrefColumn('confluences', CONFLUENCES); }
 
 // ─── Journal mensuel (bilan de fin de mois) — { "YYYY-MM": "texte" } ───
 // Cache local immédiat + sync Supabase (colonne user_preferences.monthly_notes, JSONB).
@@ -3330,6 +3330,28 @@ async function saveUserPreferences(){
   }, 400);
 }
 
+// ─── Sauvegarde ciblée (une seule colonne de user_preferences, jamais les autres) ───
+// Utilisée par les listes migrées depuis localStorage (confluences, risk_options).
+const _savePrefColumnTimers = {};
+function savePrefColumn(column, value){
+  if (!currentUser) return;
+  if (!prefsLoaded) { console.warn('[Prefs] sauvegarde ignorée ('+column+') : préférences pas encore chargées (anti-écrasement)'); return; }
+  clearTimeout(_savePrefColumnTimers[column]);
+  _savePrefColumnTimers[column] = setTimeout(async () => {
+    try {
+      const payload = { user_id: currentUser.id };
+      payload[column] = value;
+      const { error } = await sb.from('user_preferences').upsert(payload, { onConflict: 'user_id' });
+      if (error) console.error('[Prefs] save error ('+column+')', error);
+      else console.log('[Prefs] sauvegardé :', column);
+    } catch(e) { console.error('[Prefs] exception ('+column+')', e); }
+  }, 400);
+}
+// Lit un tableau JSON depuis le localStorage (migration one-shot vers Supabase).
+function readLocalStorageArray(key){
+  try{ const v = JSON.parse(localStorage.getItem(key)||'null'); return Array.isArray(v) ? v : null; }catch(e){ return null; }
+}
+
 async function loadUserPreferences(){
   if (!currentUser) return;
   // On repart d'un état « non chargé » : aucune sauvegarde ne doit partir tant que
@@ -3338,7 +3360,7 @@ async function loadUserPreferences(){
   try {
     const { data, error } = await sb
       .from('user_preferences')
-      .select('checklist, errors, tendances, language, currency, risk_per_r, checklist_required, checklist_items, trade_limit_enabled, trade_limit_monthly')
+      .select('checklist, errors, tendances, confluences, risk_options, language, currency, risk_per_r, checklist_required, checklist_items, trade_limit_enabled, trade_limit_monthly')
       .eq('user_id', currentUser.id)
       .maybeSingle();
     // ⚠️ En cas d'erreur (réseau/token), on NE débloque PAS les sauvegardes : l'état
@@ -3365,6 +3387,22 @@ async function loadUserPreferences(){
       if (Array.isArray(data.tendances)) {
         TEND_OPTIONS = data.tendances.slice();
       }
+      // ─── Confluences & options de risque — Supabase fait foi ; si la colonne est
+      // encore null (jamais sauvegardée) ET que le localStorage contient une valeur,
+      // on migre cette valeur vers Supabase une seule fois (sans perte pour l'utilisateur).
+      let _migrateConfluences = null, _migrateRiskOptions = null;
+      if (Array.isArray(data.confluences)) {
+        CONFLUENCES = data.confluences.slice();
+      } else {
+        const v = readLocalStorageArray('confluences_items');
+        if (v) { CONFLUENCES = v; _migrateConfluences = v; }
+      }
+      if (Array.isArray(data.risk_options)) {
+        RISK_OPTIONS = data.risk_options.slice();
+      } else {
+        const v = readLocalStorageArray('risk_options');
+        if (v) { RISK_OPTIONS = v; _migrateRiskOptions = v; }
+      }
       // ─── 1R = X % (pondération) — défaut 1 si absent/invalide ───
       { const v = parseFloat(data.risk_per_r); RISK_PER_R = (!isNaN(v) && v > 0) ? v : 1; }
       // ─── Checklist pré-session ───
@@ -3377,6 +3415,9 @@ async function loadUserPreferences(){
       if (data.language && STRINGS[data.language]) { setLang(data.language, {silent:true}); }
       applyTranslations();
       prefsLoaded = true; // réglages chargés → sauvegardes autorisées
+      // Migration localStorage → Supabase (après déblocage des sauvegardes ci-dessus)
+      if (_migrateConfluences) savePrefColumn('confluences', _migrateConfluences);
+      if (_migrateRiskOptions) savePrefColumn('risk_options', _migrateRiskOptions);
       console.log('[Prefs] chargé :', CHECKLIST.length, 'items checklist,', ERRORS.length, 'erreurs,', TEND_OPTIONS.length, 'tendances · lang=', currentLang, '· devise=', currentCurrency);
     } else {
       // Pas de ligne → on crée avec les valeurs par défaut (ou le choix fait à l'inscription)
@@ -3391,6 +3432,8 @@ async function loadUserPreferences(){
         checklist: CHECKLIST,
         errors:    ERRORS,
         tendances: TEND_OPTIONS,
+        confluences:   CONFLUENCES,
+        risk_options:  RISK_OPTIONS,
         language:  signupLang,
         currency:  currentCurrency,
         risk_per_r: RISK_PER_R,
