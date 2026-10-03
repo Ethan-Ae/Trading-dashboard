@@ -3356,13 +3356,13 @@ async function loadUserPreferences(){
     }
 
     if (data) {
-      if (Array.isArray(data.checklist) && data.checklist.length) {
+      if (Array.isArray(data.checklist)) {
         CHECKLIST = data.checklist.slice();
       }
-      if (Array.isArray(data.errors) && data.errors.length) {
+      if (Array.isArray(data.errors)) {
         ERRORS = data.errors.slice();
       }
-      if (Array.isArray(data.tendances) && data.tendances.length) {
+      if (Array.isArray(data.tendances)) {
         TEND_OPTIONS = data.tendances.slice();
       }
       // ─── 1R = X % (pondération) — défaut 1 si absent/invalide ───
