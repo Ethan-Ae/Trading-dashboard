@@ -4326,11 +4326,12 @@ function renderOverview(){
   // Equity — uniquement les trades pris avec un R/R final numérique valide (ignore les "—" → pas de trous)
   const eqTs = tsChrono.filter(t=>rrfNum(t)!==null);
   const eqReal = EQ_MODE==='reel';
-  const eqIsMoney = eqReal && hasAccountSetup();
-  const eqStart = eqIsMoney ? ACCOUNT_CAPITAL : 100;
   let eqData;
   if(eqReal){
-    eqData = buildRealEquityCurve(eqTs, eqStart);
+    // Courbe compoundée (base 100) reconvertie en "R pondéré cumulé" via 1R = RISK_PER_R % du capital,
+    // pour rester comparable à la courbe Brut tout en reflétant le risque % réel + l'effet de compounding.
+    const idx = buildRealEquityCurve(eqTs, 100);
+    eqData = idx.map(v => +(((v/100 - 1) * 100 / (RISK_PER_R>0 ? RISK_PER_R : 1)).toFixed(2)));
   } else {
     let eq = 0;
     eqData = eqTs.map(t=>{ eq+=rrfNum(t); return +eq.toFixed(2); });
@@ -4348,17 +4349,13 @@ function renderOverview(){
           backgroundColor:'#1c1c1e', titleColor:'#fff', bodyColor:'#aeaeb2', borderColor:'#2c2c2e', borderWidth:1,
           callbacks:{
             title:(items)=>`${L('Trade n°','Trade #')}${items[0].label}`,
-            label:(c)=> eqReal
-              ? (eqIsMoney ? ` ${formatMoney(c.parsed.y).replace(/^[+-]/,'')}` : ` ${(((c.parsed.y/eqStart)-1)*100)>=0?'+':''}${(((c.parsed.y/eqStart)-1)*100).toFixed(2)}% ${L('cumulé','cumulative')}`)
-              : ` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}`
+            label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}`
           }
         }
       },
       scales:{
         x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}}, title:{display:true,text:L('N° de trade','Trade #'),color:'#636366',font:{size:10}} },
-        y: eqReal
-          ? { grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>eqIsMoney?formatMoney(v).replace(/^[+-]/,''):v}, title:{display:true,text:eqIsMoney?L('Capital','Capital'):L('Capital (base 100)','Capital (base 100)'),color:'#636366',font:{size:10}} }
-          : { grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>(v>0?'+':'')+v+'R'}, title:{display:true,text:L('R cumulés','Cumulative R'),color:'#636366',font:{size:10}} }
+        y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>(v>0?'+':'')+v+'R'}, title:{display:true,text:L('R cumulés','Cumulative R'),color:'#636366',font:{size:10}} }
       }
     })
   });
@@ -6227,11 +6224,12 @@ function renderPeriodBody(ts, P, C, emptyId){
   if(typeof Chart === 'undefined') return;
   // Equity — uniquement R/R final numériques valides (ignore les "—" → pas de trous)
   const eqReal = EQ_MODE==='reel';
-  const eqIsMoney = eqReal && hasAccountSetup();
-  const eqStart = eqIsMoney ? ACCOUNT_CAPITAL : 100;
   let eqData;
   if(eqReal){
-    eqData = buildRealEquityCurve(numClosed, eqStart);
+    // Courbe compoundée (base 100) reconvertie en "R pondéré cumulé" via 1R = RISK_PER_R % du capital,
+    // pour rester comparable à la courbe Brut tout en reflétant le risque % réel + l'effet de compounding.
+    const idx = buildRealEquityCurve(numClosed, 100);
+    eqData = idx.map(v => +(((v/100 - 1) * 100 / (RISK_PER_R>0 ? RISK_PER_R : 1)).toFixed(2)));
   } else {
     let cum = 0;
     eqData = numClosed.map(t => { cum += rrfNum(t); return +cum.toFixed(2); });
@@ -6240,7 +6238,7 @@ function renderPeriodBody(ts, P, C, emptyId){
   dc(C+'eq-chart');
   const ctxEq = $(C+'eq-chart').getContext('2d');
   const grad = ctxEq.createLinearGradient(0,0,0,200);
-  const isPos = eqReal ? (eqData.length ? eqData[eqData.length-1] >= eqStart : true) : totalR>=0;
+  const isPos = eqData.length ? eqData[eqData.length-1] >= 0 : true;
   grad.addColorStop(0, isPos?'rgba(48,209,88,.45)':'rgba(255,69,58,.45)');
   grad.addColorStop(1, isPos?'rgba(48,209,88,0)':'rgba(255,69,58,0)');
   ch[C+'eq-chart'] = new Chart(ctxEq, {
@@ -6254,10 +6252,8 @@ function renderPeriodBody(ts, P, C, emptyId){
       pointBorderColor: '#000', pointBorderWidth: 1.5, pointRadius: 3.5, pointHoverRadius: 5.5,
     }]},
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=> eqReal
-        ? (eqIsMoney ? ` ${formatMoney(c.parsed.y).replace(/^[+-]/,'')}` : ` ${(((c.parsed.y/eqStart)-1)*100)>=0?'+':''}${(((c.parsed.y/eqStart)-1)*100).toFixed(2)}% ${L('cumulé','cumulative')}`)
-        : ` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}` } } },
-      scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback: eqReal ? (v=>eqIsMoney?formatMoney(v).replace(/^[+-]/,''):v) : fmtRTick}} },
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}` } } },
+      scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:fmtRTick}} },
       animation:{duration:600,easing:'easeOutCubic'}
     }
   });
