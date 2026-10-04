@@ -603,6 +603,16 @@ body.has-trial-banner .main { padding-top: 92px; }
 .chart-card-title { font-size: .78rem; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
 .chart-card-sub { font-size: .72rem; color: var(--text3); line-height: 1.45; margin-bottom: 14px; }
 .chart-card-sub b { color: var(--orange); font-weight: 600; }
+
+/* ── TOGGLE BRUT/RÉEL (courbes de capital) ── */
+.eq-mode-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.eq-mode-row .chart-card-title, .eq-mode-row .month-card-title { margin-bottom: 0; }
+.eq-mode-toggle { display: flex; gap: 4px; flex-shrink: 0; }
+.eq-mode-btn {
+  font-size: .68rem; font-weight: 600; padding: 3px 9px; border-radius: 6px;
+  border: 1px solid var(--sep); background: transparent; color: var(--text3); cursor: pointer;
+}
+.eq-mode-btn.active { background: var(--orange); color: #000; border-color: var(--orange); }
 .charts-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .chart-card-lg { grid-column: span 2; }
 
@@ -1415,7 +1425,13 @@ body.no-scroll { overflow: hidden; }
   <div class="gauge-row" id="gauge-row"></div>
   <div class="charts-row">
     <div class="chart-card chart-card-lg">
-      <div class="chart-card-title" data-i18n="ov_eq">Courbe de Capital</div>
+      <div class="eq-mode-row">
+        <div class="chart-card-title" data-i18n="ov_eq">Courbe de Capital</div>
+        <div class="eq-mode-toggle">
+          <button type="button" class="eq-mode-btn" data-mode="reel" onclick="setEqMode('reel')" data-i18n="eq_mode_reel">Réel</button>
+          <button type="button" class="eq-mode-btn" data-mode="brut" onclick="setEqMode('brut')" data-i18n="eq_mode_brut">Brut</button>
+        </div>
+      </div>
       <canvas id="eqChart" height="150"></canvas>
     </div>
     <div class="chart-card">
@@ -1653,7 +1669,13 @@ body.no-scroll { overflow: hidden; }
   <!-- Equity + per-trade -->
   <div class="month-grid">
     <div class="month-card">
-      <div class="month-card-title" data-i18n="mm_equity">Équité cumulée</div>
+      <div class="eq-mode-row">
+        <div class="month-card-title" data-i18n="mm_equity">Équité cumulée</div>
+        <div class="eq-mode-toggle">
+          <button type="button" class="eq-mode-btn" data-mode="reel" onclick="setEqMode('reel')" data-i18n="eq_mode_reel">Réel</button>
+          <button type="button" class="eq-mode-btn" data-mode="brut" onclick="setEqMode('brut')" data-i18n="eq_mode_brut">Brut</button>
+        </div>
+      </div>
       <div class="month-card-sub" id="mh-eq-sub" data-i18n="mm_equity_sub">R cumulés trade par trade</div>
       <div class="month-chart-wrap"><canvas id="m-eq-chart"></canvas></div>
     </div>
@@ -1745,7 +1767,13 @@ body.no-scroll { overflow: hidden; }
   <!-- Equity + per-trade -->
   <div class="month-grid">
     <div class="month-card">
-      <div class="month-card-title" data-i18n="mm_equity">Équité cumulée</div>
+      <div class="eq-mode-row">
+        <div class="month-card-title" data-i18n="mm_equity">Équité cumulée</div>
+        <div class="eq-mode-toggle">
+          <button type="button" class="eq-mode-btn" data-mode="reel" onclick="setEqMode('reel')" data-i18n="eq_mode_reel">Réel</button>
+          <button type="button" class="eq-mode-btn" data-mode="brut" onclick="setEqMode('brut')" data-i18n="eq_mode_brut">Brut</button>
+        </div>
+      </div>
       <div class="month-card-sub" id="qh-eq-sub" data-i18n="mm_equity_sub">R cumulés trade par trade</div>
       <div class="month-chart-wrap"><canvas id="q-eq-chart"></canvas></div>
     </div>
@@ -2611,6 +2639,7 @@ const STRINGS = {
     load_err_btn:"↻ Réessayer",
     tip_new:"Nouveau trade", tip_close:"Fermer", tip_nav:"Naviguer le mois",
     ov_eq:"Courbe de Capital", ov_pnl30:"P&L par Trade (30 derniers)",
+    eq_mode_reel:"Réel", eq_mode_brut:"Brut",
     ov_bypair:"Performance par Paire", ov_byday:"Wins par Jour de la Semaine",
     ov_rdist:"Distribution R Final", ov_bytype:"Performance par Type de Trade",
     ov_heatmap:"HEATMAP MENSUELLE (R PAR MOIS)", ov_heatmap_sub:"Somme du R/R final par mois. Survole une case pour le détail. Couleur = intensité relative au mois le plus extrême.",
@@ -2826,6 +2855,7 @@ const STRINGS = {
     load_err_btn:"↻ Retry",
     tip_new:"New trade", tip_close:"Close", tip_nav:"Navigate the month",
     ov_eq:"Equity Curve", ov_pnl30:"P&L per Trade (last 30)",
+    eq_mode_reel:"Real", eq_mode_brut:"Raw",
     ov_bypair:"Performance by Pair", ov_byday:"Wins by Day of Week",
     ov_rdist:"Final R Distribution", ov_bytype:"Performance by Trade Type",
     ov_heatmap:"MONTHLY HEATMAP (R PER MONTH)", ov_heatmap_sub:"Sum of final R/R per month. Hover a cell for details. Color = intensity relative to the most extreme month.",
@@ -3280,6 +3310,37 @@ function formatMoney(amount){
   const sign = amount >= 0 ? '+' : '-';
   const grouped = Math.round(Math.abs(amount)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   return `${sign}${grouped} ${sym}`;
+}
+
+// ─── Courbe de capital : mode d'affichage Brut (R additionnés, ancien comportement)
+// vs Réel (compounding selon le risque % réellement pris trade par trade). Préférence
+// d'affichage pure (pas une donnée utilisateur) → stockée en localStorage seulement.
+let EQ_MODE = (()=>{ try{ return localStorage.getItem('eq_mode')==='brut' ? 'brut' : 'reel'; }catch(e){ return 'reel'; } })();
+// Gain/perte réel en % du capital pour UN trade = R/R final × risque% RÉELLEMENT pris
+// sur ce trade (repli sur RISK_PER_R si le risque% du trade est vide).
+function realGainPct(t){
+  const r = rrfNum(t);
+  if(r === null) return null;
+  const pct = riskPctOf(t);
+  const effPct = pct !== null ? pct : RISK_PER_R;
+  return r * effPct;
+}
+// Courbe de capital compoundée : capital[t] = capital[t-1] × (1 + gain%_trade/100).
+// `ts` doit déjà être trié chronologiquement et filtré sur rrfNum(t)!==null.
+function buildRealEquityCurve(ts, startCapital){
+  let capital = startCapital;
+  return ts.map(t=>{ capital *= (1 + (realGainPct(t)||0)/100); return +capital.toFixed(2); });
+}
+function setEqMode(mode){
+  if(mode!==EQ_MODE){
+    EQ_MODE = mode;
+    try{ localStorage.setItem('eq_mode', mode); }catch(e){}
+  }
+  syncEqModeButtons();
+  if(typeof refreshCurrentPage==='function') refreshCurrentPage();
+}
+function syncEqModeButtons(){
+  document.querySelectorAll('.eq-mode-btn').forEach(b=>{ b.classList.toggle('active', b.dataset.mode===EQ_MODE); });
 }
 
 // ─── Émotions (état psychologique structuré, stocké dans extra_data.emotions) ───
@@ -4263,9 +4324,17 @@ function renderOverview(){
   const tsChrono = ts.slice().sort((a,b)=> (getTradeDate(a)||'').localeCompare(getTradeDate(b)||''));
 
   // Equity — uniquement les trades pris avec un R/R final numérique valide (ignore les "—" → pas de trous)
-  let eq = 0;
   const eqTs = tsChrono.filter(t=>rrfNum(t)!==null);
-  const eqData = eqTs.map(t=>{ eq+=rrfNum(t); return +eq.toFixed(2); });
+  const eqReal = EQ_MODE==='reel';
+  const eqIsMoney = eqReal && hasAccountSetup();
+  const eqStart = eqIsMoney ? ACCOUNT_CAPITAL : 100;
+  let eqData;
+  if(eqReal){
+    eqData = buildRealEquityCurve(eqTs, eqStart);
+  } else {
+    let eq = 0;
+    eqData = eqTs.map(t=>{ eq+=rrfNum(t); return +eq.toFixed(2); });
+  }
   dc('eqChart');
   ch['eqChart'] = new Chart(document.getElementById('eqChart'),{
     type:'line',
@@ -4279,13 +4348,17 @@ function renderOverview(){
           backgroundColor:'#1c1c1e', titleColor:'#fff', bodyColor:'#aeaeb2', borderColor:'#2c2c2e', borderWidth:1,
           callbacks:{
             title:(items)=>`${L('Trade n°','Trade #')}${items[0].label}`,
-            label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}`
+            label:(c)=> eqReal
+              ? (eqIsMoney ? ` ${formatMoney(c.parsed.y).replace(/^[+-]/,'')}` : ` ${(((c.parsed.y/eqStart)-1)*100)>=0?'+':''}${(((c.parsed.y/eqStart)-1)*100).toFixed(2)}% ${L('cumulé','cumulative')}`)
+              : ` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}`
           }
         }
       },
       scales:{
         x:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}}, title:{display:true,text:L('N° de trade','Trade #'),color:'#636366',font:{size:10}} },
-        y:{ grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>(v>0?'+':'')+v+'R'}, title:{display:true,text:L('R cumulés','Cumulative R'),color:'#636366',font:{size:10}} }
+        y: eqReal
+          ? { grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>eqIsMoney?formatMoney(v).replace(/^[+-]/,''):v}, title:{display:true,text:eqIsMoney?L('Capital','Capital'):L('Capital (base 100)','Capital (base 100)'),color:'#636366',font:{size:10}} }
+          : { grid:{color:'rgba(255,255,255,.05)'}, ticks:{color:'#636366',font:{size:10}, callback:v=>(v>0?'+':'')+v+'R'}, title:{display:true,text:L('R cumulés','Cumulative R'),color:'#636366',font:{size:10}} }
       }
     })
   });
@@ -6153,13 +6226,21 @@ function renderPeriodBody(ts, P, C, emptyId){
   // Charts
   if(typeof Chart === 'undefined') return;
   // Equity — uniquement R/R final numériques valides (ignore les "—" → pas de trous)
-  let cum = 0;
-  const eqData = numClosed.map(t => { cum += rrfNum(t); return +cum.toFixed(2); });
+  const eqReal = EQ_MODE==='reel';
+  const eqIsMoney = eqReal && hasAccountSetup();
+  const eqStart = eqIsMoney ? ACCOUNT_CAPITAL : 100;
+  let eqData;
+  if(eqReal){
+    eqData = buildRealEquityCurve(numClosed, eqStart);
+  } else {
+    let cum = 0;
+    eqData = numClosed.map(t => { cum += rrfNum(t); return +cum.toFixed(2); });
+  }
   const labels = numClosed.map((_,i)=>'#'+(i+1));
   dc(C+'eq-chart');
   const ctxEq = $(C+'eq-chart').getContext('2d');
   const grad = ctxEq.createLinearGradient(0,0,0,200);
-  const isPos = totalR>=0;
+  const isPos = eqReal ? (eqData.length ? eqData[eqData.length-1] >= eqStart : true) : totalR>=0;
   grad.addColorStop(0, isPos?'rgba(48,209,88,.45)':'rgba(255,69,58,.45)');
   grad.addColorStop(1, isPos?'rgba(48,209,88,0)':'rgba(255,69,58,0)');
   ch[C+'eq-chart'] = new Chart(ctxEq, {
@@ -6173,8 +6254,10 @@ function renderPeriodBody(ts, P, C, emptyId){
       pointBorderColor: '#000', pointBorderWidth: 1.5, pointRadius: 3.5, pointHoverRadius: 5.5,
     }]},
     options:{ responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=>` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}` } } },
-      scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback:fmtRTick}} },
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#1c1c1e', padding:10, titleColor:'#fff', bodyColor:'#fff', borderColor:'#3a3a3c', borderWidth:1, callbacks:{ label:(c)=> eqReal
+        ? (eqIsMoney ? ` ${formatMoney(c.parsed.y).replace(/^[+-]/,'')}` : ` ${(((c.parsed.y/eqStart)-1)*100)>=0?'+':''}${(((c.parsed.y/eqStart)-1)*100).toFixed(2)}% ${L('cumulé','cumulative')}`)
+        : ` ${c.parsed.y>=0?'+':''}${c.parsed.y}R ${L('cumulés','cumulative')}` } } },
+      scales:{ x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}}}, y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#636366',font:{size:10}, callback: eqReal ? (v=>eqIsMoney?formatMoney(v).replace(/^[+-]/,''):v) : fmtRTick}} },
       animation:{duration:600,easing:'easeOutCubic'}
     }
   });
@@ -8384,6 +8467,7 @@ document.addEventListener('keydown', e => {
 });
 
 renderOverview();
+syncEqModeButtons();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
