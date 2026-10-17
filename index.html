@@ -1461,7 +1461,7 @@ body.no-scroll { overflow: hidden; }
   <div class="charts-row" id="heatmap-row" style="display:none">
     <div class="chart-card" style="grid-column:1/-1">
       <div class="chart-card-title" data-i18n="ov_heatmap">HEATMAP MENSUELLE (R PAR MOIS)</div>
-      <div class="chart-card-sub" data-i18n="ov_heatmap_sub">Somme du R/R final par mois. Survole une case pour le détail. Couleur = intensité relative au mois le plus extrême.</div>
+      <div class="chart-card-sub" data-i18n="ov_heatmap_sub">Somme des R par mois, pondérés par le risque % réel en mode Réel. Survole une case pour le détail. Couleur = intensité relative au mois le plus extrême.</div>
       <div class="heatmap-wrap"><div id="heatmap-grid" class="heatmap-grid"></div></div>
     </div>
   </div>
@@ -2642,7 +2642,7 @@ const STRINGS = {
     eq_mode_reel:"Réel", eq_mode_brut:"Brut",
     ov_bypair:"Performance par Paire", ov_byday:"Wins par Jour de la Semaine",
     ov_rdist:"Distribution R Final", ov_bytype:"Performance par Type de Trade",
-    ov_heatmap:"HEATMAP MENSUELLE (R PAR MOIS)", ov_heatmap_sub:"Somme du R/R final par mois. Survole une case pour le détail. Couleur = intensité relative au mois le plus extrême.",
+    ov_heatmap:"HEATMAP MENSUELLE (R PAR MOIS)", ov_heatmap_sub:"Somme des R par mois, pondérés par le risque % réel en mode Réel. Survole une case pour le détail. Couleur = intensité relative au mois le plus extrême.",
     // Trades page (FR)
     ph_search:"🔎 Rechercher…", title_search:"Cherche dans paire, résultat, ordre, tendance, confluences, notes…",
     ph_allpairs:"Toutes les devises", opt_tf:"Time-Frame", opt_result:"Résultat",
@@ -2858,7 +2858,7 @@ const STRINGS = {
     eq_mode_reel:"Real", eq_mode_brut:"Raw",
     ov_bypair:"Performance by Pair", ov_byday:"Wins by Day of Week",
     ov_rdist:"Final R Distribution", ov_bytype:"Performance by Trade Type",
-    ov_heatmap:"MONTHLY HEATMAP (R PER MONTH)", ov_heatmap_sub:"Sum of final R/R per month. Hover a cell for details. Color = intensity relative to the most extreme month.",
+    ov_heatmap:"MONTHLY HEATMAP (R PER MONTH)", ov_heatmap_sub:"Sum of R per month, weighted by actual risk % in Real mode. Hover a cell for details. Color = intensity relative to the most extreme month.",
     // Trades page (EN)
     ph_search:"🔎 Search…", title_search:"Search pair, result, order, trend, confluences, notes…",
     ph_allpairs:"All pairs", opt_tf:"Time-Frame", opt_result:"Result",
@@ -3330,6 +3330,16 @@ function realGainPct(t){
 function buildRealEquityCurve(ts, startCapital){
   let capital = startCapital;
   return ts.map(t=>{ capital *= (1 + (realGainPct(t)||0)/100); return +capital.toFixed(2); });
+}
+// R d'un trade selon le mode d'affichage : Brut = R/R final tel quel ;
+// Réel = R pondéré par le risque % réellement pris (1R = RISK_PER_R % du capital).
+function displayR(t){
+  const r = rrfNum(t);
+  if(r === null) return null;
+  if(EQ_MODE !== 'reel' || !(RISK_PER_R > 0)) return r;
+  const pct = riskPctOf(t);
+  const effPct = pct !== null ? pct : RISK_PER_R;
+  return r * effPct / RISK_PER_R;
 }
 function setEqMode(mode){
   if(mode!==EQ_MODE){
@@ -4426,8 +4436,8 @@ function renderOverview(){
 //  HEATMAP MENSUELLE (R PAR MOIS)
 //  Une ligne "Moy." (moyenne du R mensuel sur les années ayant des trades ce
 //  mois-là) puis une ligne par année, de la première année de trading à
-//  l'année en cours. Valeur de case = somme des R/R final numériques des
-//  trades clôturés ce mois-là. Réutilise les trades déjà en mémoire (`ts`,
+//  l'année en cours. Valeur de case = somme des R des trades clôturés ce mois-là,
+//  pondérés par le risque % réel en mode Réel. Réutilise les trades en mémoire (`ts`,
 //  déjà filtrés par les filtres du dashboard : année du journal, trades pris).
 // ───────────────────────────────────────────
 function renderMonthlyHeatmap(ts){
@@ -4440,7 +4450,7 @@ function renderMonthlyHeatmap(ts){
   const cntByYear = {}; // { year: [12 nb trades] }
   const byYearMoney = {}; // { year: [12 sommes argent] } — uniquement si compte configuré
   ts.forEach(t=>{
-    const r = rrfNum(t); if(r===null) return;
+    const r = displayR(t); if(r===null) return;
     const d = getTradeDate(t); if(!d) return;
     const y = +d.slice(0,4); const mi = +d.slice(5,7)-1;
     if(isNaN(y) || mi<0 || mi>11) return;
