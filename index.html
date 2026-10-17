@@ -4082,6 +4082,9 @@ function isWin(t){ const v = rrfNum(t); return v !== null && v > 0; }   // R/R f
 function isLoss(t){ const v = rrfNum(t); return v !== null && v < 0; }  // R/R final < 0
 // Perte évitable : stockée dans extra_data.perteEvitable = 'oui' (évitable) | 'non' (inévitable)
 function perteEvitable(t){ const v = t && t.extra_data && t.extra_data.perteEvitable; return (v==='oui'||v==='non') ? v : null; }
+// Les stats « perte évitable » ne portent que sur les pertes renseignées (oui/non) :
+// une perte non notée ne doit pas compter comme « inévitable ».
+function lossesMarked(ts){ return ts.filter(t=>isLoss(t)&&perteEvitable(t)!==null); }
 
 function calcStats(ts){
   const wins   = ts.filter(isWin);                  // R/R final > 0
@@ -4294,6 +4297,9 @@ function renderOverview(){
   `;
 
   // Gauges
+  const lossesArr = lossesMarked(ts);
+  const evitCount = lossesArr.filter(t=>perteEvitable(t)==='oui').length;
+  const evitPct = lossesArr.length ? Math.round(evitCount/lossesArr.length*100) : 0;
   document.getElementById('gauge-row').innerHTML = `
     <div class="gauge-card">
       <div class="gauge-label">Win Rate</div>
@@ -4310,14 +4316,12 @@ function renderOverview(){
     <div class="gauge-card">
       <div class="gauge-label">${L('Pertes évitables','Avoidable losses')}</div>
       <div class="gauge-ring-wrap"><canvas id="gBT"></canvas>
-        <div class="gauge-center"><div class="gauge-val">${(()=>{const l=ts.filter(isLoss);return l.length?Math.round(l.filter(t=>perteEvitable(t)==='oui').length/l.length*100):0;})()}%</div></div>
+        <div class="gauge-center"><div class="gauge-val">${lossesArr.length?evitPct+'%':'—'}</div></div>
       </div>
     </div>
   `;
   dc('gWR'); ch['gWR'] = new Chart(document.getElementById('gWR'),{ type:'doughnut', data:{datasets:[{data:[s.winRate,100-s.winRate],backgroundColor:['#ff9f0a','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
   dc('gTP'); ch['gTP'] = new Chart(document.getElementById('gTP'),{ type:'doughnut', data:{datasets:[{data:[s.wins,s.losses,s.total-s.wins-s.losses],backgroundColor:['#30d158','#ff453a','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
-  const lossesArr = ts.filter(isLoss);
-  const evitCount = lossesArr.filter(t=>perteEvitable(t)==='oui').length;
   dc('gBT'); ch['gBT'] = new Chart(document.getElementById('gBT'),{ type:'doughnut', data:{datasets:[{data:[evitCount,Math.max(0,lossesArr.length-evitCount)],backgroundColor:['#ff453a','#2c2c2e'],borderWidth:0,cutout:'76%'}]}, options:{responsive:false,plugins:{legend:{display:false}},animation:{duration:500}} });
 
   // Ordre chronologique basé sur la date EFFECTIVE (prise de position, repli sur création)
@@ -4920,8 +4924,8 @@ function renderSetups(){
 
   // ─── DISCIPLINE ───
   const tsClosed = ts.filter(t=>t.rrf!==null && t.rrf!==undefined);
-  const bonTotal = ts.filter(isLoss).length;
-  const bonCount = ts.filter(t=>isLoss(t)&&perteEvitable(t)==='oui').length;
+  const bonTotal = lossesMarked(ts).length;
+  const bonCount = lossesMarked(ts).filter(t=>perteEvitable(t)==='oui').length;
   const bonPct = bonTotal? (bonCount/bonTotal*100):0;
   const errCount = ts.filter(t=>(t.errors||[]).filter(e=>e&&e!=='Aucune').length>0).length;
   const errPct = ts.length? (errCount/ts.length*100):0;
@@ -4931,9 +4935,9 @@ function renderSetups(){
 
   document.getElementById('discipline-grid').innerHTML = `
     <div class="disc-card">
-      <div class="disc-head"><div class="disc-label">${L('Pertes évitables','Avoidable losses')}</div><div class="disc-val ${bonPct<=30?'pos':bonPct<=50?'ora':'neg'}">${bonPct.toFixed(0)}%</div></div>
+      <div class="disc-head"><div class="disc-label">${L('Pertes évitables','Avoidable losses')}</div><div class="disc-val ${bonPct<=30?'pos':bonPct<=50?'ora':'neg'}">${bonTotal?bonPct.toFixed(0)+'%':'—'}</div></div>
       <div class="disc-bar"><div class="disc-bar-fill" style="width:${bonPct}%;background:${bonPct<=30?'#30d158':bonPct<=50?'#ff9f0a':'#ff453a'}"></div></div>
-      <div class="disc-hint">${L(`${bonCount}/${bonTotal} pertes étaient évitables`,`${bonCount}/${bonTotal} losses were avoidable`)}</div>
+      <div class="disc-hint">${bonTotal?L(`${bonCount}/${bonTotal} pertes notées étaient évitables`,`${bonCount}/${bonTotal} marked losses were avoidable`):L('aucune perte encore notée','no loss marked yet')}</div>
     </div>
     <div class="disc-card">
       <div class="disc-head"><div class="disc-label">${L('Trades sans erreur','Error-free trades')}</div><div class="disc-val ${(100-errPct)>=70?'pos':'ora'}">${(100-errPct).toFixed(0)}%</div></div>
@@ -6389,34 +6393,33 @@ function renderPerf(){
   })();
 
   // Étude des pertes évitables (perteEvitable stocké dans extra_data)
-  const _evitLosses=ts.filter(isLoss);
+  const _evitLosses=lossesMarked(ts);
   const _evitAvoid=_evitLosses.filter(t=>perteEvitable(t)==='oui').length;
   const evitBreak=(() => {
-    const losses=ts.filter(isLoss);
-    if(!losses.length) return '';
-    const evit=losses.filter(t=>perteEvitable(t)==='oui');
-    const inev=losses.filter(t=>perteEvitable(t)==='non');
-    const none=losses.filter(t=>perteEvitable(t)===null);
+    const allLosses=ts.filter(isLoss);
+    if(!allLosses.length) return '';
+    const marked=lossesMarked(ts);
+    const evit=marked.filter(t=>perteEvitable(t)==='oui');
+    const inev=marked.filter(t=>perteEvitable(t)==='non');
+    const none=allLosses.filter(t=>perteEvitable(t)===null);
     const sumR=arr=>+arr.reduce((s,t)=>s+(rrfNum(t)||0),0).toFixed(2);
-    const pct=arr=>losses.length?Math.round(arr.length/losses.length*100):0;
-    const marked=evit.length+inev.length;
-    const evitPctMarked=marked?Math.round(evit.length/marked*100):0;
-    const pctAll=losses.length?Math.round(evit.length/losses.length*100):0;
-    const row=(label,arr,color)=>`<tr>
+    const pct=arr=>marked.length?Math.round(arr.length/marked.length*100):0;
+    const evitPctMarked=marked.length?Math.round(evit.length/marked.length*100):0;
+    const row=(label,arr,color,showPct=true)=>`<tr>
       <td style="font-weight:600;color:${color}">${label}</td>
       <td>${arr.length}</td>
-      <td style="color:${color};font-weight:600">${pct(arr)}%</td>
+      <td style="color:${color};font-weight:600">${showPct?pct(arr)+'%':'—'}</td>
       <td class="${rClass(sumR(arr))}">${sumR(arr)>0?'+':''}${sumR(arr)}R</td>
     </tr>`;
     const savedR=sumR(evit);
     return `<div class="breakdown-card" style="margin-bottom:16px">
       <div class="breakdown-header">
         <span class="breakdown-title">${L('🩹 Pertes évitables','🩹 Avoidable losses')}</span>
-        <span class="breakdown-count">${marked?L(`${evitPctMarked}% de tes pertes notées étaient évitables`,`${evitPctMarked}% of your marked losses were avoidable`):L('aucune perte encore notée','no loss marked yet')}</span>
+        <span class="breakdown-count">${marked.length?L(`${evitPctMarked}% de tes pertes notées étaient évitables`,`${evitPctMarked}% of your marked losses were avoidable`):L('aucune perte encore notée','no loss marked yet')}</span>
       </div>
       <div style="display:flex;align-items:center;gap:22px;padding:16px 14px;flex-wrap:wrap">
         <div class="gauge-ring-wrap" style="flex:0 0 auto"><canvas id="gEvitLoss"></canvas>
-          <div class="gauge-center"><div class="gauge-val" style="color:var(--red)">${pctAll}%</div></div>
+          <div class="gauge-center"><div class="gauge-val" style="color:var(--red)">${marked.length?evitPctMarked+'%':'—'}</div></div>
         </div>
         <div style="flex:1;min-width:180px;font-size:.86rem;line-height:1.9">
           <div><span style="color:var(--red)">●</span> <b>${evit.length}</b> ${L('évitables','avoidable')}</div>
@@ -6426,11 +6429,11 @@ function renderPerf(){
       </div>
       <div style="overflow-x:auto">
         <table class="bd-table">
-          <thead><tr><th>${L('Catégorie','Category')}</th><th>${L('Pertes','Losses')}</th><th>${L('Part des pertes','Share of losses')}</th><th>${L('R cumulé','Total R')}</th></tr></thead>
+          <thead><tr><th>${L('Catégorie','Category')}</th><th>${L('Pertes','Losses')}</th><th>${L('Part des pertes notées','Share of marked losses')}</th><th>${L('R cumulé','Total R')}</th></tr></thead>
           <tbody>
             ${row(L('❌ Évitables','❌ Avoidable'),evit,'var(--red)')}
             ${row(L('🛡️ Inévitables','🛡️ Unavoidable'),inev,'var(--green)')}
-            ${none.length?row(L('— Non renseigné','— Unmarked'),none,'var(--text3)'):''}
+            ${none.length?row(L('— Non renseigné','— Unmarked'),none,'var(--text3)',false):''}
           </tbody>
         </table>
       </div>
