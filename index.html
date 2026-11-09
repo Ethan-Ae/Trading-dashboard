@@ -1238,6 +1238,17 @@ body.no-scroll { overflow: hidden; }
 .ins-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .ins-chart-wrap { height: 200px; position: relative; }
 .ins-empty { color: var(--text3); font-size: .8rem; padding: 24px 8px; text-align: center; line-height: 1.5; }
+/* ── FUITES (pertes évitables) ── */
+.leak-row { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.leak-row:last-child { border-bottom: none; }
+.leak-row-head { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; flex-wrap: wrap; }
+.leak-rank { width: 20px; height: 20px; flex-shrink: 0; border-radius: 6px; background: var(--bg4); color: var(--text3); font-size: .68rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.leak-cat { font-size: .68rem; color: var(--text3); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.leak-val { font-size: .86rem; font-weight: 600; flex: 1; min-width: 100px; }
+.leak-metrics { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.leak-count { font-size: .82rem; font-weight: 700; }
+.leak-r { font-size: .82rem; font-weight: 600; min-width: 54px; text-align: right; }
+.leak-note { font-size: .7rem; color: var(--text3); margin-top: 6px; line-height: 1.45; }
 .th-sort { cursor: pointer; user-select: none; white-space: nowrap; }
 .th-sort:hover { color: var(--text); }
 .th-arrow { color: var(--orange); font-size: .7rem; }
@@ -1372,6 +1383,10 @@ body.no-scroll { overflow: hidden; }
   <button class="nav-pill" onclick="showPage('insights',this)">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2a6 6 0 00-3 11.2V15a1 1 0 001 1h4a1 1 0 001-1v-1.8A6 6 0 0010 2z"/><path d="M8 18h4"/></svg>
     <span data-i18n="nav_insights">Insights</span>
+  </button>
+  <button class="nav-pill" onclick="showPage('leaks',this)">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2.5C10 2.5 4.5 8 4.5 12a5.5 5.5 0 0011 0C15.5 8 10 2.5 10 2.5z"/><path d="M8 12a2 2 0 002 2"/></svg>
+    <span data-i18n="nav_leaks">Fuites</span>
   </button>
   <button class="nav-pill" onclick="showPage('settings',this)" data-i18n-title="nav_settings" title="Réglages">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="3"/><path d="M10 2v2M10 16v2M4.93 4.93l1.41 1.41M13.66 13.66l1.41 1.41M2 10h2M16 10h2M4.93 15.07l1.41-1.41M13.66 6.34l1.41-1.41"/></svg>
@@ -1860,6 +1875,36 @@ body.no-scroll { overflow: hidden; }
       <div class="ins-card-sub" data-i18n="in_byerr_sub">R cumulé par erreur taguée : un trade avec plusieurs erreurs compte dans chacune</div>
       <div id="error-table"></div>
     </div>
+  </div>
+</div>
+
+<!-- ══════════ FUITES (pertes évitables) ══════════ -->
+<div id="page-leaks" class="page">
+  <div class="page-intro">
+    <div class="page-intro-title" data-i18n="intro_leaks_title">🩹 Pertes évitables & fuites récurrentes</div>
+    <div class="page-intro-sub" data-i18n-html="intro_leaks_sub">Le seul endroit où tu regardes <b>l'argent que tu n'aurais pas dû perdre</b>. Chaque perte que tu as marquée « évitable » est analysée pour faire ressortir <b>ce qui revient le plus souvent</b> : erreurs, émotions, actifs, time-frames, jours. Corrige le haut de la liste, et le reste suit.</div>
+  </div>
+
+  <div class="kpi-grid" id="leaks-kpi"></div>
+
+  <div class="ins-card" style="margin-bottom:16px">
+    <div class="ins-card-title" data-i18n="lk_top_title">🔁 Ce qui revient le plus souvent</div>
+    <div class="ins-card-sub" data-i18n="lk_top_sub">Classé par nombre d'apparitions dans tes pertes évitables. Un trade peut cumuler plusieurs facteurs.</div>
+    <div id="leaks-top" style="margin-top:14px"></div>
+  </div>
+
+  <div id="leaks-breakdown" class="perf-breakdown"></div>
+
+  <div class="ins-card" style="margin-bottom:16px">
+    <div class="ins-card-title" data-i18n="lk_list_title">🧾 Tes pertes évitables</div>
+    <div class="ins-card-sub" data-i18n="lk_list_sub">Clique une ligne pour ouvrir le trade et relire ce qui s'est passé.</div>
+    <div id="leaks-list"></div>
+  </div>
+
+  <div class="ins-card">
+    <div class="ins-card-title" data-i18n="lk_todo_title">❓ Pertes à qualifier</div>
+    <div class="ins-card-sub" data-i18n="lk_todo_sub">Tant qu'une perte n'est pas qualifiée, elle ne compte dans aucune statistique. Tranche ici en un clic.</div>
+    <div id="leaks-todo"></div>
   </div>
 </div>
 
@@ -2628,7 +2673,7 @@ const STRINGS = {
     // Navigation
     nav_overview:"Vue d'ensemble", nav_trades:"Trades", nav_setups:"Setups",
     nav_calendar:"Calendrier", nav_performance:"Performance", nav_monthly:"Mensuel",
-    nav_quarterly:"Trimestriel", nav_insights:"Insights", nav_settings:"Réglages",
+    nav_quarterly:"Trimestriel", nav_insights:"Insights", nav_leaks:"Fuites", nav_settings:"Réglages",
     // Overview + chrome (FR)
     btn_new_trade:"Nouveau Trade",
     welcome_title:"Bienvenue sur ton Journal",
@@ -2736,6 +2781,14 @@ const STRINGS = {
     intro_insights_sub:"Ton coach automatique. Cette page transforme tes données en <b>recommandations concrètes</b> : ce qui te fait gagner, ce qui te coûte, et à quel point tu respectes ton process. Elle croise tes <b>erreurs</b>, tes <b>émotions</b>, ta <b>checklist</b> et ta <b>durée de détention</b> avec tes résultats réels.",
     intro_perf_title:"📈 Analyse fine de ta performance",
     intro_perf_sub:"Page de <b>data-mining</b> de tes trades. Combine plusieurs filtres (paire, TF, tendance, durée, résultat…) pour comparer des sous-ensembles entre eux. Découvre par exemple : <b>\"mon WR sur EURUSD en H1 In Trend\"</b> ou <b>\"mon Profit Factor quand je trade contre les retails\"</b>. Les patterns d'erreur t'aident à identifier tes <b>fuites récurrentes</b>.",
+    intro_leaks_title:"🩹 Pertes évitables & fuites récurrentes",
+    intro_leaks_sub:"Le seul endroit où tu regardes <b>l'argent que tu n'aurais pas dû perdre</b>. Chaque perte que tu as marquée « évitable » est analysée pour faire ressortir <b>ce qui revient le plus souvent</b> : erreurs, émotions, actifs, time-frames, jours. Corrige le haut de la liste, et le reste suit.",
+    lk_top_title:"🔁 Ce qui revient le plus souvent",
+    lk_top_sub:"Classé par nombre d'apparitions dans tes pertes évitables. Un trade peut cumuler plusieurs facteurs.",
+    lk_list_title:"🧾 Tes pertes évitables",
+    lk_list_sub:"Clique une ligne pour ouvrir le trade et relire ce qui s'est passé.",
+    lk_todo_title:"❓ Pertes à qualifier",
+    lk_todo_sub:"Tant qu'une perte n'est pas qualifiée, elle ne compte dans aucune statistique. Tranche ici en un clic.",
     intro_settings_title:"⚙️ Réglages",
     intro_settings_sub:"Personnalise ta <b>checklist pré-trade</b> et la liste de tes <b>erreurs types</b>. Tes réglages sont sauvegardés sur ton compte et synchronisés sur tous tes appareils.",
     // Auth
@@ -2844,7 +2897,7 @@ const STRINGS = {
   en: {
     nav_overview:"Overview", nav_trades:"Trades", nav_setups:"Setups",
     nav_calendar:"Calendar", nav_performance:"Performance", nav_monthly:"Monthly",
-    nav_quarterly:"Quarterly", nav_insights:"Insights", nav_settings:"Settings",
+    nav_quarterly:"Quarterly", nav_insights:"Insights", nav_leaks:"Leaks", nav_settings:"Settings",
     // Overview + chrome (EN)
     btn_new_trade:"New Trade",
     welcome_title:"Welcome to your Journal",
@@ -2951,6 +3004,14 @@ const STRINGS = {
     intro_insights_sub:"Your automatic coach. This page turns your data into <b>concrete recommendations</b>: what makes you win, what costs you, and how well you respect your process. It cross-references your <b>mistakes</b>, your <b>emotions</b>, your <b>checklist</b> and your <b>holding time</b> with your real results.",
     intro_perf_title:"📈 Deep analysis of your performance",
     intro_perf_sub:"A <b>data-mining</b> page for your trades. Combine multiple filters (pair, TF, trend, duration, result…) to compare subsets against each other. Discover for example: <b>\"my WR on EURUSD in H1 In Trend\"</b> or <b>\"my Profit Factor when I trade against retail\"</b>. Error patterns help you identify your <b>recurring leaks</b>.",
+    intro_leaks_title:"🩹 Avoidable losses & recurring leaks",
+    intro_leaks_sub:"The one place where you look at <b>the money you shouldn't have lost</b>. Every loss you marked \"avoidable\" is analysed to surface <b>what keeps coming back</b>: mistakes, emotions, assets, time-frames, days. Fix the top of the list and the rest follows.",
+    lk_top_title:"🔁 What keeps coming back",
+    lk_top_sub:"Ranked by how often it shows up in your avoidable losses. One trade can carry several factors.",
+    lk_list_title:"🧾 Your avoidable losses",
+    lk_list_sub:"Click a row to open the trade and re-read what happened.",
+    lk_todo_title:"❓ Losses to qualify",
+    lk_todo_sub:"An unqualified loss counts in no statistic. Settle it here in one click.",
     intro_settings_title:"⚙️ Settings",
     intro_settings_sub:"Customize your <b>pre-trade checklist</b> and your list of <b>typical mistakes</b>. Your settings are saved to your account and synced across all your devices.",
     auth_back:"Back to home",
@@ -6597,6 +6658,186 @@ function renderInsights(){
 }
 
 // ───────────────────────────────────────────
+//  PAGE FUITES — pertes évitables & facteurs récurrents
+// ───────────────────────────────────────────
+// Facteurs croisés avec les pertes évitables. Un trade compte dans chaque valeur
+// qu'il porte (un trade à 3 erreurs apparaît dans les 3 lignes).
+function leakDims(){
+  const real = v => v && v !== DIM_EMPTY;
+  return [
+    { cat:L('Erreur','Mistake'),                  icon:'🎯', vals:t=>(t.errs||[]).filter(e=>e&&e!=='Aucune') },
+    { cat:L('Émotion','Emotion'),                 icon:'🧠', vals:t=>getEmotions(t) },
+    { cat:L('Actif','Asset'),                     icon:'💱', vals:t=>dimSplit(t.pair).filter(real) },
+    { cat:'Time-Frame',                           icon:'⏱️', vals:t=>dimSplit(t.tf).filter(real) },
+    { cat:L('Tendance','Trend'),                  icon:'📈', vals:t=>dimSplit(t.tend).filter(real) },
+    { cat:L("Type d'ordre",'Order type'),         icon:'🧭', vals:t=>dimSplit(t.ordre).filter(real) },
+    { cat:L('Jour','Day'),                        icon:'📅', vals:t=>dimSplit(getTradeJour(t)).filter(real) },
+    { cat:L('Durée de détention','Holding time'), icon:'⏳', vals:t=>dimSplit(t.hold).filter(real) },
+    { cat:L('Type de trade','Trade type'),        icon:'🏷️', vals:t=>dimSplit(t.type).filter(real) },
+  ];
+}
+// Liste plate des facteurs présents dans les pertes évitables, avec leur poids.
+function leakFactors(evit, allTs){
+  const out=[];
+  leakDims().forEach(d=>{
+    const map={};
+    evit.forEach(t=>d.vals(t).forEach(v=>{ const g=map[v]||(map[v]={n:0,r:0}); g.n++; g.r+=rrfNum(t)||0; }));
+    const totals={};
+    allTs.forEach(t=>d.vals(t).forEach(v=>{ totals[v]=(totals[v]||0)+1; }));
+    Object.entries(map).forEach(([val,g])=>{
+      out.push({ cat:d.cat, icon:d.icon, val, n:g.n, r:+g.r.toFixed(2), nAll:totals[val]||g.n });
+    });
+  });
+  return out.sort((a,b)=> b.n-a.n || a.r-b.r);
+}
+function markEvitable(id,val){ setEvitable(id,val); renderLeaks(); }
+
+function renderLeaks(){
+  const ts = tradesOfYear().filter(isTradePris);
+  const allLosses = ts.filter(isLoss);
+  const marked = lossesMarked(ts);
+  const evit = marked.filter(t=>perteEvitable(t)==='oui');
+  const unmarked = allLosses.filter(t=>perteEvitable(t)===null);
+  const sumR = arr => +arr.reduce((s,t)=>s+(rrfNum(t)||0),0).toFixed(2);
+  const evitR = sumR(evit);
+  const totalR = +ts.reduce((s,t)=>s+(rrfNum(t)||0),0).toFixed(2);
+  const money = arr => hasAccountSetup() ? formatMoney(sumMoneyPnL(arr)) : null;
+
+  // ── KPIs ──
+  const kpiEl = document.getElementById('leaks-kpi');
+  if(kpiEl){
+    const sharePct = marked.length ? Math.round(evit.length/marked.length*100) : null;
+    const without = +(totalR - evitR).toFixed(2);
+    const evitMoney = money(evit);
+    kpiEl.innerHTML = `
+      <div class="kpi"><div class="kpi-label">${L('Pertes évitables','Avoidable losses')}</div><div class="kpi-value neg">${evit.length}</div><div class="kpi-sub">${L(`sur ${marked.length} perte${marked.length!==1?'s':''} qualifiée${marked.length!==1?'s':''}`,`of ${marked.length} qualified loss${marked.length!==1?'es':''}`)}</div></div>
+      <div class="kpi"><div class="kpi-label">${L('R perdu évitablement','R lost avoidably')}</div><div class="kpi-value neg">${evitR}R</div>${evitMoney?`<div class="kpi-sub">${evitMoney}</div>`:''}</div>
+      <div class="kpi"><div class="kpi-label">${L('Part de tes pertes','Share of your losses')}</div><div class="kpi-value ora">${sharePct===null?'—':sharePct+'%'}</div><div class="kpi-sub">${L('des pertes qualifiées','of qualified losses')}</div></div>
+      <div class="kpi"><div class="kpi-label">${L('R sans ces trades','R without those trades')}</div><div class="kpi-value ${without>=0?'pos':'neg'}">${without>0?'+':''}${without}R</div><div class="kpi-sub">${L(`au lieu de ${totalR>0?'+':''}${totalR}R`,`instead of ${totalR>0?'+':''}${totalR}R`)}</div></div>
+      <div class="kpi"><div class="kpi-label">${L('À qualifier','To qualify')}</div><div class="kpi-value ${unmarked.length?'ora':''}">${unmarked.length}</div><div class="kpi-sub">${L('pertes non notées','unmarked losses')}</div></div>`;
+  }
+
+  const factors = leakFactors(evit, ts);
+
+  // ── Ce qui revient le plus souvent ──
+  const topEl = document.getElementById('leaks-top');
+  if(topEl){
+    if(!allLosses.length){
+      topEl.innerHTML = `<div class="ins-empty">${L('Aucune perte clôturée cette année — rien à analyser (et c\'est une bonne nouvelle).','No closed loss this year — nothing to analyse (good news).')}</div>`;
+    } else if(!evit.length){
+      topEl.innerHTML = `<div class="ins-empty">${marked.length
+        ? L('Aucune de tes pertes qualifiées n\'est évitable. Continue comme ça.','None of your qualified losses are avoidable. Keep it up.')
+        : L('Qualifie d\'abord tes pertes (« évitable » ou « inévitable ») ci-dessous pour voir tes patterns apparaître.','Qualify your losses first ("avoidable" or "unavoidable") below to make your patterns appear.')}</div>`;
+    } else {
+      const top = factors.slice(0,10);
+      const maxN = top[0].n;
+      topEl.innerHTML = top.map((f,i)=>{
+        const rate = f.nAll ? Math.round(f.n/f.nAll*100) : 0;
+        const col = f.n>=3 ? 'var(--red)' : f.n>=2 ? 'var(--orange)' : 'var(--text3)';
+        return `<div class="leak-row">
+          <div class="leak-row-head">
+            <span class="leak-rank">${i+1}</span>
+            <span class="leak-cat">${f.icon} ${f.cat}</span>
+            <span class="leak-val">${escapeHtml(tVal(f.val))}</span>
+            <span class="leak-metrics"><span class="leak-count" style="color:${col}">${f.n}×</span><span class="leak-r r-neg">${f.r}R</span></span>
+          </div>
+          <div class="disc-bar-track"><div class="disc-bar-fill" style="width:${Math.round(f.n/maxN*100)}%;background:${col}"></div></div>
+          <div class="leak-note">${L(`Présent dans ${f.n} de tes ${evit.length} pertes évitables · ${rate}% de tes ${f.nAll} trades avec ce facteur finissent en perte évitable`,`Present in ${f.n} of your ${evit.length} avoidable losses · ${rate}% of your ${f.nAll} trades with this factor end in an avoidable loss`)}</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── Détail par catégorie ──
+  const bdEl = document.getElementById('leaks-breakdown');
+  if(bdEl){
+    bdEl.innerHTML = !evit.length ? '' : leakDims().map(d=>{
+      const rows = factors.filter(f=>f.cat===d.cat);
+      if(!rows.length) return '';
+      return `<div class="breakdown-card">
+        <div class="breakdown-header">
+          <span class="breakdown-title">${d.icon} ${d.cat}</span>
+          <span class="breakdown-count">${rows.length} ${L('facteur(s)','factor(s)')}</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="bd-table">
+            <thead><tr>
+              <th>${d.cat}</th><th>${L('Pertes évitables','Avoidable losses')}</th>
+              <th>${L('Part','Share')}</th><th>${L('R perdu','R lost')}</th>
+              <th>${L('Taux sur tous tes trades','Rate across all trades')}</th>
+            </tr></thead>
+            <tbody>${rows.map(f=>{
+              const share = Math.round(f.n/evit.length*100);
+              const rate = f.nAll ? Math.round(f.n/f.nAll*100) : 0;
+              const rc = rate>=50?'var(--red)':rate>=25?'var(--orange)':'var(--text2)';
+              return `<tr>
+                <td style="font-weight:600">${escapeHtml(tVal(f.val))}</td>
+                <td>${f.n}</td>
+                <td style="color:var(--text2)">${share}%</td>
+                <td class="r-neg">${f.r}R</td>
+                <td style="color:${rc};font-weight:600">${rate}% <span style="color:var(--text3);font-weight:400">(${f.n}/${f.nAll})</span></td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Liste des pertes évitables ──
+  const listEl = document.getElementById('leaks-list');
+  if(listEl){
+    if(!evit.length){
+      listEl.innerHTML = `<div class="ins-empty">${L('Aucune perte marquée « évitable » pour le moment.','No loss marked "avoidable" yet.')}</div>`;
+    } else {
+      const chrono = evit.slice().sort((a,b)=>(getTradeDate(b)||'').localeCompare(getTradeDate(a)||''));
+      listEl.innerHTML = `<div style="overflow-x:auto;margin-top:12px"><table class="bd-table">
+        <thead><tr>
+          <th>${L('Date','Date')}</th><th>${L('Actif','Asset')}</th><th>TF</th><th>R</th>
+          <th>${L('Erreurs','Mistakes')}</th><th>${L('Émotions','Emotions')}</th>
+        </tr></thead>
+        <tbody>${chrono.map(t=>{
+          const errs=(t.errs||[]).filter(e=>e&&e!=='Aucune').map(e=>escapeHtml(tVal(e))).join(', ');
+          const emos=getEmotions(t).map(e=>(EMOTION_BY_LABEL[e]?EMOTION_BY_LABEL[e].emoji+' ':'')+escapeHtml(tVal(e))).join(' ');
+          const m=moneyPnL(t);
+          return `<tr style="cursor:pointer" onclick="openPanel(${t.id})">
+            <td style="color:var(--text2)">${getTradeEntryDate(t)||'—'}</td>
+            <td style="font-weight:600">${escapeHtml(t.pair||'—')}</td>
+            <td>${tfChip(t.tf)}</td>
+            <td class="r-neg">${rrfNum(t)}R${m!==null?`<div style="color:var(--text3);font-size:.68rem">${formatMoney(m)}</div>`:''}</td>
+            <td style="color:var(--text2);font-size:.75rem">${errs||'—'}</td>
+            <td style="color:var(--text2);font-size:.75rem">${emos||'—'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
+    }
+  }
+
+  // ── Pertes à qualifier ──
+  const todoEl = document.getElementById('leaks-todo');
+  if(todoEl){
+    if(!unmarked.length){
+      todoEl.innerHTML = `<div class="ins-empty">${allLosses.length?L('Toutes tes pertes sont qualifiées. 👌','All your losses are qualified. 👌'):L('Aucune perte à qualifier.','No loss to qualify.')}</div>`;
+    } else {
+      const chrono = unmarked.slice().sort((a,b)=>(getTradeDate(b)||'').localeCompare(getTradeDate(a)||''));
+      todoEl.innerHTML = `<div style="overflow-x:auto;margin-top:12px"><table class="bd-table">
+        <thead><tr><th>${L('Date','Date')}</th><th>${L('Actif','Asset')}</th><th>TF</th><th>R</th><th>${L('Cette perte était-elle évitable ?','Was this loss avoidable?')}</th></tr></thead>
+        <tbody>${chrono.map(t=>`<tr>
+          <td style="color:var(--text2)">${getTradeEntryDate(t)||'—'}</td>
+          <td style="font-weight:600;cursor:pointer" onclick="openPanel(${t.id})">${escapeHtml(t.pair||'—')}</td>
+          <td>${tfChip(t.tf)}</td>
+          <td class="r-neg">${rrfNum(t)}R</td>
+          <td><div class="emoji-btn-group" style="gap:6px">
+            <button type="button" class="emoji-btn" style="font-size:.74rem;padding:4px 10px" onclick="markEvitable(${t.id},'oui')">${L('⚠️ Évitable','⚠️ Avoidable')}</button>
+            <button type="button" class="emoji-btn" style="font-size:.74rem;padding:4px 10px" onclick="markEvitable(${t.id},'non')">${L('🛡️ Inévitable','🛡️ Unavoidable')}</button>
+          </div></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }
+  }
+}
+
+// ───────────────────────────────────────────
 //  PAGE ROUTING
 // ───────────────────────────────────────────
 let currentPage='overview';
@@ -6617,6 +6858,7 @@ function refreshCurrentPage(){
   else if(currentPage==='monthly') renderMonthly();
   else if(currentPage==='quarterly') renderQuarterly();
   else if(currentPage==='insights') renderInsights();
+  else if(currentPage==='leaks') renderLeaks();
   else if(currentPage==='settings') renderSettings();
 }
 
